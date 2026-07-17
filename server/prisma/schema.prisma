@@ -5,9 +5,123 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  output   = "../src/generated"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum Role {
+  admin
+  librarian
+  student
+}
+
+enum SlotType {
+  morning
+  noon
+  afternoon
+  evening
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  checked_in
+  completed
+  cancelled
+  no_show
+}
+
+// ─── Models ──────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  studentId    String?   @unique
+  passwordHash String
+  role         Role      @default(student)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  bookings Booking[]
+
+  @@map("users")
+}
+
+model Zone {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  color       String  @default("#4F46E5")
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seats Seat[]
+
+  @@map("zones")
+}
+
+model Seat {
+  id         String  @id @default(uuid())
+  seatNumber String
+  zoneId     String
+  isActive   Boolean @default(true)
+  isOccupied Boolean @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  zone     Zone      @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  // Each seat number must be unique within its zone
+  @@unique([zoneId, seatNumber])
+  @@map("seats")
+}
+
+model Schedule {
+  id     String   @id @default(uuid())
+  date   DateTime @db.Date
+  slot   SlotType
+  isOpen Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+
+  // Exactly one schedule record per date + slot window
+  @@unique([date, slot])
+  @@map("schedules")
+}
+
+model Booking {
+  id           String        @id @default(uuid())
+  userId       String
+  seatId       String
+  scheduleId   String
+  status       BookingStatus @default(confirmed)
+  qrToken      String        @unique @default(uuid())
+  bookedAt     DateTime      @default(now())
+  checkedInAt  DateTime?
+  checkedOutAt DateTime?
+  cancelledAt  DateTime?
+  cancelReason String?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seat     Seat     @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  // Prevents double-booking: one booking per seat per schedule slot
+  @@unique([seatId, scheduleId])
+  // Fast lookup for active bookings by user
+  @@index([userId, status])
+  // Fast QR verification
+  @@index([qrToken])
+  @@map("bookings")
 }

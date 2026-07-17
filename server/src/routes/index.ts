@@ -1,0 +1,16 @@
+import { Router } from "express";
+import authRoute from "../modules/auth/auth.router";
+import studentRoute from "../modules/student/student.route";
+import zoneRoute from "../modules/zone/zone.route";
+import seatRoute from "../modules/seat/seat.route";
+import bookingRoute from "../modules/booking/bookings.router";
+
+const indexRoutes: Router = Router();
+
+indexRoutes.use("/auth", authRoute);
+indexRoutes.use("/student", studentRoute);
+indexRoutes.use("/zone", zoneRoute);
+indexRoutes.use("/seat", seatRoute);
+indexRoutes.use("/booking", bookingRoute);
+
+export default indexRoutes;
