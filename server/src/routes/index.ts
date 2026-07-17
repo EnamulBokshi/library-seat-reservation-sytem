@@ -4,6 +4,7 @@ import studentRoute from "../modules/student/student.route";
 import zoneRoute from "../modules/zone/zone.route";
 import seatRoute from "../modules/seat/seat.route";
 import bookingRoute from "../modules/booking/bookings.router";
+import checkinRoute from "../modules/checkin/checkin.route";
 
 const indexRoutes: Router = Router();
 
@@ -12,5 +13,6 @@ indexRoutes.use("/student", studentRoute);
 indexRoutes.use("/zone", zoneRoute);
 indexRoutes.use("/seat", seatRoute);
 indexRoutes.use("/booking", bookingRoute);
+indexRoutes.use("/checkin", checkinRoute);
 
 export default indexRoutes;
