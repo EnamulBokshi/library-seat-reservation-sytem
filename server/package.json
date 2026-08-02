@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon ./src/server.ts",
+    "dev": "nodemon --exec tsx ./src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "db:generate": "prisma generate",
@@ -13,8 +13,7 @@
     "db:pull": "prisma db pull",
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "ts-node ./src/scripts/seed-admin.ts"
-    
+    "db:seed": "tsx ./src/scripts/seed-admin.ts"
   },
   "keywords": [],
   "author": "",
@@ -53,6 +52,7 @@
     "@types/uuid": "^11.0.0",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.1",
     "typescript": "^7.0.2"
   }
 }
