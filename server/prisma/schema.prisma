@@ -125,3 +125,13 @@ model Booking {
   @@index([qrToken])
   @@map("bookings")
 }
+
+model Setting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("settings")
+}

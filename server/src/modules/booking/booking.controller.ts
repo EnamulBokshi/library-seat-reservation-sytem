@@ -62,9 +62,21 @@ const cancelBooking = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getSchedules = catchAsync(async (req: Request, res: Response) => {
+    const result = await BookingService.getSchedules();
+
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: "Available schedules retrieved successfully",
+        data: result,
+    });
+});
+
 export const BookingController = {
     createBooking,
     getMyBookings,
     getAllBookings,
     cancelBooking,
+    getSchedules,
 };

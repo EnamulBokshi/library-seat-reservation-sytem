@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_router_1 = __importDefault(require("../modules/auth/auth.router"));
+const student_route_1 = __importDefault(require("../modules/student/student.route"));
+const zone_route_1 = __importDefault(require("../modules/zone/zone.route"));
+const seat_route_1 = __importDefault(require("../modules/seat/seat.route"));
+const bookings_router_1 = __importDefault(require("../modules/booking/bookings.router"));
+const checkin_route_1 = __importDefault(require("../modules/checkin/checkin.route"));
+const setting_route_1 = __importDefault(require("../modules/setting/setting.route"));
+const indexRoutes = (0, express_1.Router)();
+indexRoutes.use("/auth", auth_router_1.default);
+indexRoutes.use("/student", student_route_1.default);
+indexRoutes.use("/zone", zone_route_1.default);
+indexRoutes.use("/seat", seat_route_1.default);
+indexRoutes.use("/booking", bookings_router_1.default);
+indexRoutes.use("/checkin", checkin_route_1.default);
+indexRoutes.use("/setting", setting_route_1.default);
+exports.default = indexRoutes;

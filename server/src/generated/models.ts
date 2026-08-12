@@ -8,9 +8,10 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/User.ts'
-export type * from './models/Zone.ts'
-export type * from './models/Seat.ts'
-export type * from './models/Schedule.ts'
-export type * from './models/Booking.ts'
-export type * from './commonInputTypes.ts'
+export type * from './models/User'
+export type * from './models/Zone'
+export type * from './models/Seat'
+export type * from './models/Schedule'
+export type * from './models/Booking'
+export type * from './models/Setting'
+export type * from './commonInputTypes'

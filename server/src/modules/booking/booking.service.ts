@@ -6,6 +6,8 @@ import AppError from "../../helpers/AppError";
 import { ICreateBookingPayload } from "./booking.interface";
 import { BookingStatus, Role } from "../../generated/enums";
 
+import { emailService } from "../../services/email.service";
+
 /**
  * Create a new booking for a student.
  */
@@ -42,19 +44,20 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
     }
 
     // 3. Validate booking date (today up to 7 days in advance)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
 
-    const maxBookingDate = new Date(today);
-    maxBookingDate.setDate(today.getDate() + 7);
-    maxBookingDate.setHours(23, 59, 59, 999);
+    const maxDate = new Date(now);
+    maxDate.setDate(now.getDate() + 7);
+    const maxDateStr = maxDate.toISOString().split("T")[0];
 
-    const scheduleDate = new Date(schedule.date);
-    if (scheduleDate < today) {
+    const scheduleDateStr = new Date(schedule.date).toISOString().split("T")[0];
+
+    if (scheduleDateStr < todayStr) {
         throw new AppError(status.BAD_REQUEST, "Cannot book a schedule slot in the past");
     }
 
-    if (scheduleDate > maxBookingDate) {
+    if (scheduleDateStr > maxDateStr) {
         throw new AppError(status.BAD_REQUEST, "Reservations can only be made up to 7 days in advance");
     }
 
@@ -91,8 +94,6 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
     }
 
     // 6. Determine initial status: pending (future date) or confirmed (today)
-    const todayStr = today.toISOString().split("T")[0];
-    const scheduleDateStr = scheduleDate.toISOString().split("T")[0];
     const initialStatus =
         scheduleDateStr === todayStr ? BookingStatus.confirmed : BookingStatus.pending;
 
@@ -108,6 +109,7 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
             qrToken,
         },
         include: {
+            user: true,
             seat: {
                 include: {
                     zone: true,
@@ -119,6 +121,21 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
 
     // 8. Generate QR code image as base64 string
     const qrCodeImage = await QRCode.toDataURL(qrToken);
+
+    // 9. Asynchronously dispatch confirmation email with Resend
+    if (booking.user?.email) {
+      const formattedDate = new Date(booking.schedule.date).toLocaleDateString();
+      emailService.sendBookingConfirmationEmail({
+        toEmail: booking.user.email,
+        studentName: booking.user.name,
+        seatNumber: booking.seat.seatNumber,
+        zoneName: booking.seat.zone.name,
+        dateStr: formattedDate,
+        slotName: booking.schedule.slot,
+        qrToken,
+        qrCodeBase64: qrCodeImage,
+      }).catch((err) => console.error("Error sending confirmation email:", err));
+    }
 
     return {
         booking,
@@ -288,9 +305,35 @@ const cancelBooking = async (id: string, userId: string, role: Role) => {
     return cancelledBooking;
 };
 
+const getSchedules = async () => {
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+    const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
+
+    const schedules = await prisma.schedule.findMany({
+        where: {
+            isOpen: true,
+            date: {
+                gte: todayDate,
+            },
+        },
+        orderBy: [
+            { date: "asc" },
+            { slot: "asc" },
+        ],
+    });
+
+    // Filter to ensure no past date is returned
+    return schedules.filter((s) => {
+        const sDateStr = new Date(s.date).toISOString().split("T")[0];
+        return sDateStr >= todayStr;
+    });
+};
+
 export const BookingService = {
     createBooking,
     getMyBookings,
     getAllBookings,
     cancelBooking,
+    getSchedules,
 };

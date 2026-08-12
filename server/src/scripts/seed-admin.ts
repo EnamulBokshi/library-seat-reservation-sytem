@@ -108,6 +108,20 @@ async function seedSchedules() {
     console.log(`  ✅ Schedules: ${created} created, ${skipped} already existed`);
 }
 
+async function seedSettings() {
+    console.log("🌱 Seeding system settings...");
+    await prisma.setting.upsert({
+        where: { key: "CHECKIN_GRACE_PERIOD_MINUTES" },
+        update: {},
+        create: {
+            key: "CHECKIN_GRACE_PERIOD_MINUTES",
+            value: "15",
+            description: "Check-in grace period in minutes before auto-cancellation",
+        },
+    });
+    console.log("  ✅ Setting 'CHECKIN_GRACE_PERIOD_MINUTES' set to 15");
+}
+
 async function main() {
     console.log("═══════════════════════════════════════");
     console.log("  Smart Library — Database Seed");
@@ -118,6 +132,7 @@ async function main() {
         await seedZones();
         await seedSeats();
         await seedSchedules();
+        await seedSettings();
 
         console.log("\n✅ Seeding complete!");
     } catch (error) {
