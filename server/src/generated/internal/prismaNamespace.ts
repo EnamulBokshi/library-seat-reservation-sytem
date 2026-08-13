@@ -912,6 +912,7 @@ export const ZoneScalarFieldEnum = {
   name: 'name',
   description: 'description',
   color: 'color',
+  rules: 'rules',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

@@ -23,6 +23,9 @@ bookingRoute.get("/", authCheck("admin", "librarian"), BookingController.getAllB
 // Get available schedules (all authenticated roles)
 bookingRoute.get("/schedules", authCheck(), BookingController.getSchedules);
 
+// Get real-time dashboard analytics (all authenticated roles)
+bookingRoute.get("/stats", authCheck(), BookingController.getDashboardStats);
+
 // Get booking details by ID (authenticated users)
 bookingRoute.get("/:id", authCheck(), BookingController.getBookingById);
 

@@ -20,6 +20,7 @@ const createZone = async (payload: ICreateZonePayload) => {
             name: payload.name,
             description: payload.description,
             color: payload.color || "#4F46E5",
+            rules: payload.rules ?? [],
             isActive: payload.isActive !== undefined ? payload.isActive : true,
         },
     });

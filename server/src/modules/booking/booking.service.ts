@@ -390,6 +390,150 @@ const getSchedules = async () => {
     });
 };
 
+/**
+ * Calculate dynamic real-time stats for home dashboard (for admins, librarians, and students).
+ */
+const getDashboardStats = async (userId: string, role: string) => {
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+    const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
+
+    // 1. Expected Today count
+    const expectedToday = await prisma.booking.count({
+        where: {
+            schedule: {
+                date: todayDate,
+            },
+            status: {
+                in: [BookingStatus.pending, BookingStatus.confirmed, BookingStatus.checked_in, BookingStatus.completed],
+            },
+        },
+    });
+
+    // 2. Currently Checked In count
+    const checkedIn = await prisma.booking.count({
+        where: {
+            status: BookingStatus.checked_in,
+        },
+    });
+
+    // 3. No Shows for today
+    const noShows = await prisma.booking.count({
+        where: {
+            schedule: {
+                date: todayDate,
+            },
+            status: BookingStatus.no_show,
+        },
+    });
+
+    // 4. Seats & Availability
+    const totalActiveSeats = await prisma.seat.count({
+        where: {
+            isActive: true,
+            zone: {
+                isActive: true,
+            },
+        },
+    });
+
+    const occupiedSeatsCount = await prisma.seat.count({
+        where: {
+            isActive: true,
+            isOccupied: true,
+            zone: {
+                isActive: true,
+            },
+        },
+    });
+
+    const availableSeats = Math.max(0, totalActiveSeats - occupiedSeatsCount);
+
+    // 5. Zone Status List
+    const zones = await prisma.zone.findMany({
+        orderBy: { name: "asc" },
+        include: {
+            seats: {
+                where: { isActive: true },
+            },
+        },
+    });
+
+    const liveZones = zones.map((z) => {
+        const total = z.seats.length;
+        const occupied = z.seats.filter((s) => s.isOccupied).length;
+        const available = Math.max(0, total - occupied);
+        const occupancyPercent = total > 0 ? Math.round((occupied / total) * 100) : 0;
+
+        let statusLabel = "Available";
+        let statusBadgeClass = "bg-emerald-50 border-emerald-100 text-emerald-700";
+
+        if (!z.isActive) {
+            statusLabel = "Closed";
+            statusBadgeClass = "bg-rose-50 border-rose-100 text-rose-700";
+        } else if (occupancyPercent >= 85) {
+            statusLabel = `Busy (${occupancyPercent}%)`;
+            statusBadgeClass = "bg-amber-50 border-amber-100 text-amber-800";
+        } else if (occupancyPercent > 0) {
+            statusLabel = "Active";
+            statusBadgeClass = "bg-indigo-50 border-indigo-100 text-indigo-700";
+        }
+
+        return {
+            id: z.id,
+            name: z.name,
+            description: z.description,
+            isActive: z.isActive,
+            totalSeats: total,
+            occupiedSeats: occupied,
+            availableSeats: available,
+            occupancyPercent,
+            statusLabel,
+            statusBadgeClass,
+        };
+    });
+
+    // 6. Student specific stats (if student)
+    let studentStats = null;
+    if (role === "student") {
+        const myActivePasses = await prisma.booking.count({
+            where: {
+                userId,
+                status: {
+                    in: [BookingStatus.pending, BookingStatus.confirmed, BookingStatus.checked_in],
+                },
+            },
+        });
+
+        const myCompletedSessions = await prisma.booking.count({
+            where: {
+                userId,
+                status: BookingStatus.completed,
+            },
+        });
+
+        const myTotalBookings = await prisma.booking.count({
+            where: { userId },
+        });
+
+        studentStats = {
+            myActivePasses,
+            myCompletedSessions,
+            myTotalBookings,
+        };
+    }
+
+    return {
+        expectedToday,
+        checkedIn,
+        noShows,
+        availableSeats,
+        totalActiveSeats,
+        liveZones,
+        studentStats,
+    };
+};
+
 export const BookingService = {
     createBooking,
     getMyBookings,
@@ -397,5 +541,7 @@ export const BookingService = {
     getBookingById,
     cancelBooking,
     getSchedules,
+    getDashboardStats,
 };
+
 

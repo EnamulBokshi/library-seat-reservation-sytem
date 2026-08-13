@@ -49,6 +49,7 @@ export type ZoneCountAggregateOutputType = {
   name: number
   description: number
   color: number
+  rules: number
   isActive: number
   createdAt: number
   updatedAt: number
@@ -81,6 +82,7 @@ export type ZoneCountAggregateInputType = {
   name?: true
   description?: true
   color?: true
+  rules?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -164,6 +166,7 @@ export type ZoneGroupByOutputType = {
   name: string
   description: string | null
   color: string
+  rules: string[]
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -195,6 +198,7 @@ export type ZoneWhereInput = {
   name?: Prisma.StringFilter<"Zone"> | string
   description?: Prisma.StringNullableFilter<"Zone"> | string | null
   color?: Prisma.StringFilter<"Zone"> | string
+  rules?: Prisma.StringNullableListFilter<"Zone">
   isActive?: Prisma.BoolFilter<"Zone"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Zone"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Zone"> | Date | string
@@ -206,6 +210,7 @@ export type ZoneOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   color?: Prisma.SortOrder
+  rules?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -220,6 +225,7 @@ export type ZoneWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ZoneWhereInput | Prisma.ZoneWhereInput[]
   description?: Prisma.StringNullableFilter<"Zone"> | string | null
   color?: Prisma.StringFilter<"Zone"> | string
+  rules?: Prisma.StringNullableListFilter<"Zone">
   isActive?: Prisma.BoolFilter<"Zone"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Zone"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Zone"> | Date | string
@@ -231,6 +237,7 @@ export type ZoneOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   color?: Prisma.SortOrder
+  rules?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -247,6 +254,7 @@ export type ZoneScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Zone"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Zone"> | string | null
   color?: Prisma.StringWithAggregatesFilter<"Zone"> | string
+  rules?: Prisma.StringNullableListFilter<"Zone">
   isActive?: Prisma.BoolWithAggregatesFilter<"Zone"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Zone"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Zone"> | Date | string
@@ -257,6 +265,7 @@ export type ZoneCreateInput = {
   name: string
   description?: string | null
   color?: string
+  rules?: Prisma.ZoneCreaterulesInput | string[]
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -268,6 +277,7 @@ export type ZoneUncheckedCreateInput = {
   name: string
   description?: string | null
   color?: string
+  rules?: Prisma.ZoneCreaterulesInput | string[]
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -279,6 +289,7 @@ export type ZoneUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -290,6 +301,7 @@ export type ZoneUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -301,6 +313,7 @@ export type ZoneCreateManyInput = {
   name: string
   description?: string | null
   color?: string
+  rules?: Prisma.ZoneCreaterulesInput | string[]
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -311,6 +324,7 @@ export type ZoneUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -321,9 +335,18 @@ export type ZoneUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type StringNullableListFilter<$PrismaModel = never> = {
+  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
+  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
+  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
 }
 
 export type ZoneCountOrderByAggregateInput = {
@@ -331,6 +354,7 @@ export type ZoneCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   color?: Prisma.SortOrder
+  rules?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -361,6 +385,15 @@ export type ZoneScalarRelationFilter = {
   isNot?: Prisma.ZoneWhereInput
 }
 
+export type ZoneCreaterulesInput = {
+  set: string[]
+}
+
+export type ZoneUpdaterulesInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
 export type ZoneCreateNestedOneWithoutSeatsInput = {
   create?: Prisma.XOR<Prisma.ZoneCreateWithoutSeatsInput, Prisma.ZoneUncheckedCreateWithoutSeatsInput>
   connectOrCreate?: Prisma.ZoneCreateOrConnectWithoutSeatsInput
@@ -380,6 +413,7 @@ export type ZoneCreateWithoutSeatsInput = {
   name: string
   description?: string | null
   color?: string
+  rules?: Prisma.ZoneCreaterulesInput | string[]
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -390,6 +424,7 @@ export type ZoneUncheckedCreateWithoutSeatsInput = {
   name: string
   description?: string | null
   color?: string
+  rules?: Prisma.ZoneCreaterulesInput | string[]
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -416,6 +451,7 @@ export type ZoneUpdateWithoutSeatsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -426,6 +462,7 @@ export type ZoneUncheckedUpdateWithoutSeatsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -467,6 +504,7 @@ export type ZoneSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   name?: boolean
   description?: boolean
   color?: boolean
+  rules?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -479,6 +517,7 @@ export type ZoneSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   description?: boolean
   color?: boolean
+  rules?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -489,6 +528,7 @@ export type ZoneSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   description?: boolean
   color?: boolean
+  rules?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -499,12 +539,13 @@ export type ZoneSelectScalar = {
   name?: boolean
   description?: boolean
   color?: boolean
+  rules?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ZoneOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "color" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["zone"]>
+export type ZoneOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "color" | "rules" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["zone"]>
 export type ZoneInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   seats?: boolean | Prisma.Zone$seatsArgs<ExtArgs>
   _count?: boolean | Prisma.ZoneCountOutputTypeDefaultArgs<ExtArgs>
@@ -522,6 +563,7 @@ export type $ZonePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     name: string
     description: string | null
     color: string
+    rules: string[]
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -953,6 +995,7 @@ export interface ZoneFieldRefs {
   readonly name: Prisma.FieldRef<"Zone", 'String'>
   readonly description: Prisma.FieldRef<"Zone", 'String'>
   readonly color: Prisma.FieldRef<"Zone", 'String'>
+  readonly rules: Prisma.FieldRef<"Zone", 'String[]'>
   readonly isActive: Prisma.FieldRef<"Zone", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Zone", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Zone", 'DateTime'>

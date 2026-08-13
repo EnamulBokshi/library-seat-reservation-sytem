@@ -17,6 +17,10 @@ bookingRoute.get("/my", (0, authCheck_1.default)("student"), booking_controller_
 bookingRoute.get("/", (0, authCheck_1.default)("admin", "librarian"), booking_controller_1.BookingController.getAllBookings);
 // Get available schedules (all authenticated roles)
 bookingRoute.get("/schedules", (0, authCheck_1.default)(), booking_controller_1.BookingController.getSchedules);
+// Get real-time dashboard analytics (all authenticated roles)
+bookingRoute.get("/stats", (0, authCheck_1.default)(), booking_controller_1.BookingController.getDashboardStats);
+// Get booking details by ID (authenticated users)
+bookingRoute.get("/:id", (0, authCheck_1.default)(), booking_controller_1.BookingController.getBookingById);
 // Cancel booking (Student, Librarian, Admin)
 bookingRoute.delete("/:id", (0, authCheck_1.default)("student", "admin", "librarian"), booking_controller_1.BookingController.cancelBooking);
 exports.default = bookingRoute;

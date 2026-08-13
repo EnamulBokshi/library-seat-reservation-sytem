@@ -88,6 +88,20 @@ const getBookingById = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getDashboardStats = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user.userId;
+    const role = req.user.role;
+
+    const result = await BookingService.getDashboardStats(userId, role);
+
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: "Dashboard analytics retrieved successfully",
+        data: result,
+    });
+});
+
 export const BookingController = {
     createBooking,
     getMyBookings,
@@ -95,5 +109,7 @@ export const BookingController = {
     getBookingById,
     cancelBooking,
     getSchedules,
+    getDashboardStats,
 };
+
 

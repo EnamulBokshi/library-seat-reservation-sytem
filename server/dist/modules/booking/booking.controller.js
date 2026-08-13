@@ -64,10 +64,35 @@ const getSchedules = (0, CatchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const getBookingById = (0, CatchAsync_1.default)(async (req, res) => {
+    const bookingId = req.params.id;
+    const userId = req.user.userId;
+    const role = req.user.role;
+    const result = await booking_service_1.BookingService.getBookingById(bookingId, userId, role);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Booking details retrieved successfully",
+        data: result,
+    });
+});
+const getDashboardStats = (0, CatchAsync_1.default)(async (req, res) => {
+    const userId = req.user.userId;
+    const role = req.user.role;
+    const result = await booking_service_1.BookingService.getDashboardStats(userId, role);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Dashboard analytics retrieved successfully",
+        data: result,
+    });
+});
 exports.BookingController = {
     createBooking,
     getMyBookings,
     getAllBookings,
+    getBookingById,
     cancelBooking,
     getSchedules,
+    getDashboardStats,
 };

@@ -202,7 +202,61 @@ const getAllBookings = async (filters) => {
             bookedAt: "desc",
         },
     });
-    return bookings;
+    const mappedBookings = await Promise.all(bookings.map(async (b) => {
+        let qrCodeImage = null;
+        try {
+            qrCodeImage = await qrcode_1.default.toDataURL(b.qrToken);
+        }
+        catch (err) {
+            console.error(`Failed to generate QR code for booking ${b.id}:`, err);
+        }
+        return {
+            ...b,
+            qrCodeImage,
+        };
+    }));
+    return mappedBookings;
+};
+/**
+ * Get single booking by ID.
+ */
+const getBookingById = async (id, userId, role) => {
+    const booking = await prisma_1.default.booking.findUnique({
+        where: { id },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    studentId: true,
+                },
+            },
+            seat: {
+                include: {
+                    zone: true,
+                },
+            },
+            schedule: true,
+        },
+    });
+    if (!booking) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Booking not found");
+    }
+    if (role === enums_1.Role.student && booking.userId !== userId) {
+        throw new AppError_1.default(http_status_1.default.FORBIDDEN, "Access denied");
+    }
+    let qrCodeImage = null;
+    try {
+        qrCodeImage = await qrcode_1.default.toDataURL(booking.qrToken);
+    }
+    catch (err) {
+        console.error(`Failed to generate QR code for booking ${booking.id}:`, err);
+    }
+    return {
+        ...booking,
+        qrCodeImage,
+    };
 };
 /**
  * Cancel a booking.
@@ -275,10 +329,141 @@ const getSchedules = async () => {
         return sDateStr >= todayStr;
     });
 };
+/**
+ * Calculate dynamic real-time stats for home dashboard (for admins, librarians, and students).
+ */
+const getDashboardStats = async (userId, role) => {
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+    const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
+    // 1. Expected Today count
+    const expectedToday = await prisma_1.default.booking.count({
+        where: {
+            schedule: {
+                date: todayDate,
+            },
+            status: {
+                in: [enums_1.BookingStatus.pending, enums_1.BookingStatus.confirmed, enums_1.BookingStatus.checked_in, enums_1.BookingStatus.completed],
+            },
+        },
+    });
+    // 2. Currently Checked In count
+    const checkedIn = await prisma_1.default.booking.count({
+        where: {
+            status: enums_1.BookingStatus.checked_in,
+        },
+    });
+    // 3. No Shows for today
+    const noShows = await prisma_1.default.booking.count({
+        where: {
+            schedule: {
+                date: todayDate,
+            },
+            status: enums_1.BookingStatus.no_show,
+        },
+    });
+    // 4. Seats & Availability
+    const totalActiveSeats = await prisma_1.default.seat.count({
+        where: {
+            isActive: true,
+            zone: {
+                isActive: true,
+            },
+        },
+    });
+    const occupiedSeatsCount = await prisma_1.default.seat.count({
+        where: {
+            isActive: true,
+            isOccupied: true,
+            zone: {
+                isActive: true,
+            },
+        },
+    });
+    const availableSeats = Math.max(0, totalActiveSeats - occupiedSeatsCount);
+    // 5. Zone Status List
+    const zones = await prisma_1.default.zone.findMany({
+        orderBy: { name: "asc" },
+        include: {
+            seats: {
+                where: { isActive: true },
+            },
+        },
+    });
+    const liveZones = zones.map((z) => {
+        const total = z.seats.length;
+        const occupied = z.seats.filter((s) => s.isOccupied).length;
+        const available = Math.max(0, total - occupied);
+        const occupancyPercent = total > 0 ? Math.round((occupied / total) * 100) : 0;
+        let statusLabel = "Available";
+        let statusBadgeClass = "bg-emerald-50 border-emerald-100 text-emerald-700";
+        if (!z.isActive) {
+            statusLabel = "Closed";
+            statusBadgeClass = "bg-rose-50 border-rose-100 text-rose-700";
+        }
+        else if (occupancyPercent >= 85) {
+            statusLabel = `Busy (${occupancyPercent}%)`;
+            statusBadgeClass = "bg-amber-50 border-amber-100 text-amber-800";
+        }
+        else if (occupancyPercent > 0) {
+            statusLabel = "Active";
+            statusBadgeClass = "bg-indigo-50 border-indigo-100 text-indigo-700";
+        }
+        return {
+            id: z.id,
+            name: z.name,
+            description: z.description,
+            isActive: z.isActive,
+            totalSeats: total,
+            occupiedSeats: occupied,
+            availableSeats: available,
+            occupancyPercent,
+            statusLabel,
+            statusBadgeClass,
+        };
+    });
+    // 6. Student specific stats (if student)
+    let studentStats = null;
+    if (role === "student") {
+        const myActivePasses = await prisma_1.default.booking.count({
+            where: {
+                userId,
+                status: {
+                    in: [enums_1.BookingStatus.pending, enums_1.BookingStatus.confirmed, enums_1.BookingStatus.checked_in],
+                },
+            },
+        });
+        const myCompletedSessions = await prisma_1.default.booking.count({
+            where: {
+                userId,
+                status: enums_1.BookingStatus.completed,
+            },
+        });
+        const myTotalBookings = await prisma_1.default.booking.count({
+            where: { userId },
+        });
+        studentStats = {
+            myActivePasses,
+            myCompletedSessions,
+            myTotalBookings,
+        };
+    }
+    return {
+        expectedToday,
+        checkedIn,
+        noShows,
+        availableSeats,
+        totalActiveSeats,
+        liveZones,
+        studentStats,
+    };
+};
 exports.BookingService = {
     createBooking,
     getMyBookings,
     getAllBookings,
+    getBookingById,
     cancelBooking,
     getSchedules,
+    getDashboardStats,
 };
