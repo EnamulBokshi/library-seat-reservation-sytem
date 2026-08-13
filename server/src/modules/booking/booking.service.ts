@@ -239,7 +239,67 @@ const getAllBookings = async (filters: {
         },
     });
 
-    return bookings;
+    const mappedBookings = await Promise.all(
+        bookings.map(async (b) => {
+            let qrCodeImage = null;
+            try {
+                qrCodeImage = await QRCode.toDataURL(b.qrToken);
+            } catch (err) {
+                console.error(`Failed to generate QR code for booking ${b.id}:`, err);
+            }
+            return {
+                ...b,
+                qrCodeImage,
+            };
+        })
+    );
+
+    return mappedBookings;
+};
+
+/**
+ * Get single booking by ID.
+ */
+const getBookingById = async (id: string, userId: string, role: Role) => {
+    const booking = await prisma.booking.findUnique({
+        where: { id },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    studentId: true,
+                },
+            },
+            seat: {
+                include: {
+                    zone: true,
+                },
+            },
+            schedule: true,
+        },
+    });
+
+    if (!booking) {
+        throw new AppError(status.NOT_FOUND, "Booking not found");
+    }
+
+    if (role === Role.student && booking.userId !== userId) {
+        throw new AppError(status.FORBIDDEN, "Access denied");
+    }
+
+    let qrCodeImage = null;
+    try {
+        qrCodeImage = await QRCode.toDataURL(booking.qrToken);
+    } catch (err) {
+        console.error(`Failed to generate QR code for booking ${booking.id}:`, err);
+    }
+
+    return {
+        ...booking,
+        qrCodeImage,
+    };
 };
 
 /**
@@ -334,6 +394,8 @@ export const BookingService = {
     createBooking,
     getMyBookings,
     getAllBookings,
+    getBookingById,
     cancelBooking,
     getSchedules,
 };
+

@@ -23,7 +23,11 @@ bookingRoute.get("/", authCheck("admin", "librarian"), BookingController.getAllB
 // Get available schedules (all authenticated roles)
 bookingRoute.get("/schedules", authCheck(), BookingController.getSchedules);
 
+// Get booking details by ID (authenticated users)
+bookingRoute.get("/:id", authCheck(), BookingController.getBookingById);
+
 // Cancel booking (Student, Librarian, Admin)
 bookingRoute.delete("/:id", authCheck("student", "admin", "librarian"), BookingController.cancelBooking);
+
 
 export default bookingRoute;
