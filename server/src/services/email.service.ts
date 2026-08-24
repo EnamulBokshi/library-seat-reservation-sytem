@@ -1,11 +1,8 @@
 import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
 dotenv.config();
-
-const resendApiKey = process.env.RESEND_API_KEY;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
-const fromEmail = process.env.RESEND_FROM_EMAIL || "Smart Library <onboarding@resend.dev>";
 
 interface SendBookingEmailOptions {
   toEmail: string;
@@ -17,6 +14,42 @@ interface SendBookingEmailOptions {
   qrToken: string;
   qrCodeBase64: string;
 }
+
+/**
+ * Creates a Nodemailer transporter based on .env configuration.
+ */
+const createNodemailerTransporter = () => {
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
+  const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER;
+  const smtpPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD;
+  const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
+
+  if (smtpHost && smtpUser && smtpPass) {
+    return nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
+  }
+
+  // Gmail convenience helper if GMAIL_USER & GMAIL_APP_PASSWORD are provided
+  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+  }
+
+  return null;
+};
 
 /**
  * Send booking confirmation email with embedded QR code.
@@ -34,6 +67,17 @@ export const sendBookingConfirmationEmail = async (opts: SendBookingEmailOptions
   } = opts;
 
   console.log(`[Email Service] Preparing confirmation email for ${toEmail}...`);
+
+  const fromAddress =
+    process.env.EMAIL_FROM ||
+    process.env.RESEND_FROM_EMAIL ||
+    process.env.SMTP_USER ||
+    process.env.GMAIL_USER ||
+    "Smart Library <onboarding@resend.dev>";
+
+  const base64Data = qrCodeBase64.includes(";base64,")
+    ? qrCodeBase64.split(";base64,").pop()!
+    : qrCodeBase64;
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -75,7 +119,7 @@ export const sendBookingConfirmationEmail = async (opts: SendBookingEmailOptions
 
           <div style="text-align: center;">
             <div class="qr-container">
-              <img src="${qrCodeBase64}" alt="QR Pass" class="qr-img" />
+              <img src="cid:qrcode" alt="QR Pass" class="qr-img" />
             </div>
           </div>
 
@@ -91,24 +135,64 @@ export const sendBookingConfirmationEmail = async (opts: SendBookingEmailOptions
     </html>
   `;
 
-  if (resend) {
+  // 1. Try Nodemailer SMTP if configured
+  const smtpTransporter = createNodemailerTransporter();
+  if (smtpTransporter) {
     try {
+      const info = await smtpTransporter.sendMail({
+        from: fromAddress,
+        to: toEmail,
+        subject: `Your Library Seat Pass — Seat ${seatNumber} (${zoneName})`,
+        html: htmlContent,
+        attachments: [
+          {
+            filename: "qr-pass.png",
+            content: Buffer.from(base64Data, "base64"),
+            cid: "qrcode",
+          },
+        ],
+      });
+      console.log(`[Email Service] SMTP email dispatched successfully to ${toEmail}. Message ID: ${info.messageId}`);
+      return info;
+    } catch (error) {
+      console.error("[Email Service] SMTP dispatch error:", error);
+    }
+  }
+
+  // 2. Try Resend API if configured
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      const resend = new Resend(resendApiKey);
       const response = await resend.emails.send({
-        from: fromEmail,
+        from: fromAddress,
         to: [toEmail],
         subject: `Your Library Seat Pass — Seat ${seatNumber} (${zoneName})`,
         html: htmlContent,
+        attachments: [
+          {
+            filename: "qr-pass.png",
+            content: Buffer.from(base64Data, "base64"),
+            contentId: "qrcode",
+          },
+        ],
       });
       console.log(`[Email Service] Resend email dispatched successfully. ID: ${response.data?.id}`);
       return response;
     } catch (error) {
       console.error("[Email Service] Resend API error:", error);
     }
-  } else {
-    console.log(`[Email Service] RESEND_API_KEY not configured in .env. Email contents logged to console for ${toEmail}.`);
   }
+
+  // 3. Fallback warning if no provider is configured in .env
+  console.warn(
+    `[Email Service] ⚠️ Email delivery skipped for ${toEmail}. No email credentials found in server/.env.\n` +
+      `  To enable emails via Nodemailer (SMTP/Gmail): Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS (or GMAIL_USER & GMAIL_APP_PASSWORD) in server/.env\n` +
+      `  To enable emails via Resend: Set RESEND_API_KEY in server/.env`
+  );
 };
 
 export const emailService = {
   sendBookingConfirmationEmail,
 };
+
