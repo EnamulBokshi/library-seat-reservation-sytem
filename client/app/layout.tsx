@@ -1,4 +1,4 @@
-import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google"
+import { Roboto, Roboto_Mono } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -7,15 +7,16 @@ import { Navbar } from "@/components/shared/navbar"
 import { cn } from "@/lib/utils"
 import Script from "next/script"
 
-const fontSans = Plus_Jakarta_Sans({
+const fontSans = Roboto({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["300", "400", "500", "700", "900"],
 })
 
-const fontMono = Geist_Mono({
+const fontMono = Roboto_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
+  weight: ["400", "500", "700"],
 })
 
 export default function RootLayout({

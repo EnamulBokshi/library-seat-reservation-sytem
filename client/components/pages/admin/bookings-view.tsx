@@ -173,10 +173,9 @@ export function AdminBookingsView() {
   const hasFilters = statusFilter || dateFilter || searchQuery;
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] text-[#1e293b]">
-      <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 pb-12">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="kicker-label">ADMINISTRATION &rsaquo; RESERVATION LOGS</p>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">All Bookings</h1>
@@ -328,7 +327,6 @@ export function AdminBookingsView() {
             </div>
           </>
         )}
-      </div>
     </div>
   );
 }

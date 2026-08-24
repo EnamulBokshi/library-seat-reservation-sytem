@@ -249,11 +249,9 @@ export function CheckInView() {
   const isCheckIn = result?.action === "check_in";
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] text-slate-900">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8 space-y-6">
-        
-        {/* Hidden container for image scan processing */}
-        <div id="temp-upload-reader" className="hidden"></div>
+    <div className="space-y-6 pb-12 max-w-4xl mx-auto">
+      {/* Hidden container for image scan processing */}
+      <div id="temp-upload-reader" className="hidden"></div>
 
         {/* ── Top Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -640,8 +638,6 @@ export function CheckInView() {
             </div>
           </div>
         )}
-
-      </div>
     </div>
   );
 }

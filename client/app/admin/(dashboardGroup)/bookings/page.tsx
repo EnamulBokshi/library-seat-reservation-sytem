@@ -1,5 +1,4 @@
 import { AdminBookingsView } from "@/components/pages/admin/bookings-view";
-import { AuthGuard } from "@/components/shared/auth-guard";
 
 export const metadata = {
   title: "All Bookings | Admin | Smart Library",
@@ -7,9 +6,5 @@ export const metadata = {
 };
 
 export default function AdminBookingsPage() {
-  return (
-    <AuthGuard allowedRoles={["admin", "librarian"]}>
-      <AdminBookingsView />
-    </AuthGuard>
-  );
+  return <AdminBookingsView />;
 }

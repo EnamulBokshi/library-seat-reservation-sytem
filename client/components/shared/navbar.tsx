@@ -43,6 +43,11 @@ export function Navbar() {
   const isStudent = user?.role === "student";
   const canManage = isAdmin || isLibrarian;
 
+  // Do not render student/public navbar on dedicated admin dashboard pages
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <>
       {/* ── Top Navbar ── */}

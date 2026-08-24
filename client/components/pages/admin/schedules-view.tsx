@@ -280,11 +280,9 @@ export function SchedulesView() {
   }, [schedules, groupedSchedules]);
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] text-slate-900 pb-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 space-y-6">
-
-        {/* ── Header Section ── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 pb-12">
+      {/* ── Header Section ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="kicker-label">ADMINISTRATION &rsaquo; SCHEDULES & TIME SLOTS</p>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
@@ -785,7 +783,6 @@ export function SchedulesView() {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

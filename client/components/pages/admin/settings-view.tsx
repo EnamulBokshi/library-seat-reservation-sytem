@@ -199,11 +199,9 @@ export function SettingsView() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] text-slate-900 pb-24">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8 space-y-6">
-
-        {/* ── Header Section ── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 pb-12 max-w-5xl mx-auto">
+      {/* ── Header Section ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="kicker-label">ADMINISTRATION &rsaquo; SYSTEM CONFIG</p>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
@@ -487,10 +485,8 @@ export function SettingsView() {
                 </div>
               </form>
             </div>
-
           </div>
         )}
-      </div>
     </div>
   );
 }
