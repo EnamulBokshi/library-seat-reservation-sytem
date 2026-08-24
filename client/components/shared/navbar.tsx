@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import {
   BookOpen, LogOut, User as UserIcon, LogIn, UserPlus,
-  MapPin, ClipboardList, ScanLine, Home, Shield, Settings, Activity, Search, Calendar
+  MapPin, ClipboardList, ScanLine, Home, Shield, Settings, Activity, Search, Calendar, Armchair
 } from "lucide-react";
 
 interface NavLinkProps {
@@ -68,7 +68,7 @@ export function Navbar() {
           {isAuthenticated && !isLoading && (
             <nav className="hidden md:flex items-center gap-1 rounded-full bg-[#efeff1] p-1 border border-slate-200/60">
               <NavLink href="/" icon={Home} label="Overview" active={pathname === "/"} />
-              <NavLink href="/zones" icon={MapPin} label="Zones" active={pathname.startsWith("/zones")} />
+              <NavLink href="/book" icon={Armchair} label="Book Seat" active={pathname.startsWith("/book") || pathname.startsWith("/zones")} />
 
               {isStudent && (
                 <>
@@ -167,12 +167,12 @@ export function Navbar() {
           </Link>
 
           <Link
-            href="/zones"
-            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${pathname.startsWith("/zones") ? "text-slate-900 font-extrabold" : "text-slate-400 font-medium"
+            href="/book"
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${pathname.startsWith("/book") || pathname.startsWith("/zones") ? "text-slate-900 font-extrabold" : "text-slate-400 font-medium"
               }`}
           >
-            <MapPin className={`h-5 w-5 ${pathname.startsWith("/zones") ? "text-slate-900" : "text-slate-400"}`} />
-            <span className="text-[10px]">Zones</span>
+            <Armchair className={`h-5 w-5 ${pathname.startsWith("/book") || pathname.startsWith("/zones") ? "text-slate-900" : "text-slate-400"}`} />
+            <span className="text-[10px]">Book</span>
           </Link>
 
           {isStudent && (

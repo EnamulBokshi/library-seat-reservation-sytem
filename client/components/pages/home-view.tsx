@@ -7,7 +7,7 @@ import { bookingService } from "@/services/booking-service";
 import { DashboardStats, ApiError } from "@/lib/types";
 import {
   Shield, MapPin, ClipboardList, ScanLine, ArrowRight, Loader2,
-  Calendar, CheckCircle2, AlertTriangle, UserCheck, Activity, Plus, Search, RefreshCw, BookOpen
+  Calendar, CheckCircle2, AlertTriangle, UserCheck, Activity, Plus, Search, RefreshCw, BookOpen, Armchair
 } from "lucide-react";
 
 export function HomeView() {
@@ -76,13 +76,13 @@ export function HomeView() {
                   <ScanLine className="h-4 w-4" />
                   <span>Scan QR Token</span>
                 </Link>
-                <Link href="/zones" className="pulse-button-primary">
+                <Link href="/book" className="pulse-button-primary">
                   <Plus className="h-4 w-4" />
                   <span>Reserve Seat</span>
                 </Link>
               </>
             ) : (
-              <Link href="/zones" className="pulse-button-primary">
+              <Link href="/book" className="pulse-button-primary">
                 <Plus className="h-4 w-4" />
                 <span>Book Seat Now</span>
               </Link>
@@ -215,15 +215,15 @@ export function HomeView() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Link
-                  href="/zones"
+                  href="/book"
                   className="group rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 hover:bg-white hover:shadow-xs hover:border-slate-300 transition-all"
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white group-hover:scale-105 transition-transform">
-                      <MapPin className="h-5 w-5" />
+                      <Armchair className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900 text-sm">Study Zones & Seats</h3>
+                      <h3 className="font-bold text-slate-900 text-sm">Reserve a Seat</h3>
                       <p className="text-xs text-slate-500 mt-0.5">Interactive seat selection grid</p>
                     </div>
                   </div>
@@ -297,12 +297,15 @@ export function HomeView() {
                 </div>
               ) : (
                 stats.liveZones.map((zone) => (
-                  <div
+                  <Link
                     key={zone.id}
-                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                    href={`/book?zoneId=${zone.id}`}
+                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-2xs transition-all group"
                   >
                     <div>
-                      <p className="font-bold text-slate-900 text-sm">{zone.name}</p>
+                      <p className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
+                        {zone.name}
+                      </p>
                       <p className="text-xs text-slate-400 font-medium">
                         {zone.description || "Study area"} ({zone.availableSeats}/{zone.totalSeats} Available)
                       </p>
@@ -311,14 +314,14 @@ export function HomeView() {
                       <span className="h-1.5 w-1.5 rounded-full bg-current" />
                       {zone.statusLabel}
                     </span>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>
 
             <div className="pt-2 border-t border-slate-100">
-              <Link href="/zones" className="text-xs font-bold text-slate-900 flex items-center justify-between hover:underline">
-                <span>View all zone details</span>
+              <Link href="/book" className="text-xs font-bold text-slate-900 flex items-center justify-between hover:underline">
+                <span>Select a zone & book a seat</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>

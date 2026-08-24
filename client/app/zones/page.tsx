@@ -1,10 +1,5 @@
-import { ZonesView } from "@/components/pages/zones/zones-view";
-
-export const metadata = {
-  title: "Study Zones | Smart Library",
-  description: "Browse and manage library study zones",
-};
+import { redirect } from "next/navigation";
 
 export default function ZonesPage() {
-  return <ZonesView />;
+  redirect("/book");
 }
