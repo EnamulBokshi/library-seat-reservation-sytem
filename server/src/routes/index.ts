@@ -6,6 +6,7 @@ import seatRoute from "../modules/seat/seat.route";
 import bookingRoute from "../modules/booking/bookings.router";
 import checkinRoute from "../modules/checkin/checkin.route";
 import settingRoute from "../modules/setting/setting.route";
+import scheduleRoute from "../modules/schedule/schedule.router";
 
 const indexRoutes: Router = Router();
 
@@ -16,5 +17,6 @@ indexRoutes.use("/seat", seatRoute);
 indexRoutes.use("/booking", bookingRoute);
 indexRoutes.use("/checkin", checkinRoute);
 indexRoutes.use("/setting", settingRoute);
+indexRoutes.use("/schedule", scheduleRoute);
 
 export default indexRoutes;

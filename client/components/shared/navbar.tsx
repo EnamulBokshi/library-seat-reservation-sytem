@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import {
   BookOpen, LogOut, User as UserIcon, LogIn, UserPlus,
-  MapPin, ClipboardList, ScanLine, Home, Shield, Settings, Activity, Search
+  MapPin, ClipboardList, ScanLine, Home, Shield, Settings, Activity, Search, Calendar
 } from "lucide-react";
 
 interface NavLinkProps {
@@ -91,6 +91,12 @@ export function Navbar() {
                     icon={ScanLine}
                     label="Check-In"
                     active={pathname.startsWith("/admin/checkin")}
+                  />
+                  <NavLink
+                    href="/admin/schedules"
+                    icon={Calendar}
+                    label="Schedules"
+                    active={pathname.startsWith("/admin/schedules")}
                   />
                   <NavLink
                     href="/admin/settings"
@@ -192,6 +198,14 @@ export function Navbar() {
               >
                 <ScanLine className={`h-5 w-5 ${pathname.startsWith("/admin/checkin") ? "text-slate-900" : "text-slate-400"}`} />
                 <span className="text-[10px]">Scan QR</span>
+              </Link>
+              <Link
+                href="/admin/schedules"
+                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${pathname.startsWith("/admin/schedules") ? "text-slate-900 font-extrabold" : "text-slate-400 font-medium"
+                  }`}
+              >
+                <Calendar className={`h-5 w-5 ${pathname.startsWith("/admin/schedules") ? "text-slate-900" : "text-slate-400"}`} />
+                <span className="text-[10px]">Schedules</span>
               </Link>
               <Link
                 href="/admin/settings"

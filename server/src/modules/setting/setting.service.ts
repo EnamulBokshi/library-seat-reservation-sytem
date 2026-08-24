@@ -1,4 +1,5 @@
 import prisma from "../../lib/prisma";
+import { getActiveSlotConfig, getAdvanceBookingDays, DEFAULT_SLOT_CONFIG } from "../../utils/time";
 
 /**
  * Get all settings.
@@ -13,9 +14,44 @@ const getAllSettings = async () => {
  * Get a setting by key.
  */
 const getSettingByKey = async (key: string) => {
-  return prisma.setting.findUnique({
+  const setting = await prisma.setting.findUnique({
     where: { key },
   });
+
+  if (!setting) {
+    if (key === "SLOT_CONFIG") {
+      return {
+        id: "default-slot-config",
+        key: "SLOT_CONFIG",
+        value: JSON.stringify(DEFAULT_SLOT_CONFIG),
+        description: "Library time slot configuration and timings",
+        updatedAt: new Date(),
+      };
+    }
+    if (key === "ADVANCE_BOOKING_DAYS") {
+      return {
+        id: "default-advance-days",
+        key: "ADVANCE_BOOKING_DAYS",
+        value: "7",
+        description: "Number of days in advance reservations can be made",
+        updatedAt: new Date(),
+      };
+    }
+  }
+
+  return setting;
+};
+
+/**
+ * Get public system configuration (slot timings and advance days).
+ */
+const getPublicConfig = async () => {
+  const slotConfig = await getActiveSlotConfig();
+  const advanceBookingDays = await getAdvanceBookingDays();
+  return {
+    slotConfig,
+    advanceBookingDays,
+  };
 };
 
 /**
@@ -39,5 +75,6 @@ const updateSetting = async (key: string, value: string, description?: string) =
 export const SettingService = {
   getAllSettings,
   getSettingByKey,
+  getPublicConfig,
   updateSetting,
 };

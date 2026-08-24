@@ -7,6 +7,8 @@ const express_1 = require("express");
 const setting_controller_1 = require("./setting.controller");
 const authCheck_1 = __importDefault(require("../../middleware/authCheck"));
 const settingRoute = (0, express_1.Router)();
+// GET public configuration (slot timings, advance booking days)
+settingRoute.get("/public/config", setting_controller_1.SettingController.getPublicConfig);
 // GET all settings (Admin, Librarian)
 settingRoute.get("/", (0, authCheck_1.default)("admin", "librarian"), setting_controller_1.SettingController.getAllSettings);
 // GET setting by key

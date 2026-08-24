@@ -10,6 +10,7 @@ const qrcode_1 = __importDefault(require("qrcode"));
 const prisma_1 = __importDefault(require("../../lib/prisma"));
 const AppError_1 = __importDefault(require("../../helpers/AppError"));
 const enums_1 = require("../../generated/enums");
+const time_1 = require("../../utils/time");
 const email_service_1 = require("../../services/email.service");
 /**
  * Create a new booking for a student.
@@ -39,18 +40,23 @@ const createBooking = async (userId, payload) => {
     if (!schedule.isOpen) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "This schedule slot is closed");
     }
-    // 3. Validate booking date (today up to 7 days in advance)
+    // 3. Validate booking date (today up to dynamic advance days) & slot timing
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
+    const advanceDays = await (0, time_1.getAdvanceBookingDays)();
     const maxDate = new Date(now);
-    maxDate.setDate(now.getDate() + 7);
+    maxDate.setDate(now.getDate() + advanceDays);
     const maxDateStr = maxDate.toISOString().split("T")[0];
     const scheduleDateStr = new Date(schedule.date).toISOString().split("T")[0];
     if (scheduleDateStr < todayStr) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Cannot book a schedule slot in the past");
     }
     if (scheduleDateStr > maxDateStr) {
-        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Reservations can only be made up to 7 days in advance");
+        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, `Reservations can only be made up to ${advanceDays} days in advance`);
+    }
+    const slotConfig = await (0, time_1.getActiveSlotConfig)();
+    if ((0, time_1.isSlotExpired)(schedule.date, schedule.slot, slotConfig)) {
+        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "This time slot has already ended for today");
     }
     // 4. Enforce 1-active-booking rule: (pending, confirmed, or checked_in)
     const activeBooking = await prisma_1.default.booking.findFirst({
@@ -344,16 +350,22 @@ const ensureUpcomingSchedules = async (daysAhead = 7) => {
     }
 };
 const getSchedules = async () => {
+    const advanceDays = await (0, time_1.getAdvanceBookingDays)();
     // Auto-generate upcoming schedules if missing
-    await ensureUpcomingSchedules(7);
+    await ensureUpcomingSchedules(advanceDays);
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
     const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
+    const maxDate = new Date(now);
+    maxDate.setDate(now.getDate() + advanceDays);
+    const maxDateStr = maxDate.toISOString().split("T")[0];
+    const maxDateObj = new Date(`${maxDateStr}T23:59:59.999Z`);
     const schedules = await prisma_1.default.schedule.findMany({
         where: {
             isOpen: true,
             date: {
                 gte: todayDate,
+                lte: maxDateObj,
             },
         },
         orderBy: [

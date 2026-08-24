@@ -8,15 +8,9 @@ const node_cron_1 = __importDefault(require("node-cron"));
 const prisma_1 = __importDefault(require("../lib/prisma"));
 const enums_1 = require("../generated/enums");
 const booking_service_1 = require("../modules/booking/booking.service");
+const time_1 = require("../utils/time");
 // Default grace period in minutes if not configured in DB
 const DEFAULT_GRACE_PERIOD_MINUTES = 15;
-// Slot start hours (24h format)
-const SLOT_START_HOURS = {
-    morning: 8, // 08:00 AM
-    noon: 12, // 12:00 PM
-    afternoon: 14, // 02:00 PM
-    evening: 18, // 06:00 PM
-};
 /**
  * Read the current check-in grace period setting (in minutes) from the database.
  */
@@ -44,44 +38,57 @@ exports.getGracePeriodMinutes = getGracePeriodMinutes;
 const checkGracePeriodCancellations = async () => {
     try {
         const graceMinutes = await (0, exports.getGracePeriodMinutes)();
+        const slotConfig = await (0, time_1.getActiveSlotConfig)();
         const now = new Date();
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
         const todayStr = now.toISOString().split("T")[0];
         const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
-        // Check each slot window
-        for (const [slotKey, startHour] of Object.entries(SLOT_START_HOURS)) {
-            const slot = slotKey;
-            // Calculate cutoff time in minutes from midnight for this slot
-            const slotStartInMinutes = startHour * 60;
-            const cutoffInMinutes = slotStartInMinutes + graceMinutes;
-            const currentInMinutes = currentHour * 60 + currentMinute;
-            // If current time has passed the grace period cutoff for this slot
-            if (currentInMinutes >= cutoffInMinutes && currentInMinutes < slotStartInMinutes + 240) {
-                const schedule = await prisma_1.default.schedule.findUnique({
-                    where: {
-                        date_slot: {
-                            date: todayDate,
-                            slot,
-                        },
-                    },
-                });
-                if (schedule) {
-                    // Cancel unconfirmed bookings for this slot
-                    const result = await prisma_1.default.booking.updateMany({
-                        where: {
-                            scheduleId: schedule.id,
-                            status: enums_1.BookingStatus.confirmed,
-                        },
-                        data: {
-                            status: enums_1.BookingStatus.no_show,
-                            cancelReason: `Auto-cancelled: Missed ${graceMinutes}-minute check-in grace period`,
-                        },
-                    });
-                    if (result.count > 0) {
-                        console.log(`[Cron Scheduler] Grace Period Enforcer: Auto-cancelled ${result.count} unverified reservation(s) for slot '${slot}' (Grace: ${graceMinutes}m).`);
-                    }
-                }
+        // Fetch all confirmed bookings for today
+        const confirmedBookings = await prisma_1.default.booking.findMany({
+            where: {
+                status: enums_1.BookingStatus.confirmed,
+                schedule: {
+                    date: todayDate,
+                },
+            },
+            include: {
+                schedule: true,
+            },
+        });
+        const expiredBookingIds = [];
+        for (const booking of confirmedBookings) {
+            const slot = booking.schedule.slot;
+            const slotInfo = slotConfig[slot];
+            if (!slotInfo || !slotInfo.enabled)
+                continue;
+            const startMinutes = (0, time_1.parseTimeToMinutes)(slotInfo.startTime);
+            const startHour = Math.floor(startMinutes / 60);
+            const startMin = startMinutes % 60;
+            // Slot start time on today's date
+            const slotStartTime = new Date(now);
+            slotStartTime.setHours(startHour, startMin, 0, 0);
+            // Effective check-in deadline is the LATER of:
+            // 1. Slot Start Time + graceMinutes (for reservations made in advance)
+            // 2. Booking Creation Time (bookedAt) + graceMinutes (for reservations made during active slot)
+            const slotStartCutoff = slotStartTime.getTime() + graceMinutes * 60 * 1000;
+            const bookedAtCutoff = new Date(booking.bookedAt).getTime() + graceMinutes * 60 * 1000;
+            const effectiveCutoff = Math.max(slotStartCutoff, bookedAtCutoff);
+            if (now.getTime() >= effectiveCutoff) {
+                expiredBookingIds.push(booking.id);
+            }
+        }
+        if (expiredBookingIds.length > 0) {
+            const result = await prisma_1.default.booking.updateMany({
+                where: {
+                    id: { in: expiredBookingIds },
+                    status: enums_1.BookingStatus.confirmed,
+                },
+                data: {
+                    status: enums_1.BookingStatus.no_show,
+                    cancelReason: `Auto-cancelled: Missed ${graceMinutes}-minute check-in grace period`,
+                },
+            });
+            if (result.count > 0) {
+                console.log(`[Cron Scheduler] Grace Period Enforcer: Auto-cancelled ${result.count} unverified reservation(s) (Grace: ${graceMinutes}m).`);
             }
         }
     }
@@ -168,7 +175,9 @@ const processSlotCleanup = async (slot) => {
 const initCronJobs = () => {
     console.log("[Cron Scheduler] Initializing seat booking cron services...");
     // 0. Ensure upcoming schedules exist immediately on startup
-    booking_service_1.BookingService.ensureUpcomingSchedules(7).catch((err) => console.error("[Cron Scheduler] Failed to ensure upcoming schedules on startup:", err));
+    (0, time_1.getAdvanceBookingDays)().then((days) => {
+        booking_service_1.BookingService.ensureUpcomingSchedules(days).catch((err) => console.error("[Cron Scheduler] Failed to ensure upcoming schedules on startup:", err));
+    });
     // 1. Run grace-period check every minute
     node_cron_1.default.schedule("* * * * *", () => {
         checkGracePeriodCancellations();
@@ -179,9 +188,15 @@ const initCronJobs = () => {
     node_cron_1.default.schedule("0 18 * * *", () => processSlotCleanup(enums_1.SlotType.afternoon));
     node_cron_1.default.schedule("0 21 * * *", () => processSlotCleanup(enums_1.SlotType.evening));
     // 3. Roll over schedules daily at midnight
-    node_cron_1.default.schedule("0 0 * * *", () => {
-        console.log("[Cron Scheduler] Generating rolling schedules for upcoming 7 days...");
-        booking_service_1.BookingService.ensureUpcomingSchedules(7).catch((err) => console.error("[Cron Scheduler] Failed to generate daily rolling schedules:", err));
+    node_cron_1.default.schedule("0 0 * * *", async () => {
+        try {
+            const advanceDays = await (0, time_1.getAdvanceBookingDays)();
+            console.log(`[Cron Scheduler] Generating rolling schedules for upcoming ${advanceDays} days...`);
+            await booking_service_1.BookingService.ensureUpcomingSchedules(advanceDays);
+        }
+        catch (err) {
+            console.error("[Cron Scheduler] Failed to generate daily rolling schedules:", err);
+        }
     });
     console.log("[Cron Scheduler] Cron jobs scheduled successfully.");
 };

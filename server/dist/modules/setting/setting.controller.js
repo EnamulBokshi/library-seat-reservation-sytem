@@ -38,8 +38,18 @@ const updateSetting = (0, CatchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const getPublicConfig = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await setting_service_1.SettingService.getPublicConfig();
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "System configuration retrieved successfully",
+        data: result,
+    });
+});
 exports.SettingController = {
     getAllSettings,
     getSettingByKey,
+    getPublicConfig,
     updateSetting,
 };

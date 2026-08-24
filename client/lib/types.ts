@@ -131,10 +131,78 @@ export interface UpdateSeatPayload {
 
 export type SlotType = "morning" | "noon" | "afternoon" | "evening";
 
+export interface SlotConfigItem {
+  startTime: string; // "08:00"
+  endTime: string;   // "12:00"
+  label: string;     // "Morning"
+  icon?: string;     // "🌅"
+  enabled: boolean;
+}
+
+export type SlotConfig = Record<SlotType, SlotConfigItem>;
+
+export const DEFAULT_SLOT_CONFIG: SlotConfig = {
+  morning: {
+    startTime: "08:00",
+    endTime: "12:00",
+    label: "Morning",
+    icon: "🌅",
+    enabled: true,
+  },
+  noon: {
+    startTime: "12:00",
+    endTime: "14:00",
+    label: "Noon",
+    icon: "☀️",
+    enabled: true,
+  },
+  afternoon: {
+    startTime: "14:00",
+    endTime: "18:00",
+    label: "Afternoon",
+    icon: "🌇",
+    enabled: true,
+  },
+  evening: {
+    startTime: "18:00",
+    endTime: "21:00",
+    label: "Evening",
+    icon: "🌙",
+    enabled: true,
+  },
+};
+
 export interface Schedule {
   id: string;
   date: string;
   slot: SlotType;
+  isOpen?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  _count?: {
+    bookings: number;
+  };
+}
+
+export interface BulkToggleSchedulePayload {
+  startDate?: string;
+  endDate?: string;
+  dates?: string[];
+  slots?: SlotType[];
+  isOpen: boolean;
+}
+
+export interface BulkToggleScheduleResponse {
+  success: boolean;
+  message: string;
+  updatedSlotsCount: number;
+  updatedDaysCount: number;
+  isOpen: boolean;
+}
+
+export interface PublicSystemConfig {
+  slotConfig: SlotConfig;
+  advanceBookingDays: number;
 }
 
 // ─── Booking ──────────────────────────────────────────────────────────────────

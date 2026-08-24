@@ -4,6 +4,9 @@ import authCheck from "../../middleware/authCheck";
 
 const settingRoute: Router = Router();
 
+// GET public configuration (slot timings, advance booking days)
+settingRoute.get("/public/config", SettingController.getPublicConfig);
+
 // GET all settings (Admin, Librarian)
 settingRoute.get("/", authCheck("admin", "librarian"), SettingController.getAllSettings);
 

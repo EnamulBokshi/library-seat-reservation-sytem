@@ -37,8 +37,19 @@ const updateSetting = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getPublicConfig = catchAsync(async (req: Request, res: Response) => {
+  const result = await SettingService.getPublicConfig();
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "System configuration retrieved successfully",
+    data: result,
+  });
+});
+
 export const SettingController = {
   getAllSettings,
   getSettingByKey,
+  getPublicConfig,
   updateSetting,
 };

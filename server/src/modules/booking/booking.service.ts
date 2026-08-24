@@ -5,6 +5,7 @@ import prisma from "../../lib/prisma";
 import AppError from "../../helpers/AppError";
 import { ICreateBookingPayload } from "./booking.interface";
 import { BookingStatus, Role, SlotType } from "../../generated/enums";
+import { isSlotExpired, getAdvanceBookingDays, getActiveSlotConfig } from "../../utils/time";
 
 import { emailService } from "../../services/email.service";
 
@@ -43,12 +44,13 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
         throw new AppError(status.BAD_REQUEST, "This schedule slot is closed");
     }
 
-    // 3. Validate booking date (today up to 7 days in advance)
+    // 3. Validate booking date (today up to dynamic advance days) & slot timing
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
 
+    const advanceDays = await getAdvanceBookingDays();
     const maxDate = new Date(now);
-    maxDate.setDate(now.getDate() + 7);
+    maxDate.setDate(now.getDate() + advanceDays);
     const maxDateStr = maxDate.toISOString().split("T")[0];
 
     const scheduleDateStr = new Date(schedule.date).toISOString().split("T")[0];
@@ -58,7 +60,12 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
     }
 
     if (scheduleDateStr > maxDateStr) {
-        throw new AppError(status.BAD_REQUEST, "Reservations can only be made up to 7 days in advance");
+        throw new AppError(status.BAD_REQUEST, `Reservations can only be made up to ${advanceDays} days in advance`);
+    }
+
+    const slotConfig = await getActiveSlotConfig();
+    if (isSlotExpired(schedule.date, schedule.slot as SlotType, slotConfig)) {
+        throw new AppError(status.BAD_REQUEST, "This time slot has already ended for today");
     }
 
     // 4. Enforce 1-active-booking rule: (pending, confirmed, or checked_in)
@@ -405,18 +412,25 @@ const ensureUpcomingSchedules = async (daysAhead: number = 7) => {
 };
 
 const getSchedules = async () => {
+    const advanceDays = await getAdvanceBookingDays();
     // Auto-generate upcoming schedules if missing
-    await ensureUpcomingSchedules(7);
+    await ensureUpcomingSchedules(advanceDays);
 
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
     const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
+
+    const maxDate = new Date(now);
+    maxDate.setDate(now.getDate() + advanceDays);
+    const maxDateStr = maxDate.toISOString().split("T")[0];
+    const maxDateObj = new Date(`${maxDateStr}T23:59:59.999Z`);
 
     const schedules = await prisma.schedule.findMany({
         where: {
             isOpen: true,
             date: {
                 gte: todayDate,
+                lte: maxDateObj,
             },
         },
         orderBy: [

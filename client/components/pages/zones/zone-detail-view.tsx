@@ -5,7 +5,18 @@ import { useAuth } from "@/context/auth-context";
 import { zoneService } from "@/services/zone-service";
 import { seatService } from "@/services/seat-service";
 import { bookingService } from "@/services/booking-service";
-import { Zone, Seat, Schedule, ApiError, CreateSeatPayload, Booking, SlotType } from "@/lib/types";
+import { settingService } from "@/services/setting-service";
+import {
+  Zone,
+  Seat,
+  Schedule,
+  ApiError,
+  CreateSeatPayload,
+  Booking,
+  SlotType,
+  SlotConfig,
+  DEFAULT_SLOT_CONFIG,
+} from "@/lib/types";
 import {
   MapPin, Plus, Loader2, AlertCircle, Calendar, Clock, Download,
   Trash2, X, ChevronLeft, BookOpen, CheckCircle2, RefreshCw,
@@ -21,6 +32,54 @@ const SLOT_META: Record<SlotType, { label: string; time: string; icon: string }>
   noon: { label: "Noon", time: "12:00 PM – 02:00 PM", icon: "☀️" },
   afternoon: { label: "Afternoon", time: "02:00 PM – 06:00 PM", icon: "🌇" },
   evening: { label: "Evening", time: "06:00 PM – 10:00 PM", icon: "🌙" },
+};
+
+/**
+ * Determines whether a schedule slot has already ended relative to current local time.
+ */
+export const isSlotPast = (
+  dateStr: string,
+  slot: SlotType,
+  customConfig?: SlotConfig
+): boolean => {
+  if (!dateStr) return false;
+  const now = new Date();
+  const todayStr = now.toISOString().split("T")[0];
+
+  if (dateStr < todayStr) return true;
+  if (dateStr > todayStr) return false;
+
+  // It's today
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const config = customConfig ?? DEFAULT_SLOT_CONFIG;
+  const slotDetail = config[slot] ?? DEFAULT_SLOT_CONFIG[slot];
+
+  if (!slotDetail) return false;
+
+  const [endHour, endMin] = (slotDetail.endTime || "22:00").split(":");
+  const endMinutes = (parseInt(endHour, 10) || 0) * 60 + (parseInt(endMin, 10) || 0);
+
+  return currentMinutes >= endMinutes;
+};
+
+/**
+ * Returns the first available non-expired slot for the given date.
+ */
+export const getFirstAvailableSlot = (dateStr: string, availableSchedules: Schedule[]): SlotType => {
+  const allSlots: SlotType[] = ["morning", "noon", "afternoon", "evening"];
+  const dateSchedules = availableSchedules.filter(
+    (s) => new Date(s.date).toISOString().split("T")[0] === dateStr
+  );
+  const existingSlotKeys = new Set(dateSchedules.map((s) => s.slot));
+
+  for (const slot of allSlots) {
+    if (existingSlotKeys.has(slot) && !isSlotPast(dateStr, slot)) {
+      return slot;
+    }
+  }
+
+  // Fallback to first existing slot
+  return dateSchedules[0]?.slot || "morning";
 };
 
 // ─── Download QR Helper Function ──────────────────────────────────────────────
@@ -135,6 +194,7 @@ interface CoachSeatProps {
   isSelected: boolean;
   canManage: boolean;
   isStudent: boolean;
+  isSlotPast?: boolean;
   onSelect: (seat: Seat) => void;
   onDelete: (id: string) => void;
   zoneColor: string;
@@ -145,6 +205,7 @@ function CoachSeat({
   isSelected,
   canManage,
   isStudent,
+  isSlotPast = false,
   onSelect,
   onDelete,
   zoneColor,
@@ -152,7 +213,7 @@ function CoachSeat({
   const isInactive = !seat.isActive;
   const isBooked = !isInactive && (seat.isBooked || seat.isOccupied);
   const isMyBooking = seat.isMyBooking;
-  const isAvailable = !isInactive && !isBooked;
+  const isAvailable = !isInactive && !isBooked && !isSlotPast;
 
   const handleClick = () => {
     if (!isAvailable || !isStudent) return;
@@ -187,6 +248,8 @@ function CoachSeat({
             ? "bg-violet-50/90 border-violet-500 text-violet-900 shadow-md ring-2 ring-violet-500/20 cursor-default"
             : isBooked
             ? "bg-rose-50/80 border-rose-200/90 text-rose-900 shadow-2xs cursor-not-allowed"
+            : isSlotPast
+            ? "bg-slate-100/70 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed"
             : isSelected
             ? "bg-slate-900 border-slate-900 text-white shadow-xl scale-105 ring-4 ring-slate-900/15"
             : "bg-white border-slate-200 hover:border-slate-400 hover:shadow-md hover:-translate-y-1 text-slate-800 cursor-pointer active:scale-95"
@@ -201,7 +264,7 @@ function CoachSeat({
               ? "bg-violet-500"
               : isBooked
               ? "bg-rose-300"
-              : isInactive
+              : isInactive || isSlotPast
               ? "bg-slate-300"
               : "bg-slate-200 group-hover:bg-slate-300"
           }`}
@@ -211,7 +274,7 @@ function CoachSeat({
         <div className="flex flex-col items-center justify-center my-auto">
           <span
             className={`font-mono text-xs sm:text-sm font-black tracking-tight ${
-              isSelected ? "text-white" : isBooked ? "text-rose-800" : "text-slate-900"
+              isSelected ? "text-white" : isBooked ? "text-rose-800" : isSlotPast ? "text-slate-400" : "text-slate-900"
             }`}
           >
             {seat.seatNumber}
@@ -232,6 +295,8 @@ function CoachSeat({
               </span>
             ) : isInactive ? (
               <span className="text-[9px] font-semibold text-slate-400">Inactive</span>
+            ) : isSlotPast ? (
+              <span className="text-[9px] font-semibold text-slate-400">Slot Ended</span>
             ) : (
               <span className="flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 text-[9px] font-bold text-emerald-700">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Available
@@ -269,6 +334,7 @@ interface CoachLayoutProps {
   selectedSeatId: string | null;
   canManage: boolean;
   isStudent: boolean;
+  isSlotPast?: boolean;
   onSelectSeat: (seat: Seat) => void;
   onDeleteSeat: (id: string) => void;
   zoneColor: string;
@@ -279,6 +345,7 @@ function CoachLayout({
   selectedSeatId,
   canManage,
   isStudent,
+  isSlotPast = false,
   onSelectSeat,
   onDeleteSeat,
   zoneColor,
@@ -334,6 +401,7 @@ function CoachLayout({
                   isSelected={selectedSeatId === seat.id}
                   canManage={canManage}
                   isStudent={isStudent}
+                  isSlotPast={isSlotPast}
                   onSelect={onSelectSeat}
                   onDelete={onDeleteSeat}
                   zoneColor={zoneColor}
@@ -363,6 +431,7 @@ function CoachLayout({
                   isSelected={selectedSeatId === seat.id}
                   canManage={canManage}
                   isStudent={isStudent}
+                  isSlotPast={isSlotPast}
                   onSelect={onSelectSeat}
                   onDelete={onDeleteSeat}
                   zoneColor={zoneColor}
@@ -399,6 +468,7 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
   const [zone, setZone] = useState<Zone | null>(null);
   const [seats, setSeats] = useState<Seat[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [slotConfig, setSlotConfig] = useState<SlotConfig>(DEFAULT_SLOT_CONFIG);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedSlot, setSelectedSlot] = useState<SlotType>("morning");
 
@@ -439,24 +509,37 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
     }
   }, [zoneId]);
 
-  // ── 2. Fetch Schedules ────────────────────────────────────────────────────
+  // ── 2. Fetch Schedules & Slot Configuration ──────────────────────────────
   const fetchSchedules = useCallback(async () => {
     setIsLoadingSchedules(true);
     try {
-      const res = await bookingService.getSchedules();
-      const rawList = res.data ?? [];
-      const todayStr = new Date().toISOString().split("T")[0];
-      const validSchedules = rawList.filter((s) => {
-        const sDateStr = new Date(s.date).toISOString().split("T")[0];
-        return sDateStr >= todayStr;
-      });
-      setSchedules(validSchedules);
+      const [schedulesRes, configRes] = await Promise.allSettled([
+        bookingService.getSchedules(),
+        settingService.getPublicConfig(),
+      ]);
+
+      let validSchedules: Schedule[] = [];
+      if (schedulesRes.status === "fulfilled") {
+        const rawList = schedulesRes.value.data ?? [];
+        const todayStr = new Date().toISOString().split("T")[0];
+        validSchedules = rawList.filter((s) => {
+          const sDateStr = new Date(s.date).toISOString().split("T")[0];
+          return sDateStr >= todayStr;
+        });
+        setSchedules(validSchedules);
+      }
+
+      let activeConfig = DEFAULT_SLOT_CONFIG;
+      if (configRes.status === "fulfilled" && configRes.value.data?.slotConfig) {
+        activeConfig = configRes.value.data.slotConfig;
+        setSlotConfig(activeConfig);
+      }
 
       // Default date & slot selection
       if (validSchedules.length > 0) {
         const firstDateStr = new Date(validSchedules[0].date).toISOString().split("T")[0];
         setSelectedDate(firstDateStr);
-        setSelectedSlot(validSchedules[0].slot);
+        setSelectedSlot(getFirstAvailableSlot(firstDateStr, validSchedules));
       }
     } catch (err: unknown) {
       console.error("Failed to load schedules:", err);
@@ -698,7 +781,13 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
                     <button
                       key={dateStr}
                       type="button"
-                      onClick={() => setSelectedDate(dateStr)}
+                      onClick={() => {
+                        setSelectedDate(dateStr);
+                        if (isSlotPast(dateStr, selectedSlot)) {
+                          const nextSlot = getFirstAvailableSlot(dateStr, schedules);
+                          setSelectedSlot(nextSlot);
+                        }
+                      }}
                       className={`flex flex-col items-center justify-center px-4 py-2.5 rounded-2xl border transition-all shrink-0 min-w-[90px] ${
                         isSelected
                           ? "bg-slate-900 border-slate-900 text-white shadow-md scale-102"
@@ -724,34 +813,74 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {(["morning", "noon", "afternoon", "evening"] as SlotType[]).map((slotKey) => {
                 const isSelected = selectedSlot === slotKey;
-                const meta = SLOT_META[slotKey];
+                const detail = slotConfig[slotKey] ?? DEFAULT_SLOT_CONFIG[slotKey];
+                const isPast = isSlotPast(selectedDate, slotKey, slotConfig);
+
+                // Check if this slot is open in the schedule for the selected date
+                const scheduleForSlot = schedules.find(
+                  (s) =>
+                    s.slot === slotKey &&
+                    new Date(s.date).toISOString().split("T")[0] === selectedDate
+                );
+                const isClosed = !scheduleForSlot || scheduleForSlot.isOpen === false;
+                const isDisabled = isPast || isClosed;
 
                 return (
                   <button
                     key={slotKey}
                     type="button"
-                    onClick={() => setSelectedSlot(slotKey)}
+                    disabled={isDisabled}
+                    onClick={() => {
+                      if (!isDisabled) setSelectedSlot(slotKey);
+                    }}
                     className={`flex flex-col p-3 rounded-2xl border text-left transition-all ${
-                      isSelected
+                      isClosed
+                        ? "bg-slate-100/70 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed select-none"
+                        : isPast
+                        ? "bg-slate-100/70 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed select-none"
+                        : isSelected
                         ? "bg-slate-900 border-slate-900 text-white shadow-md ring-2 ring-slate-900/10"
-                        : "bg-slate-50/70 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-white"
+                        : "bg-slate-50/70 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-white cursor-pointer"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-base">{meta.icon}</span>
+                      <span className={`text-base ${isDisabled ? "grayscale opacity-50" : ""}`}>
+                        {detail?.icon ?? "⏱️"}
+                      </span>
                       <span
                         className={`text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded-full ${
-                          isSelected
+                          isClosed
+                            ? "bg-rose-100 text-rose-700"
+                            : isPast
+                            ? "bg-slate-200 text-slate-500"
+                            : isSelected
                             ? "bg-white/20 text-white"
                             : "bg-slate-200/80 text-slate-600"
                         }`}
                       >
-                        {meta.label}
+                        {isClosed ? "Closed" : isPast ? "Ended" : detail?.label ?? slotKey}
                       </span>
                     </div>
-                    <span className={`text-[11px] font-semibold ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
-                      {meta.time}
+                    <span
+                      className={`text-[11px] font-semibold ${
+                        isDisabled
+                          ? "text-slate-400 line-through"
+                          : isSelected
+                          ? "text-slate-300"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      {detail?.startTime} &ndash; {detail?.endTime}
                     </span>
+                    {isClosed ? (
+                      <span className="text-[9px] font-bold text-rose-500 mt-1">
+                        Closed by Admin
+                      </span>
+                    ) : isPast ? (
+                      <span className="text-[9px] font-bold text-rose-500 mt-1">
+                        Passed for today
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
@@ -799,11 +928,19 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
           {/* Quick Metrics Strip */}
           <div className="flex items-center justify-between bg-white px-5 py-3 rounded-2xl border border-slate-200 shadow-2xs text-xs font-bold text-slate-600">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className={`h-2 w-2 rounded-full ${isSlotPast(selectedDate, selectedSlot) ? "bg-slate-400" : "bg-emerald-500 animate-pulse"}`} />
               <span>
-                <strong className="text-slate-900">{availableSeatsCount}</strong> of{" "}
-                <strong className="text-slate-900">{totalSeatsCount}</strong> seats available for{" "}
-                <span className="capitalize font-black text-slate-900">{selectedSlot}</span> slot
+                {isSlotPast(selectedDate, selectedSlot) ? (
+                  <span className="text-amber-700 font-bold">
+                    This <span className="capitalize">{selectedSlot}</span> slot has already ended for today.
+                  </span>
+                ) : (
+                  <>
+                    <strong className="text-slate-900">{availableSeatsCount}</strong> of{" "}
+                    <strong className="text-slate-900">{totalSeatsCount}</strong> seats available for{" "}
+                    <span className="capitalize font-black text-slate-900">{selectedSlot}</span> slot
+                  </>
+                )}
               </span>
             </div>
             {canManage && (
@@ -837,6 +974,7 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
               selectedSeatId={selectedSeat?.id ?? null}
               canManage={canManage}
               isStudent={isStudent}
+              isSlotPast={isSlotPast(selectedDate, selectedSlot)}
               onSelectSeat={setSelectedSeat}
               onDeleteSeat={handleDeleteSeat}
               zoneColor={zoneColor}
