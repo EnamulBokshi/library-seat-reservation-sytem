@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const auth_controller_1 = require("./auth.controller");
 const requestValidator_1 = __importDefault(require("../../middleware/requestValidator"));
+const authCheck_1 = __importDefault(require("../../middleware/authCheck"));
 const auth_validation_1 = require("./auth.validation");
 const authRoute = (0, express_1.Router)();
 // POST /api/v1/auth/register — public
@@ -14,6 +15,8 @@ authRoute.post("/register", (0, requestValidator_1.default)(auth_validation_1.Au
 authRoute.post("/login", (0, requestValidator_1.default)(auth_validation_1.AuthValidation.loginSchema), auth_controller_1.AuthController.login);
 // POST /api/v1/auth/refresh — public (uses refresh token from cookie)
 authRoute.post("/refresh", auth_controller_1.AuthController.refresh);
+// GET /api/v1/auth/me — authenticated
+authRoute.get("/me", (0, authCheck_1.default)(), auth_controller_1.AuthController.getMe);
 // POST /api/v1/auth/logout — public
 authRoute.post("/logout", auth_controller_1.AuthController.logout);
 exports.default = authRoute;

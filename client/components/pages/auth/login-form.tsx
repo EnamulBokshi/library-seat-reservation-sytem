@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { ApiError } from "@/lib/types";
 import { Activity, Mail, Lock, ArrowRight, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect") || "/";
   const { login, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -20,9 +22,12 @@ export function LoginForm() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/");
+      const destination = redirectPath.startsWith("/") && !redirectPath.startsWith("//")
+        ? redirectPath
+        : "/";
+      router.push(destination);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, redirectPath, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +41,10 @@ export function LoginForm() {
     setIsSubmitting(true);
     try {
       await login({ email, password });
-      router.push("/");
+      const destination = redirectPath.startsWith("/") && !redirectPath.startsWith("//")
+        ? redirectPath
+        : "/";
+      router.push(destination);
     } catch (err: unknown) {
       const apiErr = err as ApiError;
       setError(apiErr?.message || "Failed to log in. Please check your credentials.");

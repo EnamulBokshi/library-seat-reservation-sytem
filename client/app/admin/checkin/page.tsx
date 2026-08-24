@@ -1,4 +1,5 @@
 import { CheckInView } from "@/components/pages/admin/checkin-view";
+import { AuthGuard } from "@/components/shared/auth-guard";
 
 export const metadata = {
   title: "Check-In | Admin | Smart Library",
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function CheckInPage() {
-  return <CheckInView />;
+  return (
+    <AuthGuard allowedRoles={["admin", "librarian"]}>
+      <CheckInView />
+    </AuthGuard>
+  );
 }

@@ -23,10 +23,17 @@ export const authService = {
   },
 
   /**
+   * Get current authenticated user profile
+   */
+  async getMe(): Promise<ApiResponse<{ user: User }>> {
+    return apiClient.get<unknown, ApiResponse<{ user: User }>>("/auth/me");
+  },
+
+  /**
    * Refresh access token using HttpOnly refresh token cookie
    */
-  async refresh(): Promise<ApiResponse<null>> {
-    return apiClient.post<unknown, ApiResponse<null>>("/auth/refresh");
+  async refresh(): Promise<ApiResponse<{ user?: User } | null>> {
+    return apiClient.post<unknown, ApiResponse<{ user?: User } | null>>("/auth/refresh");
   },
 
   /**

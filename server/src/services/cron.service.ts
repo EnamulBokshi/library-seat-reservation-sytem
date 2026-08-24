@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import prisma from "../lib/prisma";
 import { BookingStatus, SlotType } from "../generated/enums";
+import { BookingService } from "../modules/booking/booking.service";
 
 // Default grace period in minutes if not configured in DB
 const DEFAULT_GRACE_PERIOD_MINUTES = 15;
@@ -179,6 +180,11 @@ const processSlotCleanup = async (slot: SlotType) => {
 export const initCronJobs = () => {
   console.log("[Cron Scheduler] Initializing seat booking cron services...");
 
+  // 0. Ensure upcoming schedules exist immediately on startup
+  BookingService.ensureUpcomingSchedules(7).catch((err) =>
+    console.error("[Cron Scheduler] Failed to ensure upcoming schedules on startup:", err)
+  );
+
   // 1. Run grace-period check every minute
   cron.schedule("* * * * *", () => {
     checkGracePeriodCancellations();
@@ -189,6 +195,14 @@ export const initCronJobs = () => {
   cron.schedule("0 14 * * *", () => processSlotCleanup(SlotType.noon));
   cron.schedule("0 18 * * *", () => processSlotCleanup(SlotType.afternoon));
   cron.schedule("0 21 * * *", () => processSlotCleanup(SlotType.evening));
+
+  // 3. Roll over schedules daily at midnight
+  cron.schedule("0 0 * * *", () => {
+    console.log("[Cron Scheduler] Generating rolling schedules for upcoming 7 days...");
+    BookingService.ensureUpcomingSchedules(7).catch((err) =>
+      console.error("[Cron Scheduler] Failed to generate daily rolling schedules:", err)
+    );
+  });
 
   console.log("[Cron Scheduler] Cron jobs scheduled successfully.");
 };

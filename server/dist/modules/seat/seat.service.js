@@ -7,6 +7,7 @@ exports.SeatService = void 0;
 const http_status_1 = __importDefault(require("http-status"));
 const prisma_1 = __importDefault(require("../../lib/prisma"));
 const AppError_1 = __importDefault(require("../../helpers/AppError"));
+const enums_1 = require("../../generated/enums");
 /**
  * Add a seat to a zone.
  */
@@ -41,9 +42,9 @@ const createSeat = async (payload) => {
     return seat;
 };
 /**
- * List seats in a zone with live occupancy and active status.
+ * List seats in a zone with live occupancy, active status, and optional schedule-specific booking info.
  */
-const getSeatsByZone = async (zoneId, showInactive = false) => {
+const getSeatsByZone = async (zoneId, showInactive = false, scheduleId, currentUserId) => {
     // Check if zone exists
     const zone = await prisma_1.default.zone.findUnique({
         where: { id: zoneId },
@@ -60,7 +61,50 @@ const getSeatsByZone = async (zoneId, showInactive = false) => {
             seatNumber: "asc",
         },
     });
-    return seats;
+    if (!scheduleId) {
+        return seats;
+    }
+    // Find all active bookings for this schedule in this zone
+    const bookings = await prisma_1.default.booking.findMany({
+        where: {
+            scheduleId,
+            seatId: { in: seats.map((s) => s.id) },
+            status: {
+                in: [enums_1.BookingStatus.pending, enums_1.BookingStatus.confirmed, enums_1.BookingStatus.checked_in],
+            },
+        },
+        select: {
+            id: true,
+            seatId: true,
+            userId: true,
+            status: true,
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    studentId: true,
+                },
+            },
+        },
+    });
+    const bookingMap = new Map(bookings.map((b) => [b.seatId, b]));
+    return seats.map((seat) => {
+        const booking = bookingMap.get(seat.id);
+        const isBooked = !!booking;
+        const isMyBooking = isBooked && currentUserId ? booking.userId === currentUserId : false;
+        return {
+            ...seat,
+            isBooked,
+            isMyBooking,
+            booking: booking
+                ? {
+                    id: booking.id,
+                    status: booking.status,
+                    user: booking.user,
+                }
+                : null,
+        };
+    });
 };
 /**
  * Update a seat.

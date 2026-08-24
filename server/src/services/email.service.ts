@@ -162,10 +162,15 @@ export const sendBookingConfirmationEmail = async (opts: SendBookingEmailOptions
   // 2. Try Resend API if configured
   const resendApiKey = process.env.RESEND_API_KEY;
   if (resendApiKey) {
+    const resendFrom =
+      process.env.RESEND_FROM_EMAIL ||
+      process.env.EMAIL_FROM ||
+      "Smart Library <onboarding@resend.dev>";
+
     try {
       const resend = new Resend(resendApiKey);
       const response = await resend.emails.send({
-        from: fromAddress,
+        from: resendFrom,
         to: [toEmail],
         subject: `Your Library Seat Pass — Seat ${seatNumber} (${zoneName})`,
         html: htmlContent,
@@ -177,10 +182,14 @@ export const sendBookingConfirmationEmail = async (opts: SendBookingEmailOptions
           },
         ],
       });
-      console.log(`[Email Service] Resend email dispatched successfully. ID: ${response.data?.id}`);
+      if (response.error) {
+        console.error("[Email Service] Resend API error:", response.error);
+      } else {
+        console.log(`[Email Service] Resend email dispatched successfully. ID: ${response.data?.id}`);
+      }
       return response;
     } catch (error) {
-      console.error("[Email Service] Resend API error:", error);
+      console.error("[Email Service] Resend API exception:", error);
     }
   }
 

@@ -307,7 +307,45 @@ const cancelBooking = async (id, userId, role) => {
     });
     return cancelledBooking;
 };
+/**
+ * Ensure schedule slots exist for today and the upcoming days (default 7 days).
+ * Auto-creates open slots if they do not already exist.
+ */
+const ensureUpcomingSchedules = async (daysAhead = 7) => {
+    const slots = [
+        enums_1.SlotType.morning,
+        enums_1.SlotType.noon,
+        enums_1.SlotType.afternoon,
+        enums_1.SlotType.evening,
+    ];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let dayOffset = 0; dayOffset <= daysAhead; dayOffset++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + dayOffset);
+        const dateStr = d.toISOString().split("T")[0];
+        const dateOnly = new Date(`${dateStr}T00:00:00.000Z`);
+        for (const slot of slots) {
+            await prisma_1.default.schedule.upsert({
+                where: {
+                    date_slot: {
+                        date: dateOnly,
+                        slot,
+                    },
+                },
+                update: {},
+                create: {
+                    date: dateOnly,
+                    slot,
+                    isOpen: true,
+                },
+            });
+        }
+    }
+};
 const getSchedules = async () => {
+    // Auto-generate upcoming schedules if missing
+    await ensureUpcomingSchedules(7);
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
     const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
@@ -466,4 +504,5 @@ exports.BookingService = {
     cancelBooking,
     getSchedules,
     getDashboardStats,
+    ensureUpcomingSchedules,
 };

@@ -1,4 +1,5 @@
 import { SettingsView } from "@/components/pages/admin/settings-view";
+import { AuthGuard } from "@/components/shared/auth-guard";
 
 export const metadata = {
   title: "System Settings | Admin | Smart Library",
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function SettingsPage() {
-  return <SettingsView />;
+  return (
+    <AuthGuard allowedRoles={["admin"]}>
+      <SettingsView />
+    </AuthGuard>
+  );
 }

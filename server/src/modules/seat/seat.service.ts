@@ -1,6 +1,7 @@
 import status from "http-status";
 import prisma from "../../lib/prisma";
 import AppError from "../../helpers/AppError";
+import { BookingStatus } from "../../generated/enums";
 import { ICreateSeatPayload, IUpdateSeatPayload } from "./seat.interface";
 
 /**
@@ -43,9 +44,14 @@ const createSeat = async (payload: ICreateSeatPayload) => {
 };
 
 /**
- * List seats in a zone with live occupancy and active status.
+ * List seats in a zone with live occupancy, active status, and optional schedule-specific booking info.
  */
-const getSeatsByZone = async (zoneId: string, showInactive = false) => {
+const getSeatsByZone = async (
+    zoneId: string,
+    showInactive = false,
+    scheduleId?: string,
+    currentUserId?: string
+) => {
     // Check if zone exists
     const zone = await prisma.zone.findUnique({
         where: { id: zoneId },
@@ -66,7 +72,54 @@ const getSeatsByZone = async (zoneId: string, showInactive = false) => {
         },
     });
 
-    return seats;
+    if (!scheduleId) {
+        return seats;
+    }
+
+    // Find all active bookings for this schedule in this zone
+    const bookings = await prisma.booking.findMany({
+        where: {
+            scheduleId,
+            seatId: { in: seats.map((s) => s.id) },
+            status: {
+                in: [BookingStatus.pending, BookingStatus.confirmed, BookingStatus.checked_in],
+            },
+        },
+        select: {
+            id: true,
+            seatId: true,
+            userId: true,
+            status: true,
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    studentId: true,
+                },
+            },
+        },
+    });
+
+    const bookingMap = new Map(bookings.map((b) => [b.seatId, b]));
+
+    return seats.map((seat) => {
+        const booking = bookingMap.get(seat.id);
+        const isBooked = !!booking;
+        const isMyBooking = isBooked && currentUserId ? booking.userId === currentUserId : false;
+
+        return {
+            ...seat,
+            isBooked,
+            isMyBooking,
+            booking: booking
+                ? {
+                      id: booking.id,
+                      status: booking.status,
+                      user: booking.user,
+                  }
+                : null,
+        };
+    });
 };
 
 /**

@@ -101,6 +101,18 @@ export interface Seat {
   zoneId: string;
   isActive: boolean;
   isOccupied: boolean;
+  isBooked?: boolean;
+  isMyBooking?: boolean;
+  booking?: {
+    id: string;
+    status: BookingStatus;
+    user?: {
+      id: string;
+      name: string;
+      studentId?: string | null;
+    };
+  } | null;
+  zone?: Zone;
   createdAt: string;
   updatedAt: string;
 }
@@ -117,7 +129,7 @@ export interface UpdateSeatPayload {
 
 // ─── Schedule ─────────────────────────────────────────────────────────────────
 
-export type SlotType = "morning" | "afternoon" | "evening";
+export type SlotType = "morning" | "noon" | "afternoon" | "evening";
 
 export interface Schedule {
   id: string;

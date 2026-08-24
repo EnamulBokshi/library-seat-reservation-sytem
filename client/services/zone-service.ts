@@ -52,13 +52,16 @@ export const zoneService = {
   },
 
   /**
-   * Get all seats for a zone (all authenticated roles)
+   * Get all seats for a zone with optional schedule booking status (all authenticated roles)
    */
   async getSeatsByZone(
     zoneId: string,
-    showInactive?: boolean
+    showInactive?: boolean,
+    scheduleId?: string
   ): Promise<ApiResponse<Seat[]>> {
-    const params = showInactive ? { showInactive: "true" } : {};
+    const params: Record<string, string> = {};
+    if (showInactive) params.showInactive = "true";
+    if (scheduleId) params.scheduleId = scheduleId;
     return apiClient.get<unknown, ApiResponse<Seat[]>>(`/zone/${zoneId}/seats`, { params });
   },
 };

@@ -48,6 +48,23 @@ const refresh = catchAsync(async (req: Request, res: Response) => {
         httpStatusCode: status.OK,
         success: true,
         message: "Token refreshed successfully",
+        data: { user: result.user },
+    });
+});
+
+const getMe = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) {
+        throw new AppError(status.UNAUTHORIZED, "Unauthorized");
+    }
+
+    const user = await AuthService.getMe(userId);
+
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: "User profile fetched successfully",
+        data: { user },
     });
 });
 
@@ -67,5 +84,6 @@ export const AuthController = {
     register,
     login,
     refresh,
+    getMe,
     logout,
 };

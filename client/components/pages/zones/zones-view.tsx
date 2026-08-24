@@ -249,7 +249,7 @@ function CreateZoneModal({ onClose, onCreate }: CreateZoneModalProps) {
 
 // ─── Zones View ───────────────────────────────────────────────────────────────
 export function ZonesView() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [zones, setZones] = useState<Zone[]>([]);
   const [liveStats, setLiveStats] = useState<LiveZoneStat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -279,7 +279,11 @@ export function ZonesView() {
     }
   }, [isAuthenticated]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    if (!isAuthLoading) {
+      fetchData();
+    }
+  }, [isAuthLoading, fetchData]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this zone? This cannot be undone.")) return;

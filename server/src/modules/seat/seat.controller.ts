@@ -21,12 +21,13 @@ const createSeat = catchAsync(async (req: Request, res: Response) => {
 
 const getSeatsByZone = catchAsync(async (req: Request, res: Response) => {
     const zoneId = req.params.id as string; // from /zone/:id/seats
-    // Admins and Librarians can see inactive seats using showInactive=true
     const showInactive =
         (req.user?.role === "admin" || req.user?.role === "librarian") &&
         req.query.showInactive === "true";
+    const scheduleId = req.query.scheduleId as string | undefined;
+    const currentUserId = req.user?.userId;
 
-    const result = await SeatService.getSeatsByZone(zoneId, showInactive);
+    const result = await SeatService.getSeatsByZone(zoneId, showInactive, scheduleId, currentUserId);
 
     sendResponse(res, {
         httpStatusCode: status.OK,

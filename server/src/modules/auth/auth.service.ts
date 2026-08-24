@@ -135,11 +135,48 @@ const refreshAccessToken = async (refreshToken: string) => {
 
     const newAccessToken = tokenUtils.getAccessToken(tokenPayload);
 
-    return { accessToken: newAccessToken };
+    return {
+        accessToken: newAccessToken,
+        user: {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+        },
+    };
+};
+
+/**
+ * Get current authenticated user profile
+ */
+const getMe = async (userId: string) => {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            studentId: true,
+            role: true,
+            createdAt: true,
+            isActive: true,
+        },
+    });
+
+    if (!user) {
+        throw new AppError(status.UNAUTHORIZED, "User not found");
+    }
+
+    if (!user.isActive) {
+        throw new AppError(status.UNAUTHORIZED, "Your account has been deactivated");
+    }
+
+    const { isActive, ...userData } = user;
+    return userData;
 };
 
 export const AuthService = {
     register,
     login,
     refreshAccessToken,
+    getMe,
 };

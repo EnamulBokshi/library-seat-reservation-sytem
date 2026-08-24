@@ -1,18 +1,27 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/auth-context";
 import { zoneService } from "@/services/zone-service";
 import { seatService } from "@/services/seat-service";
 import { bookingService } from "@/services/booking-service";
-import { Zone, Seat, Schedule, ApiError, CreateSeatPayload, Booking } from "@/lib/types";
+import { Zone, Seat, Schedule, ApiError, CreateSeatPayload, Booking, SlotType } from "@/lib/types";
 import {
   MapPin, Plus, Loader2, AlertCircle, Calendar, Clock, Download,
   Trash2, X, ChevronLeft, BookOpen, CheckCircle2, RefreshCw,
   Armchair, ArrowRight, Eye, EyeOff, ShieldCheck, Info, CircleAlert,
+  Sparkles, Lock, Check,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
+// ─── Slot Meta Config ─────────────────────────────────────────────────────────
+const SLOT_META: Record<SlotType, { label: string; time: string; icon: string }> = {
+  morning: { label: "Morning", time: "08:00 AM – 12:00 PM", icon: "🌅" },
+  noon: { label: "Noon", time: "12:00 PM – 02:00 PM", icon: "☀️" },
+  afternoon: { label: "Afternoon", time: "02:00 PM – 06:00 PM", icon: "🌇" },
+  evening: { label: "Evening", time: "06:00 PM – 10:00 PM", icon: "🌙" },
+};
 
 // ─── Download QR Helper Function ──────────────────────────────────────────────
 export function downloadQrImage(base64Image: string, fileName: string = "library-pass-qr.png") {
@@ -22,84 +31,6 @@ export function downloadQrImage(base64Image: string, fileName: string = "library
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-}
-
-// ─── Seat Row Component ───────────────────────────────────────────────────────
-interface SeatRowProps {
-  seat: Seat;
-  canManage: boolean;
-  isStudent: boolean;
-  onDelete: (id: string) => void;
-  onBook: (seat: Seat) => void;
-  zoneColor: string;
-}
-
-function SeatRow({ seat, canManage, isStudent, onDelete, onBook, zoneColor }: SeatRowProps) {
-  const isAvailable = seat.isActive && !seat.isOccupied;
-  const isOccupied = seat.isActive && seat.isOccupied;
-  const isInactive = !seat.isActive;
-
-  const statusDot = isInactive
-    ? "bg-slate-300"
-    : isOccupied
-      ? "bg-amber-500"
-      : "bg-emerald-500";
-
-  const statusText = isInactive ? "Inactive" : isOccupied ? "Occupied" : "Available";
-  const statusBadge = isInactive
-    ? "bg-slate-100 text-slate-500 border-slate-200"
-    : isOccupied
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : "bg-emerald-50 text-emerald-700 border-emerald-200";
-
-  return (
-    <div className="group pulse-card flex items-center gap-4 px-4 py-3.5 sm:px-5 hover:shadow-md transition-all">
-      {/* Seat icon */}
-      <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-105"
-        style={{
-          backgroundColor: isAvailable ? `${zoneColor}12` : isOccupied ? "#fef3c710" : "#f1f5f9",
-          border: `1.5px solid ${isAvailable ? `${zoneColor}30` : isOccupied ? "#fbbf2440" : "#e2e8f0"}`,
-        }}
-      >
-        <Armchair className="h-4 w-4" style={{ color: isAvailable ? zoneColor : isOccupied ? "#d97706" : "#94a3b8" }} />
-      </div>
-
-      {/* Seat number + status */}
-      <div className="flex items-center gap-2.5 flex-1 min-w-0">
-        <span className="font-mono text-sm font-extrabold text-slate-900">{seat.seatNumber}</span>
-        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold shrink-0 ${statusBadge}`}>
-          <span className={`h-1.5 w-1.5 rounded-full ${statusDot}`} />
-          {statusText}
-        </span>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        {canManage && (
-          <button
-            onClick={() => onDelete(seat.id)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-600"
-            title="Remove seat"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        )}
-        {isStudent && isAvailable && (
-          <button
-            onClick={() => onBook(seat)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 active:scale-95 transition-all shadow-xs"
-          >
-            <BookOpen className="h-3 w-3" />
-            <span>Book</span>
-          </button>
-        )}
-        {isStudent && isOccupied && (
-          <span className="text-[11px] font-semibold text-amber-600">In use</span>
-        )}
-      </div>
-    </div>
-  );
 }
 
 // ─── Success & QR Code Modal Component ────────────────────────────────────────
@@ -127,9 +58,8 @@ function BookingSuccessModal({ booking, qrCodeImage, zoneName, onClose }: Bookin
     : "—";
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs p-4 sm:p-6">
-      <div className="flex min-h-full items-center justify-center">
-        <div className="pulse-card relative w-full max-w-sm p-6 text-center shadow-2xl my-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6 flex items-center justify-center">
+      <div className="pulse-card relative w-full max-w-sm p-6 text-center shadow-2xl my-auto animate-in fade-in zoom-in-95 duration-200">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
@@ -141,9 +71,9 @@ function BookingSuccessModal({ booking, qrCodeImage, zoneName, onClose }: Bookin
           <CheckCircle2 className="h-7 w-7" />
         </div>
 
-        <h3 className="text-xl font-extrabold text-slate-900">Booking Confirmed!</h3>
+        <h3 className="text-xl font-extrabold text-slate-900">Seat Reserved!</h3>
         <p className="mt-1 text-xs text-slate-500">
-          Your seat pass has been dispatched to your email.
+          Your seat pass QR code has been generated and emailed to you.
         </p>
 
         {/* QR Code Display */}
@@ -154,7 +84,7 @@ function BookingSuccessModal({ booking, qrCodeImage, zoneName, onClose }: Bookin
 
           <button
             onClick={handleDownload}
-            className="pulse-button-secondary mt-3 text-xs py-1.5 px-3"
+            className="pulse-button-secondary mt-3 text-xs py-1.5 px-3 w-full"
           >
             <Download className="h-3.5 w-3.5" />
             Download QR Pass (PNG)
@@ -183,7 +113,7 @@ function BookingSuccessModal({ booking, qrCodeImage, zoneName, onClose }: Bookin
 
         {/* Notice */}
         <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-left text-[11px] text-amber-800 font-medium">
-          ⏰ <strong>Check-in notice:</strong> Scan this QR code at the library entrance within 15 minutes of slot start time.
+          ⏰ <strong>Check-in Notice:</strong> Scan this QR pass at the entrance within 15 minutes of slot start time.
         </div>
 
         <div className="flex gap-2">
@@ -196,182 +126,267 @@ function BookingSuccessModal({ booking, qrCodeImage, zoneName, onClose }: Bookin
         </div>
       </div>
     </div>
-  </div>
-);
+  );
 }
 
-// ─── Booking Modal Component ──────────────────────────────────────────────────
-interface BookSeatModalProps {
+// ─── Individual Train Coach Seat Component ─────────────────────────────────────
+interface CoachSeatProps {
   seat: Seat;
-  zoneName: string;
-  onClose: () => void;
-  onSuccess: (booking: Booking, qrCodeImage: string) => void;
+  isSelected: boolean;
+  canManage: boolean;
+  isStudent: boolean;
+  onSelect: (seat: Seat) => void;
+  onDelete: (id: string) => void;
+  zoneColor: string;
 }
 
-function BookSeatModal({ seat, zoneName, onClose, onSuccess }: BookSeatModalProps) {
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [selectedScheduleId, setSelectedScheduleId] = useState<string>("");
-  const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function CoachSeat({
+  seat,
+  isSelected,
+  canManage,
+  isStudent,
+  onSelect,
+  onDelete,
+  zoneColor,
+}: CoachSeatProps) {
+  const isInactive = !seat.isActive;
+  const isBooked = !isInactive && (seat.isBooked || seat.isOccupied);
+  const isMyBooking = seat.isMyBooking;
+  const isAvailable = !isInactive && !isBooked;
 
-  useEffect(() => {
-    async function loadSchedules() {
-      setIsLoadingSchedules(true);
-      try {
-        const res = await bookingService.getSchedules();
-        const rawList = res.data ?? [];
-        const todayStr = new Date().toISOString().split("T")[0];
-        const list = rawList.filter((s) => {
-          const sDateStr = new Date(s.date).toISOString().split("T")[0];
-          return sDateStr >= todayStr;
-        });
-        setSchedules(list);
-        if (list.length > 0) {
-          setSelectedScheduleId(list[0].id);
-        }
-      } catch (err: unknown) {
-        const apiErr = err as ApiError;
-        setError(apiErr?.message ?? "Failed to load schedule slots.");
-      } finally {
-        setIsLoadingSchedules(false);
-      }
-    }
-    loadSchedules();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedScheduleId) {
-      setError("Please select a schedule slot.");
-      return;
-    }
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      const res = await bookingService.create({
-        seatId: seat.id,
-        scheduleId: selectedScheduleId,
-      });
-      if (res.data?.booking && res.data?.qrCodeImage) {
-        onSuccess(res.data.booking, res.data.qrCodeImage);
-      } else {
-        onSuccess({} as Booking, "");
-      }
-    } catch (err: unknown) {
-      const apiErr = err as ApiError;
-      setError(apiErr?.message ?? "Failed to reserve seat.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleClick = () => {
+    if (!isAvailable || !isStudent) return;
+    onSelect(seat);
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs p-4 sm:p-6">
-      <div className="flex min-h-full items-center justify-center">
-        <div className="pulse-card relative w-full max-w-md p-6 shadow-2xl my-auto">
+    <div className="relative group flex flex-col items-center">
+      {/* Admin Quick Delete Action */}
+      {canManage && (
         <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(seat.id);
+          }}
+          className="absolute -top-2 -right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-white opacity-0 shadow-sm transition-all group-hover:opacity-100 hover:bg-rose-600 active:scale-95"
+          title={`Delete ${seat.seatNumber}`}
         >
-          <X className="h-5 w-5" />
+          <Trash2 className="h-3 w-3" />
         </button>
+      )}
 
-        <div className="flex items-center gap-3 mb-6 pb-3 border-b border-slate-100">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white">
-            <BookOpen className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-extrabold text-slate-900">Reserve Seat {seat.seatNumber}</h2>
-            <p className="text-xs text-slate-500">{zoneName}</p>
+      {/* Armchair visual container */}
+      <button
+        type="button"
+        disabled={!isAvailable || !isStudent}
+        onClick={handleClick}
+        className={`relative w-20 sm:w-24 h-24 sm:h-28 rounded-2xl flex flex-col items-center justify-between p-2.5 transition-all duration-200 border-2 select-none ${
+          isInactive
+            ? "bg-slate-100/70 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed"
+            : isMyBooking
+            ? "bg-violet-50/90 border-violet-500 text-violet-900 shadow-md ring-2 ring-violet-500/20 cursor-default"
+            : isBooked
+            ? "bg-rose-50/80 border-rose-200/90 text-rose-900 shadow-2xs cursor-not-allowed"
+            : isSelected
+            ? "bg-slate-900 border-slate-900 text-white shadow-xl scale-105 ring-4 ring-slate-900/15"
+            : "bg-white border-slate-200 hover:border-slate-400 hover:shadow-md hover:-translate-y-1 text-slate-800 cursor-pointer active:scale-95"
+        }`}
+      >
+        {/* Top Backrest Bar */}
+        <div
+          className={`w-12 sm:w-14 h-2.5 rounded-full transition-colors ${
+            isSelected
+              ? "bg-emerald-400"
+              : isMyBooking
+              ? "bg-violet-500"
+              : isBooked
+              ? "bg-rose-300"
+              : isInactive
+              ? "bg-slate-300"
+              : "bg-slate-200 group-hover:bg-slate-300"
+          }`}
+        />
+
+        {/* Center Seat Number & Status Icon */}
+        <div className="flex flex-col items-center justify-center my-auto">
+          <span
+            className={`font-mono text-xs sm:text-sm font-black tracking-tight ${
+              isSelected ? "text-white" : isBooked ? "text-rose-800" : "text-slate-900"
+            }`}
+          >
+            {seat.seatNumber}
+          </span>
+
+          <div className="mt-1 flex items-center gap-1">
+            {isSelected ? (
+              <span className="flex items-center gap-0.5 rounded-full bg-emerald-500/30 px-1.5 py-0.2 text-[9px] font-extrabold text-emerald-300">
+                <Check className="h-2.5 w-2.5" /> Selected
+              </span>
+            ) : isMyBooking ? (
+              <span className="rounded-full bg-violet-200/80 px-1.5 py-0.2 text-[9px] font-extrabold text-violet-800">
+                Your Seat
+              </span>
+            ) : isBooked ? (
+              <span className="flex items-center gap-0.5 rounded-full bg-rose-100 px-1.5 py-0.2 text-[9px] font-bold text-rose-700">
+                <Lock className="h-2.5 w-2.5" /> Booked
+              </span>
+            ) : isInactive ? (
+              <span className="text-[9px] font-semibold text-slate-400">Inactive</span>
+            ) : (
+              <span className="flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 text-[9px] font-bold text-emerald-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Available
+              </span>
+            )}
           </div>
         </div>
 
-        {error && (
-          <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700">
-            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
+        {/* Bottom Armrest Tabs */}
+        <div className="w-full flex justify-between items-center px-0.5">
+          <div
+            className={`h-3.5 w-1.5 rounded-full ${
+              isSelected ? "bg-slate-700" : isBooked ? "bg-rose-200" : "bg-slate-200"
+            }`}
+          />
+          <div
+            className={`h-1.5 w-6 rounded-full ${
+              isSelected ? "bg-slate-700" : isBooked ? "bg-rose-200" : "bg-slate-200"
+            }`}
+          />
+          <div
+            className={`h-3.5 w-1.5 rounded-full ${
+              isSelected ? "bg-slate-700" : isBooked ? "bg-rose-200" : "bg-slate-200"
+            }`}
+          />
+        </div>
+      </button>
+    </div>
+  );
+}
 
-        {isLoadingSchedules ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-slate-900" />
-          </div>
-        ) : schedules.length === 0 ? (
-          <div className="py-8 text-center text-slate-500 text-sm">
-            No active schedule slots available for booking.
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="kicker-label mb-2 block">
-                Select Date & Time Slot
-              </label>
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                {schedules.map((sch) => {
-                  const dateStr = new Date(sch.date).toLocaleDateString(undefined, {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  });
-                  const isSelected = selectedScheduleId === sch.id;
+// ─── Train Coach Layout Component ─────────────────────────────────────────────
+interface CoachLayoutProps {
+  seats: Seat[];
+  selectedSeatId: string | null;
+  canManage: boolean;
+  isStudent: boolean;
+  onSelectSeat: (seat: Seat) => void;
+  onDeleteSeat: (id: string) => void;
+  zoneColor: string;
+}
 
-                  return (
-                    <button
-                      key={sch.id}
-                      type="button"
-                      onClick={() => setSelectedScheduleId(sch.id)}
-                      className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${isSelected
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200 bg-slate-50/50 text-slate-700 hover:border-slate-300 hover:bg-white"
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Calendar className={`h-4 w-4 ${isSelected ? "text-white" : "text-slate-400"}`} />
-                        <div>
-                          <p className="text-sm font-bold">{dateStr}</p>
-                          <p className={`text-xs capitalize flex items-center gap-1 mt-0.5 ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
-                            <Clock className="h-3 w-3" />
-                            {sch.slot} slot
-                          </p>
-                        </div>
-                      </div>
-                      {isSelected && <CheckCircle2 className="h-5 w-5 text-emerald-400" />}
-                    </button>
-                  );
-                })}
-              </div>
+function CoachLayout({
+  seats,
+  selectedSeatId,
+  canManage,
+  isStudent,
+  onSelectSeat,
+  onDeleteSeat,
+  zoneColor,
+}: CoachLayoutProps) {
+  // Split seats into 2x2 rows (2 seats on Left, 2 seats on Right, Aisle in the middle)
+  const rows = useMemo(() => {
+    const list = [...seats];
+    const grouped: { left: Seat[]; right: Seat[]; rowNumber: number }[] = [];
+    let rowIdx = 1;
+
+    for (let i = 0; i < list.length; i += 4) {
+      const chunk = list.slice(i, i + 4);
+      grouped.push({
+        rowNumber: rowIdx++,
+        left: chunk.slice(0, 2),
+        right: chunk.slice(2, 4),
+      });
+    }
+    return grouped;
+  }, [seats]);
+
+  return (
+    <div className="w-full max-w-2xl mx-auto rounded-3xl border-2 border-slate-300 bg-[#f8f9fa] shadow-inner p-4 sm:p-7 relative overflow-hidden">
+      {/* Coach Top Header (Front / Whiteboard & Entrance) */}
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-3.5 flex items-center justify-between shadow-2xs">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+            🚪
+          </span>
+          <span>Front Entrance</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-400">
+          <span>🧑‍🏫 Front Whiteboard / Screen</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+          <span>Power Outlets</span>
+          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+            🔌
+          </span>
+        </div>
+      </div>
+
+      {/* Central Walking Path Watermark */}
+      <div className="space-y-4">
+        {rows.map((row) => (
+          <div key={row.rowNumber} className="flex items-center justify-between gap-2 sm:gap-4">
+            {/* Left Pair */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {row.left.map((seat) => (
+                <CoachSeat
+                  key={seat.id}
+                  seat={seat}
+                  isSelected={selectedSeatId === seat.id}
+                  canManage={canManage}
+                  isStudent={isStudent}
+                  onSelect={onSelectSeat}
+                  onDelete={onDeleteSeat}
+                  zoneColor={zoneColor}
+                />
+              ))}
+              {row.left.length < 2 &&
+                Array.from({ length: 2 - row.left.length }).map((_, i) => (
+                  <div key={i} className="w-20 sm:w-24 h-24 sm:h-28" />
+                ))}
             </div>
 
-            <div className="flex gap-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="pulse-button-secondary flex-1 py-2.5"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting || !selectedScheduleId}
-                className="pulse-button-primary flex-1 py-2.5"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <BookOpen className="h-4 w-4" />
-                )}
-                {isSubmitting ? "Confirming..." : "Confirm Booking"}
-              </button>
+            {/* Central Walking Aisle */}
+            <div className="flex-1 flex flex-col items-center justify-center py-2 min-w-[50px] sm:min-w-[70px] select-none">
+              <div className="h-full w-px border-r-2 border-dashed border-slate-300 my-1" />
+              <span className="rounded-full bg-slate-200/90 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-slate-500 uppercase">
+                Row {row.rowNumber}
+              </span>
+              <div className="h-full w-px border-r-2 border-dashed border-slate-300 my-1" />
             </div>
-          </form>
-        )}
+
+            {/* Right Pair */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {row.right.map((seat) => (
+                <CoachSeat
+                  key={seat.id}
+                  seat={seat}
+                  isSelected={selectedSeatId === seat.id}
+                  canManage={canManage}
+                  isStudent={isStudent}
+                  onSelect={onSelectSeat}
+                  onDelete={onDeleteSeat}
+                  zoneColor={zoneColor}
+                />
+              ))}
+              {row.right.length < 2 &&
+                Array.from({ length: 2 - row.right.length }).map((_, i) => (
+                  <div key={i} className="w-20 sm:w-24 h-24 sm:h-28" />
+                ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Coach Bottom Header (Rear Area) */}
+      <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-3 flex items-center justify-between text-xs font-bold text-slate-500 shadow-2xs">
+        <span>🚪 Rear Emergency Exit</span>
+        <span className="text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">
+          Study Hall Cabin End
+        </span>
+        <span>☕ Quiet Break Zone</span>
       </div>
     </div>
-  </div>
-);
+  );
 }
 
 // ─── Main Zone Detail View ─────────────────────────────────────────────────────
@@ -383,24 +398,34 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
   const { user } = useAuth();
   const [zone, setZone] = useState<Zone | null>(null);
   const [seats, setSeats] = useState<Seat[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedSlot, setSelectedSlot] = useState<SlotType>("morning");
+
   const [isLoadingZone, setIsLoadingZone] = useState(true);
+  const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
   const [isLoadingSeats, setIsLoadingSeats] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newSeatNumber, setNewSeatNumber] = useState("");
-  const [isAddingSeat, setIsAddingSeat] = useState(false);
-  const [addSeatError, setAddSeatError] = useState<string | null>(null);
-  const [showInactive, setShowInactive] = useState(false);
 
-  // Modals state
-  const [selectedSeatForBooking, setSelectedSeatForBooking] = useState<Seat | null>(null);
+  // Seat Selection & Booking State
+  const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
+  const [isReserving, setIsReserving] = useState(false);
+  const [reservationError, setReservationError] = useState<string | null>(null);
   const [completedBookingData, setCompletedBookingData] = useState<{
     booking: Booking;
     qrCodeImage: string;
   } | null>(null);
 
+  // Admin Seat Management State
+  const [newSeatNumber, setNewSeatNumber] = useState("");
+  const [isAddingSeat, setIsAddingSeat] = useState(false);
+  const [addSeatError, setAddSeatError] = useState<string | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
+
   const canManage = user?.role === "admin" || user?.role === "librarian" || user?.role === "super_admin";
   const isStudent = user?.role === "student";
 
+  // ── 1. Fetch Zone ─────────────────────────────────────────────────────────
   const fetchZone = useCallback(async () => {
     setIsLoadingZone(true);
     try {
@@ -414,10 +439,66 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
     }
   }, [zoneId]);
 
+  // ── 2. Fetch Schedules ────────────────────────────────────────────────────
+  const fetchSchedules = useCallback(async () => {
+    setIsLoadingSchedules(true);
+    try {
+      const res = await bookingService.getSchedules();
+      const rawList = res.data ?? [];
+      const todayStr = new Date().toISOString().split("T")[0];
+      const validSchedules = rawList.filter((s) => {
+        const sDateStr = new Date(s.date).toISOString().split("T")[0];
+        return sDateStr >= todayStr;
+      });
+      setSchedules(validSchedules);
+
+      // Default date & slot selection
+      if (validSchedules.length > 0) {
+        const firstDateStr = new Date(validSchedules[0].date).toISOString().split("T")[0];
+        setSelectedDate(firstDateStr);
+        setSelectedSlot(validSchedules[0].slot);
+      }
+    } catch (err: unknown) {
+      console.error("Failed to load schedules:", err);
+    } finally {
+      setIsLoadingSchedules(false);
+    }
+  }, []);
+
+  // Distinct dates available in schedules
+  const availableDates = useMemo(() => {
+    const map = new Map<string, Date>();
+    schedules.forEach((sch) => {
+      const dateStr = new Date(sch.date).toISOString().split("T")[0];
+      if (!map.has(dateStr)) {
+        map.set(dateStr, new Date(sch.date));
+      }
+    });
+    return Array.from(map.entries()).map(([dateStr, dateObj]) => ({
+      dateStr,
+      dateObj,
+    }));
+  }, [schedules]);
+
+  // Find active scheduleId based on selected date & slot
+  const activeSchedule = useMemo(() => {
+    if (!selectedDate) return null;
+    return schedules.find((s) => {
+      const sDateStr = new Date(s.date).toISOString().split("T")[0];
+      return sDateStr === selectedDate && s.slot === selectedSlot;
+    });
+  }, [schedules, selectedDate, selectedSlot]);
+
+  // ── 3. Fetch Seats with Schedule-Aware Booking Status ─────────────────────
   const fetchSeats = useCallback(async () => {
     setIsLoadingSeats(true);
     try {
-      const res = await zoneService.getSeatsByZone(zoneId, canManage && showInactive);
+      const scheduleId = activeSchedule?.id;
+      const res = await zoneService.getSeatsByZone(
+        zoneId,
+        canManage && showInactive,
+        scheduleId
+      );
       setSeats(res.data ?? []);
     } catch (err: unknown) {
       const apiErr = err as ApiError;
@@ -425,11 +506,54 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
     } finally {
       setIsLoadingSeats(false);
     }
-  }, [zoneId, canManage, showInactive]);
+  }, [zoneId, canManage, showInactive, activeSchedule?.id]);
 
-  useEffect(() => { fetchZone(); }, [fetchZone]);
-  useEffect(() => { fetchSeats(); }, [fetchSeats]);
+  useEffect(() => {
+    fetchZone();
+    fetchSchedules();
+  }, [fetchZone, fetchSchedules]);
 
+  useEffect(() => {
+    if (zoneId) {
+      fetchSeats();
+    }
+  }, [fetchSeats, zoneId, activeSchedule?.id, showInactive]);
+
+  // Clear selected seat if date/slot changes
+  useEffect(() => {
+    setSelectedSeat(null);
+    setReservationError(null);
+  }, [selectedDate, selectedSlot]);
+
+  // ── Seat Reservation Action ───────────────────────────────────────────────
+  const handleReserveSeat = async () => {
+    if (!selectedSeat || !activeSchedule) return;
+    setIsReserving(true);
+    setReservationError(null);
+
+    try {
+      const res = await bookingService.create({
+        seatId: selectedSeat.id,
+        scheduleId: activeSchedule.id,
+      });
+
+      if (res.data?.booking && res.data?.qrCodeImage) {
+        setCompletedBookingData({
+          booking: res.data.booking,
+          qrCodeImage: res.data.qrCodeImage,
+        });
+      }
+      setSelectedSeat(null);
+      fetchSeats();
+    } catch (err: unknown) {
+      const apiErr = err as ApiError;
+      setReservationError(apiErr?.message ?? "Failed to reserve seat.");
+    } finally {
+      setIsReserving(false);
+    }
+  };
+
+  // ── Admin Handlers ────────────────────────────────────────────────────────
   const handleAddSeat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSeatNumber.trim()) return;
@@ -455,22 +579,17 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
     try {
       await seatService.delete(id);
       setSeats((prev) => prev.filter((s) => s.id !== id));
+      if (selectedSeat?.id === id) setSelectedSeat(null);
     } catch (err: unknown) {
       const apiErr = err as ApiError;
       alert(apiErr?.message ?? "Failed to remove seat.");
     }
   };
 
-  const handleBookingSuccess = (booking: Booking, qrCodeImage: string) => {
-    setSelectedSeatForBooking(null);
-    setCompletedBookingData({ booking, qrCodeImage });
-    fetchSeats();
-  };
-
-  const freeSeats = seats.filter((s) => s.isActive && !s.isOccupied).length;
-  const occupiedSeats = seats.filter((s) => s.isOccupied).length;
-  const totalSeats = seats.length;
-  const occupancyPercent = totalSeats > 0 ? Math.round((occupiedSeats / totalSeats) * 100) : 0;
+  // ── Counts & Metrics ──────────────────────────────────────────────────────
+  const availableSeatsCount = seats.filter((s) => s.isActive && !s.isBooked && !s.isOccupied).length;
+  const bookedSeatsCount = seats.filter((s) => s.isActive && (s.isBooked || s.isOccupied)).length;
+  const totalSeatsCount = seats.length;
   const zoneColor = zone?.color ?? "#0f172a";
 
   if (isLoadingZone) {
@@ -494,44 +613,49 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] text-slate-900">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-6 pb-24 md:pb-8 space-y-6">
+    <div className="min-h-screen bg-[#f4f5f7] text-slate-900 pb-28 md:pb-16">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-6 space-y-6">
 
-        {/* Header */}
+        {/* ── Header ── */}
         <div>
-          <Link href="/zones" className="mb-3 inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">
+          <Link
+            href="/zones"
+            className="mb-3 inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
+          >
             <ChevronLeft className="h-4 w-4" />
             Back to Zones
           </Link>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              {/* <div
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-                style={{ backgroundColor: `${zoneColor}12`, border: `1.5px solid ${zoneColor}30` }}
-              >
-                <MapPin className="h-5 w-5" style={{ color: zoneColor }} />
-              </div> */}
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">{zone.name}</h1>
-                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${zone.isActive ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-slate-100 border-slate-200 text-slate-500"
-                    }`}>
-                    {zone.isActive ? "Active" : "Inactive"}
-                  </span>
-                </div>
-                {zone.description && (
-                  <p className="mt-0.5 text-xs sm:text-sm text-slate-500">{zone.description}</p>
-                )}
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                  {zone.name}
+                </h1>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
+                    zone.isActive
+                      ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+                      : "bg-slate-100 border-slate-200 text-slate-500"
+                  }`}
+                >
+                  {zone.isActive ? "Active" : "Inactive"}
+                </span>
               </div>
+              {zone.description && (
+                <p className="mt-0.5 text-xs sm:text-sm text-slate-500 font-medium">{zone.description}</p>
+              )}
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <button
-                onClick={() => { fetchZone(); fetchSeats(); }}
+                onClick={() => {
+                  fetchZone();
+                  fetchSeats();
+                }}
                 disabled={isLoadingSeats}
                 className="pulse-button-secondary py-2.5 px-3 text-xs"
-                title="Refresh"
+                title="Refresh Seats"
               >
                 <RefreshCw className={`h-4 w-4 ${isLoadingSeats ? "animate-spin" : ""}`} />
               </button>
@@ -539,59 +663,193 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
           </div>
         </div>
 
-        {/* Summary Stats Strip */}
-        <div className="pulse-card flex flex-wrap items-center gap-x-8 gap-y-3 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-100">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            </div>
+        {/* ── STEP 1: Schedule Selection (Date & Time Period) ── */}
+        <div className="pulse-card p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Available</p>
-              <p className="text-lg font-extrabold text-emerald-600 leading-tight">{freeSeats}</p>
+              <span className="kicker-label">STEP 1</span>
+              <h2 className="text-sm sm:text-base font-extrabold text-slate-900">
+                Choose Date & Time Slot
+              </h2>
             </div>
+            <span className="text-xs text-slate-500 font-semibold">
+              Select a session to view real-time seat availability
+            </span>
           </div>
-          <div className="h-8 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 border border-amber-100">
-              <Armchair className="h-4 w-4 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Occupied</p>
-              <p className="text-lg font-extrabold text-amber-600 leading-tight">{occupiedSeats}</p>
-            </div>
-          </div>
-          <div className="h-8 w-px bg-slate-200 hidden sm:block" />
+
+          {/* Date Selector Tabs */}
           <div>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Seats</p>
-            <p className="text-lg font-extrabold text-slate-900 leading-tight">{totalSeats}</p>
+            <label className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 block">
+              Reservation Date
+            </label>
+            {isLoadingSchedules ? (
+              <div className="h-10 w-full animate-pulse rounded-xl bg-slate-200" />
+            ) : availableDates.length === 0 ? (
+              <p className="text-xs text-rose-500 font-semibold">No schedule dates available.</p>
+            ) : (
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                {availableDates.map(({ dateStr, dateObj }) => {
+                  const isSelected = selectedDate === dateStr;
+                  const isToday = new Date().toISOString().split("T")[0] === dateStr;
+                  const dayName = dateObj.toLocaleDateString(undefined, { weekday: "short" });
+                  const formatted = dateObj.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+                  return (
+                    <button
+                      key={dateStr}
+                      type="button"
+                      onClick={() => setSelectedDate(dateStr)}
+                      className={`flex flex-col items-center justify-center px-4 py-2.5 rounded-2xl border transition-all shrink-0 min-w-[90px] ${
+                        isSelected
+                          ? "bg-slate-900 border-slate-900 text-white shadow-md scale-102"
+                          : "bg-slate-50/70 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-white"
+                      }`}
+                    >
+                      <span className={`text-[10px] font-extrabold uppercase ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
+                        {isToday ? "Today" : dayName}
+                      </span>
+                      <span className="text-xs font-black mt-0.5">{formatted}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <div className="h-8 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Occupancy</p>
-              <p className="text-lg font-extrabold text-slate-900 leading-tight">{occupancyPercent}%</p>
-            </div>
-            <div className="w-20 h-2 rounded-full bg-slate-100 overflow-hidden hidden sm:block">
-              <div
-                className="h-full rounded-full transition-all duration-700 ease-out"
-                style={{
-                  width: `${occupancyPercent}%`,
-                  backgroundColor: occupancyPercent >= 85 ? "#f59e0b" : occupancyPercent >= 50 ? "#6366f1" : "#10b981",
-                }}
-              />
+
+          {/* Slot Selector Pills */}
+          <div>
+            <label className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 block">
+              Time Period
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {(["morning", "noon", "afternoon", "evening"] as SlotType[]).map((slotKey) => {
+                const isSelected = selectedSlot === slotKey;
+                const meta = SLOT_META[slotKey];
+
+                return (
+                  <button
+                    key={slotKey}
+                    type="button"
+                    onClick={() => setSelectedSlot(slotKey)}
+                    className={`flex flex-col p-3 rounded-2xl border text-left transition-all ${
+                      isSelected
+                        ? "bg-slate-900 border-slate-900 text-white shadow-md ring-2 ring-slate-900/10"
+                        : "bg-slate-50/70 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-base">{meta.icon}</span>
+                      <span
+                        className={`text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded-full ${
+                          isSelected
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-200/80 text-slate-600"
+                        }`}
+                      >
+                        {meta.label}
+                      </span>
+                    </div>
+                    <span className={`text-[11px] font-semibold ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
+                      {meta.time}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* Zone Rules & Useful Information */}
+        {/* ── STEP 2: Coach Seating Visualization ── */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+            <div>
+              <span className="kicker-label">STEP 2</span>
+              <h2 className="text-lg font-extrabold text-slate-900">
+                Interactive Seating Plan
+              </h2>
+            </div>
 
+            {/* Visual Legend */}
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
+              <div className="flex items-center gap-1.5">
+                <span className="h-3 w-3 rounded-md bg-white border border-slate-300 shadow-2xs" />
+                <span className="text-slate-600">Available</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="h-3 w-3 rounded-md bg-rose-100 border border-rose-300" />
+                <span className="text-slate-600">Booked</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="h-3 w-3 rounded-md bg-slate-900 border border-slate-900" />
+                <span className="text-slate-600">Selected</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="h-3 w-3 rounded-md bg-violet-100 border border-violet-400" />
+                <span className="text-slate-600">Your Booking</span>
+              </div>
+              {canManage && (
+                <div className="flex items-center gap-1.5">
+                  <span className="h-3 w-3 rounded-md bg-slate-200 border border-slate-300" />
+                  <span className="text-slate-400">Inactive</span>
+                </div>
+              )}
+            </div>
+          </div>
 
-        {/* Add Seat Form (admin/librarian) */}
+          {/* Quick Metrics Strip */}
+          <div className="flex items-center justify-between bg-white px-5 py-3 rounded-2xl border border-slate-200 shadow-2xs text-xs font-bold text-slate-600">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>
+                <strong className="text-slate-900">{availableSeatsCount}</strong> of{" "}
+                <strong className="text-slate-900">{totalSeatsCount}</strong> seats available for{" "}
+                <span className="capitalize font-black text-slate-900">{selectedSlot}</span> slot
+              </span>
+            </div>
+            {canManage && (
+              <button
+                onClick={() => setShowInactive(!showInactive)}
+                className="pulse-button-secondary py-1 px-2.5 text-[11px]"
+              >
+                {showInactive ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                <span>{showInactive ? "Hide" : "Show"} Inactive</span>
+              </button>
+            )}
+          </div>
+
+          {/* Seating Plan Area */}
+          {isLoadingSeats ? (
+            <div className="flex flex-col items-center justify-center py-24 pulse-card gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-slate-900" />
+              <p className="text-xs text-slate-400 font-semibold">Loading coach seating map…</p>
+            </div>
+          ) : seats.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 pulse-card py-20 text-center">
+              <Armchair className="h-10 w-10 text-slate-300" />
+              <p className="text-sm text-slate-600 font-bold">No seats found in this study zone.</p>
+              {canManage && (
+                <p className="text-xs text-slate-400">Use the admin form below to add seats.</p>
+              )}
+            </div>
+          ) : (
+            <CoachLayout
+              seats={seats}
+              selectedSeatId={selectedSeat?.id ?? null}
+              canManage={canManage}
+              isStudent={isStudent}
+              onSelectSeat={setSelectedSeat}
+              onDeleteSeat={handleDeleteSeat}
+              zoneColor={zoneColor}
+            />
+          )}
+        </div>
+
+        {/* ── Admin: Add Seat Form ── */}
         {canManage && (
-          <div className="pulse-card p-5">
-            <span className="kicker-label mb-3 block">ADD NEW SEAT</span>
+          <div className="pulse-card p-5 space-y-3">
+            <span className="kicker-label block">ADMINISTRATION &rsaquo; ADD NEW SEAT</span>
             {addSeatError && (
-              <div className="mb-3 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 font-medium">
+              <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 font-medium">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 {addSeatError}
               </div>
@@ -601,7 +859,7 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
                 type="text"
                 value={newSeatNumber}
                 onChange={(e) => setNewSeatNumber(e.target.value)}
-                placeholder="e.g. A-101"
+                placeholder="e.g. A-11, B-01"
                 className="flex-1 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium"
               />
               <button
@@ -615,172 +873,119 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
             </form>
           </div>
         )}
-        {/* Check-in Notice */}
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <CircleAlert className="h-4 w-4 text-amber-600 shrink-0" />
-            <span className="text-xs font-bold text-amber-800">Check-in Reminder</span>
-          </div>
-          <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
-            After booking a seat, scan your QR pass at the library entrance within <strong>15 minutes</strong> of your slot start time. Failure to check in will mark your pass as a no-show.
-          </p>
-        </div>
-        {/* Seat List */}
-        <div className="space-y-2">
-          {/* List header */}
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <span className="kicker-label">SEAT LIST</span>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
-                {totalSeats} total
-              </span>
+
+        {/* ── Zone Guidelines & Regulations ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-3 pulse-card p-5 space-y-4">
+            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
+                <ShieldCheck className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">Rules & Regulations</h2>
+                <p className="text-[11px] text-slate-400 font-medium">Zone etiquette and guidelines</p>
+              </div>
             </div>
-            {canManage && (
-              <button
-                onClick={() => setShowInactive(!showInactive)}
-                className="pulse-button-secondary py-1.5 px-3 text-xs"
-              >
-                {showInactive ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                <span>{showInactive ? "Hide" : "Show"} Inactive</span>
-              </button>
+
+            {zone.rules && zone.rules.length > 0 ? (
+              <ul className="space-y-2">
+                {zone.rules.map((rule, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-xs font-medium text-slate-600">
+                    <span
+                      className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-extrabold text-white"
+                      style={{ backgroundColor: zoneColor }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span>{rule}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-slate-400 font-medium">Standard library quiet study rules apply.</p>
             )}
           </div>
 
-          {/* Column headers (desktop) */}
-          {!isLoadingSeats && seats.length > 0 && (
-            <div className="hidden sm:flex items-center px-5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              <span className="w-9 shrink-0 mr-4" />
-              <span className="flex-1">Seat</span>
-              <span className="w-24 text-right mr-2">Action</span>
-            </div>
-          )}
-
-          {isLoadingSeats ? (
-            <div className="flex justify-center py-16">
-              <Loader2 className="h-6 w-6 animate-spin text-slate-900" />
-            </div>
-          ) : seats.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 pulse-card py-16 text-center">
-              <Armchair className="h-10 w-10 text-slate-300" />
-              <p className="text-sm text-slate-500 font-medium">No seats configured in this zone yet.</p>
-              {canManage && (
-                <p className="text-xs text-slate-400">Use the form above to add seats.</p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {seats.map((seat) => (
-                <SeatRow
-                  key={seat.id}
-                  seat={seat}
-                  canManage={canManage}
-                  isStudent={isStudent}
-                  onDelete={handleDeleteSeat}
-                  onBook={setSelectedSeatForBooking}
-                  zoneColor={zoneColor}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-
-        {/* Rules & Regulations — larger column */}
-        <div className="lg:col-span-3 pulse-card p-5 space-y-4">
-          <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
-              <ShieldCheck className="h-4 w-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-slate-900">Rules & Regulations</h2>
-              <p className="text-[11px] text-slate-400 font-medium">Please adhere to these while using this zone</p>
-            </div>
-          </div>
-
-          {zone.rules && zone.rules.length > 0 ? (
-            <ul className="space-y-2">
-              {zone.rules.map((rule, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-sm">
-                  <span
-                    className="mt-1.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[10px] font-extrabold text-white"
-                    style={{ backgroundColor: zoneColor }}
-                  >
-                    {i + 1}
-                  </span>
-                  <span className="text-slate-600 font-medium leading-relaxed">{rule}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <ShieldCheck className="h-8 w-8 text-slate-300" />
-              <p className="text-xs text-slate-400 font-medium">No specific rules configured for this zone yet.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Useful Information — smaller sidebar column */}
-        <div className="lg:col-span-2 space-y-4">
-
-          {/* Zone Info Card */}
-          <div className="pulse-card p-5 space-y-3">
+          <div className="lg:col-span-2 pulse-card p-5 space-y-3">
             <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100">
               <Info className="h-4 w-4 text-slate-400" />
-              <span className="text-sm font-bold text-slate-900">Zone Information</span>
+              <span className="text-sm font-bold text-slate-900">Check-in Reminder</span>
             </div>
-            <div className="space-y-2.5 text-xs font-medium">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Zone Name</span>
-                <span className="text-slate-900 font-bold">{zone.name}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Status</span>
-                <span className={zone.isActive ? "text-emerald-600 font-bold" : "text-slate-500 font-bold"}>                    {zone.isActive ? "Open & Active" : "Currently Closed"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Total Capacity</span>
-                <span className="text-slate-900 font-bold">{totalSeats} seats</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Available Now</span>
-                <span className="text-emerald-600 font-bold">{freeSeats} seats</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Created</span>
-                <span className="text-slate-700">{new Date(zone.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
-              </div>
-            </div>
-          </div>
-
-
-
-          {/* Booking Tip */}
-          <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 space-y-2 mb-20">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-indigo-600 shrink-0" />
-              <span className="text-xs font-bold text-indigo-800">Booking Info</span>
-            </div>
-            <p className="text-[11px] text-indigo-700 font-medium leading-relaxed">
-              Select an available seat below and choose a time slot to reserve it. Your QR pass will be generated instantly for check-in.
+            <p className="text-xs text-slate-500 leading-relaxed font-medium">
+              After confirming your reservation, present your QR pass at the entrance scanner within <strong>15 minutes</strong> of your slot start time to check in.
             </p>
           </div>
-
         </div>
       </div>
-      {/* Book Seat Modal */}
-      {selectedSeatForBooking && zone && (
-        <BookSeatModal
-          seat={selectedSeatForBooking}
-          zoneName={zone.name}
-          onClose={() => setSelectedSeatForBooking(null)}
-          onSuccess={handleBookingSuccess}
-        />
+
+      {/* ── Sticky Reservation Action Bar (Slides in when seat is selected) ── */}
+      {selectedSeat && activeSchedule && (
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:max-w-md z-40 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="pulse-card p-4 shadow-2xl border-2 border-slate-900 bg-white/95 backdrop-blur-md">
+            {reservationError && (
+              <div className="mb-3 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700 font-medium">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{reservationError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white font-mono font-black text-base shadow-sm">
+                  {selectedSeat.seatNumber}
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-slate-900">
+                    Seat {selectedSeat.seatNumber}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 font-semibold">
+                    {new Date(activeSchedule.date).toLocaleDateString(undefined, {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })}{" "}
+                    • <span className="capitalize font-bold text-slate-700">{activeSchedule.slot}</span> Slot
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedSeat(null)}
+                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                title="Cancel Selection"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedSeat(null)}
+                className="pulse-button-secondary py-2.5 px-3 text-xs"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                disabled={isReserving}
+                onClick={handleReserveSeat}
+                className="pulse-button-primary flex-1 py-2.5 text-xs"
+              >
+                {isReserving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                <span>{isReserving ? "Reserving Seat..." : "Confirm Reservation"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Success QR Pass Modal */}
+      {/* ── Success QR Pass Modal ── */}
       {completedBookingData && zone && (
         <BookingSuccessModal
           booking={completedBookingData.booking}

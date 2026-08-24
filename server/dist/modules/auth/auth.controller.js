@@ -44,6 +44,20 @@ const refresh = (0, CatchAsync_1.default)(async (req, res) => {
         httpStatusCode: http_status_1.default.OK,
         success: true,
         message: "Token refreshed successfully",
+        data: { user: result.user },
+    });
+});
+const getMe = (0, CatchAsync_1.default)(async (req, res) => {
+    const userId = req.user?.userId;
+    if (!userId) {
+        throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, "Unauthorized");
+    }
+    const user = await auth_service_1.AuthService.getMe(userId);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "User profile fetched successfully",
+        data: { user },
     });
 });
 const logout = (0, CatchAsync_1.default)(async (req, res) => {
@@ -60,5 +74,6 @@ exports.AuthController = {
     register,
     login,
     refresh,
+    getMe,
     logout,
 };

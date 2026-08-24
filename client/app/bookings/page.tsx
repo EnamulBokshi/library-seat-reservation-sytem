@@ -1,4 +1,5 @@
 import { MyBookingsView } from "@/components/pages/bookings/my-bookings-view";
+import { AuthGuard } from "@/components/shared/auth-guard";
 
 export const metadata = {
   title: "My Bookings | Smart Library",
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function BookingsPage() {
-  return <MyBookingsView />;
+  return (
+    <AuthGuard allowedRoles={["student"]}>
+      <MyBookingsView />
+    </AuthGuard>
+  );
 }

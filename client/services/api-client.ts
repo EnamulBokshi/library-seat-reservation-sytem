@@ -59,6 +59,9 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError: unknown) {
         processQueue(refreshError);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
