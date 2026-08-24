@@ -33,14 +33,21 @@ const getAllBookings = (0, CatchAsync_1.default)(async (req, res) => {
         status: req.query.status,
         userId: req.query.userId,
         date: req.query.date,
+        slot: req.query.slot,
         zoneId: req.query.zoneId,
+        search: req.query.search,
+        page: req.query.page,
+        limit: req.query.limit,
+        sortBy: req.query.sortBy,
+        sortOrder: req.query.sortOrder,
     };
     const result = await booking_service_1.BookingService.getAllBookings(filters);
     (0, SendResponse_1.sendResponse)(res, {
         httpStatusCode: http_status_1.default.OK,
         success: true,
         message: "All bookings retrieved successfully",
-        data: result,
+        data: result.bookings,
+        meta: result.meta,
     });
 });
 const cancelBooking = (0, CatchAsync_1.default)(async (req, res) => {

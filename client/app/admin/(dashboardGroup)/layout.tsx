@@ -14,22 +14,22 @@ export default function AdminDashboardLayout({
 
   return (
     <AuthGuard allowedRoles={["admin", "librarian", "super_admin"]}>
-      <div className="flex min-h-screen bg-[#f4f5f7] text-slate-900 selection:bg-slate-900 selection:text-white font-sans">
-        {/* ── Vertical Left Sidebar ── */}
+      <div className="flex h-screen overflow-hidden bg-[#f4f5f7] text-slate-900 selection:bg-slate-900 selection:text-white font-sans">
+        {/* ── Fixed / Stationary Left Sidebar ── */}
         <AdminSidebar
           isOpen={isMobileSidebarOpen}
           onClose={() => setIsMobileSidebarOpen(false)}
         />
 
-        {/* ── Main Layout Column ── */}
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {/* ── Independently Scrollable Main Layout Column ── */}
+        <div className="flex min-w-0 flex-1 flex-col h-screen overflow-y-auto">
           {/* Top Bar with Breadcrumbs & Live Time */}
           <AdminTopbar
             onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
           />
 
           {/* Main Content Viewport */}
-          <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
+          <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
             <div className="mx-auto max-w-7xl">
               {children}
             </div>

@@ -3,7 +3,7 @@ import status from "http-status";
 import catchAsync from "../../helpers/CatchAsync";
 import { sendResponse } from "../../helpers/SendResponse";
 import { BookingService } from "./booking.service";
-import { BookingStatus } from "../../generated/enums";
+import { BookingStatus, SlotType } from "../../generated/enums";
 
 const createBooking = catchAsync(async (req: Request, res: Response) => {
     const userId = req.user.userId;
@@ -34,7 +34,13 @@ const getAllBookings = catchAsync(async (req: Request, res: Response) => {
         status: req.query.status as BookingStatus | undefined,
         userId: req.query.userId as string | undefined,
         date: req.query.date as string | undefined,
+        slot: req.query.slot as SlotType | undefined,
         zoneId: req.query.zoneId as string | undefined,
+        search: req.query.search as string | undefined,
+        page: req.query.page as string | undefined,
+        limit: req.query.limit as string | undefined,
+        sortBy: req.query.sortBy as string | undefined,
+        sortOrder: req.query.sortOrder as "asc" | "desc" | undefined,
     };
 
     const result = await BookingService.getAllBookings(filters);
@@ -43,7 +49,8 @@ const getAllBookings = catchAsync(async (req: Request, res: Response) => {
         httpStatusCode: status.OK,
         success: true,
         message: "All bookings retrieved successfully",
-        data: result,
+        data: result.bookings,
+        meta: result.meta,
     });
 });
 

@@ -88,7 +88,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
       {/* ── Sidebar Container ── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200/80 bg-[#f8f9fa]/95 backdrop-blur-xl p-4 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-72 flex-col justify-between border-r border-slate-200/80 bg-[#f8f9fa]/95 backdrop-blur-xl p-4 transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:translate-x-0 shrink-0 overflow-y-auto ${
           isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:shadow-none"
         }`}
       >

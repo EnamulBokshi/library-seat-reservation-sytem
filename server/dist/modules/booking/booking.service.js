@@ -165,7 +165,7 @@ const getMyBookings = async (userId) => {
     return mappedBookings;
 };
 /**
- * List all bookings for librarians / admins with query filters.
+ * List all bookings for librarians / admins with server-side pagination & query filters.
  */
 const getAllBookings = async (filters) => {
     const whereCondition = {};
@@ -175,39 +175,74 @@ const getAllBookings = async (filters) => {
     if (filters.userId) {
         whereCondition.userId = filters.userId;
     }
-    if (filters.date || filters.zoneId) {
-        whereCondition.schedule = {};
+    if (filters.date || filters.slot) {
+        whereCondition.schedule = whereCondition.schedule || {};
         if (filters.date) {
-            whereCondition.schedule.date = new Date(filters.date);
+            whereCondition.schedule.date = new Date(`${filters.date}T00:00:00.000Z`);
+        }
+        if (filters.slot) {
+            whereCondition.schedule.slot = filters.slot;
         }
     }
     if (filters.zoneId) {
         whereCondition.seat = {
+            ...(whereCondition.seat || {}),
             zoneId: filters.zoneId,
         };
     }
-    const bookings = await prisma_1.default.booking.findMany({
-        where: whereCondition,
-        include: {
-            user: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    studentId: true,
+    if (filters.search && filters.search.trim() !== "") {
+        const query = filters.search.trim();
+        whereCondition.OR = [
+            { user: { name: { contains: query, mode: "insensitive" } } },
+            { user: { email: { contains: query, mode: "insensitive" } } },
+            { user: { studentId: { contains: query, mode: "insensitive" } } },
+            { seat: { seatNumber: { contains: query, mode: "insensitive" } } },
+            { seat: { zone: { name: { contains: query, mode: "insensitive" } } } },
+        ];
+    }
+    const page = Math.max(1, Number(filters.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 10));
+    const skip = (page - 1) * limit;
+    const sortBy = filters.sortBy || "bookedAt";
+    const sortOrder = filters.sortOrder === "asc" ? "asc" : "desc";
+    const orderBy = {};
+    if (sortBy === "date") {
+        orderBy.schedule = { date: sortOrder };
+    }
+    else if (sortBy === "seatNumber") {
+        orderBy.seat = { seatNumber: sortOrder };
+    }
+    else if (sortBy === "studentName") {
+        orderBy.user = { name: sortOrder };
+    }
+    else {
+        orderBy[sortBy] = sortOrder;
+    }
+    const [total, bookings] = await Promise.all([
+        prisma_1.default.booking.count({ where: whereCondition }),
+        prisma_1.default.booking.findMany({
+            where: whereCondition,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        studentId: true,
+                    },
                 },
-            },
-            seat: {
-                include: {
-                    zone: true,
+                seat: {
+                    include: {
+                        zone: true,
+                    },
                 },
+                schedule: true,
             },
-            schedule: true,
-        },
-        orderBy: {
-            bookedAt: "desc",
-        },
-    });
+            orderBy,
+            skip,
+            take: limit,
+        }),
+    ]);
     const mappedBookings = await Promise.all(bookings.map(async (b) => {
         let qrCodeImage = null;
         try {
@@ -221,7 +256,16 @@ const getAllBookings = async (filters) => {
             qrCodeImage,
         };
     }));
-    return mappedBookings;
+    const totalPages = Math.ceil(total / limit);
+    return {
+        bookings: mappedBookings,
+        meta: {
+            total,
+            page,
+            limit,
+            totalPages,
+        },
+    };
 };
 /**
  * Get single booking by ID.

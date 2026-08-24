@@ -253,10 +253,16 @@ export interface CreateBookingResponseData {
 }
 
 export interface BookingQueryParams {
-  status?: BookingStatus;
+  status?: BookingStatus | "";
   userId?: string;
   date?: string;
+  slot?: SlotType | "";
   zoneId?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 // ─── Check-In ─────────────────────────────────────────────────────────────────
