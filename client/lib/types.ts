@@ -109,6 +109,7 @@ export interface Seat {
     user?: {
       id: string;
       name: string;
+      email?: string | null;
       studentId?: string | null;
     };
   } | null;

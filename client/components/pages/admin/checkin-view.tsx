@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { checkinService } from "@/services/checkin-service";
 import { CheckInResponseData, ApiError } from "@/lib/types";
 import {
@@ -47,8 +48,11 @@ export function CheckInView() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [history, setHistory] = useState<ScanHistoryItem[]>([]);
 
+  const pathname = usePathname();
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const isScanningLockedRef = useRef(false);
+  const isStartingCameraRef = useRef(false);
+  const isMountedRef = useRef(true);
 
   // Play gentle sound feedback
   const playBeep = useCallback(
@@ -86,6 +90,24 @@ export function CheckInView() {
     },
     [soundEnabled]
   );
+
+  // Stop all active MediaStream tracks on the page to immediately shut off camera hardware indicator
+  const stopAllMediaTracks = useCallback(() => {
+    try {
+      const videoElements = document.querySelectorAll("video");
+      videoElements.forEach((video) => {
+        const stream = video.srcObject as MediaStream | null;
+        if (stream) {
+          stream.getTracks().forEach((track) => {
+            track.stop();
+          });
+          video.srcObject = null;
+        }
+      });
+    } catch (e) {
+      console.warn("Error stopping video stream tracks:", e);
+    }
+  }, []);
 
   // Core verification dispatcher
   const verifyToken = useCallback(
@@ -134,30 +156,39 @@ export function CheckInView() {
 
   // Stop camera helper
   const stopCameraScanner = useCallback(async () => {
+    isStartingCameraRef.current = false;
     if (html5QrCodeRef.current) {
       try {
-        if (html5QrCodeRef.current.isScanning) {
-          await html5QrCodeRef.current.stop();
+        const scanner = html5QrCodeRef.current;
+        html5QrCodeRef.current = null;
+        if (scanner.isScanning) {
+          await scanner.stop();
         }
-        await html5QrCodeRef.current.clear();
+        await scanner.clear();
       } catch (err) {
         console.warn("Error stopping scanner:", err);
       }
-      html5QrCodeRef.current = null;
     }
-    setIsCameraActive(false);
-  }, []);
+    stopAllMediaTracks();
+    if (isMountedRef.current) {
+      setIsCameraActive(false);
+    }
+  }, [stopAllMediaTracks]);
 
   // Start camera helper
   const startCameraScanner = useCallback(async () => {
+    if (!isMountedRef.current || document.hidden) return;
     setCameraError(null);
+    isStartingCameraRef.current = true;
 
-    // Make sure previous scanner instance is cleared
+    // Make sure previous scanner instance and video tracks are cleared
     await stopCameraScanner();
 
     try {
       const qrScannerElement = document.getElementById("qr-reader-container");
-      if (!qrScannerElement) return;
+      if (!qrScannerElement || !isMountedRef.current || document.hidden || !isStartingCameraRef.current) {
+        return;
+      }
 
       const html5QrCode = new Html5Qrcode("qr-reader-container", {
         formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
@@ -167,9 +198,14 @@ export function CheckInView() {
 
       // Query available camera devices if not yet populated
       const devices = await Html5Qrcode.getCameras();
+      if (!isMountedRef.current || document.hidden || !isStartingCameraRef.current) {
+        stopCameraScanner();
+        return;
+      }
+
       if (devices && devices.length > 0) {
         setCameras(devices);
-        const cameraToUse = selectedCameraId || devices[devices.length - 1].id; // default to environment/back camera if available
+        const cameraToUse = selectedCameraId || devices[devices.length - 1].id;
 
         await html5QrCode.start(
           cameraToUse,
@@ -187,20 +223,77 @@ export function CheckInView() {
             // Frame scan miss, do nothing
           }
         );
+
+        if (!isMountedRef.current || document.hidden || !isStartingCameraRef.current) {
+          stopCameraScanner();
+          return;
+        }
+
         setIsCameraActive(true);
       } else {
         setCameraError("No camera devices detected on this device.");
       }
     } catch (err) {
       console.error("Camera scanner initialization error:", err);
-      setCameraError(
-        "Could not access camera. Please ensure camera permissions are granted in your browser."
-      );
-      setIsCameraActive(false);
+      stopAllMediaTracks();
+      if (isMountedRef.current) {
+        setCameraError(
+          "Could not access camera. Please ensure camera permissions are granted in your browser."
+        );
+        setIsCameraActive(false);
+      }
+    } finally {
+      isStartingCameraRef.current = false;
     }
-  }, [selectedCameraId, stopCameraScanner, verifyToken]);
+  }, [selectedCameraId, stopCameraScanner, stopAllMediaTracks, verifyToken]);
 
-  // Handle mode switches
+  // Handle component mount/unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      stopCameraScanner();
+    };
+  }, [stopCameraScanner]);
+
+  // Handle route / pathname navigation changes
+  useEffect(() => {
+    return () => {
+      stopCameraScanner();
+    };
+  }, [pathname, stopCameraScanner]);
+
+  // Handle browser tab switching (visibilitychange), window pagehide / unload
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab was switched away - IMMEDIATELY stop camera
+        stopCameraScanner();
+      } else {
+        // Tab is active again - restart camera if in camera mode
+        if (mode === "camera" && isMountedRef.current) {
+          startCameraScanner();
+        }
+      }
+    };
+
+    const handlePageHide = () => {
+      stopCameraScanner();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handlePageHide);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handlePageHide);
+      stopCameraScanner();
+    };
+  }, [mode, startCameraScanner, stopCameraScanner]);
+
+  // Handle mode switches (camera vs manual vs upload)
   useEffect(() => {
     if (mode === "camera") {
       startCameraScanner();
