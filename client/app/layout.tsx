@@ -40,12 +40,6 @@ export default function RootLayout({
           <AuthProvider>
             <Navbar />
             {children}
-
-            <Script
-              src="http://localhost:3000/widget/ora-widget.js"
-              data-ora-key="biz_live_7ac5e44d7bd3c143f7ec8910"
-              strategy="lazyOnload"
-            />
           </AuthProvider>
         </ThemeProvider>
       </body>
