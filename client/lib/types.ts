@@ -323,3 +323,124 @@ export interface DashboardStats {
   studentStats?: StudentDashboardStats | null;
 }
 
+// ─── Books & Borrowing Types ──────────────────────────────────────────────────
+
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  isbn?: string | null;
+  category: string;
+  publisher?: string | null;
+  publicationYear?: number | null;
+  edition?: string | null;
+  description?: string | null;
+  coverImage?: string | null;
+  pdfUrl?: string | null;
+  totalCopies: number;
+  availableCopies: number;
+  block: string;
+  shelfNumber: string;
+  rowNumber?: string | null;
+  callNumber?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  loans?: BookLoan[];
+}
+
+export type LoanStatus = "requested" | "issued" | "returned" | "overdue" | "cancelled" | "rejected";
+
+export interface BookLoan {
+  id: string;
+  bookId: string;
+  userId: string;
+  borrowDate: string;
+  dueDate: string;
+  returnDate?: string | null;
+  renewCount: number;
+  status: LoanStatus;
+  notes?: string | null;
+  approvedById?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  book?: Book;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    studentId?: string | null;
+  };
+}
+
+export interface StudentLoanSummary {
+  quota: {
+    maxBorrowLimit: number;
+    maxRenewalLimit: number;
+    currentlyBorrowed: number;
+    pendingRequests: number;
+    availableQuota: number;
+  };
+  activeLoans: BookLoan[];
+  pendingRequests: BookLoan[];
+  returnedHistory: BookLoan[];
+  allLoans: BookLoan[];
+}
+
+export interface CirculationStats {
+  totalBooks: number;
+  activeLoans: number;
+  pendingRequests: number;
+  overdueLoans: number;
+  totalReturned: number;
+}
+
+export interface BookQueryParams {
+  searchTerm?: string;
+  category?: string;
+  block?: string;
+  shelfNumber?: string;
+  hasPdf?: boolean;
+  inStockOnly?: boolean;
+  showInactive?: boolean;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export interface CreateBookPayload {
+  title: string;
+  author: string;
+  isbn?: string;
+  category?: string;
+  publisher?: string;
+  publicationYear?: number;
+  edition?: string;
+  description?: string;
+  coverImage?: string;
+  pdfUrl?: string;
+  totalCopies?: number;
+  availableCopies?: number;
+  block: string;
+  shelfNumber: string;
+  rowNumber?: string;
+  callNumber?: string;
+}
+
+export interface UpdateBookPayload extends Partial<CreateBookPayload> {
+  isActive?: boolean;
+}
+
+export interface LoanQueryParams {
+  status?: LoanStatus | "active" | "all";
+  userId?: string;
+  bookId?: string;
+  searchTerm?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+

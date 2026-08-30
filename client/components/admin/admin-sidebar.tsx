@@ -16,6 +16,8 @@ import {
   ChevronRight,
   Shield,
   Sparkles,
+  BookOpen,
+  BookMarked,
 } from "lucide-react";
 import { AdminUserMenu } from "./admin-user-menu";
 
@@ -40,8 +42,18 @@ const NAV_TABS: NavTabItem[] = [
     exact: true,
   },
   {
+    href: "/admin/books",
+    label: "Book Inventory",
+    icon: BookOpen,
+  },
+  {
+    href: "/admin/loans",
+    label: "Circulation Desk",
+    icon: BookMarked,
+  },
+  {
     href: "/admin/bookings",
-    label: "All Bookings",
+    label: "Seat Bookings",
     icon: ClipboardList,
   },
   {

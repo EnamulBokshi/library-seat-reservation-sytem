@@ -38,3 +38,15 @@ export const BookingStatus = {
 } as const
 
 export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus]
+
+
+export const LoanStatus = {
+  requested: 'requested',
+  issued: 'issued',
+  returned: 'returned',
+  overdue: 'overdue',
+  cancelled: 'cancelled',
+  rejected: 'rejected'
+} as const
+
+export type LoanStatus = (typeof LoanStatus)[keyof typeof LoanStatus]
