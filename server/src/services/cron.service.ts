@@ -29,9 +29,9 @@ export const getGracePeriodMinutes = async (): Promise<number> => {
 
 /**
  * Dynamic grace period worker:
- * Runs every minute to auto-cancel bookings that miss the check-in grace period window.
+ * Runs every minute to auto-cancel bookings that miss the check-in grace period window and notify students.
  */
-const checkGracePeriodCancellations = async () => {
+export const checkGracePeriodCancellations = async () => {
   try {
     const graceMinutes = await getGracePeriodMinutes();
     const slotConfig = await getActiveSlotConfig();
@@ -40,7 +40,7 @@ const checkGracePeriodCancellations = async () => {
     const todayStr = now.toISOString().split("T")[0];
     const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
 
-    // Fetch all confirmed bookings for today
+    // Fetch all confirmed bookings for today with complete student & seat info
     const confirmedBookings = await prisma.booking.findMany({
       where: {
         status: BookingStatus.confirmed,
@@ -50,10 +50,16 @@ const checkGracePeriodCancellations = async () => {
       },
       include: {
         schedule: true,
+        user: true,
+        seat: {
+          include: {
+            zone: true,
+          },
+        },
       },
     });
 
-    const expiredBookingIds: string[] = [];
+    const expiredBookings: typeof confirmedBookings = [];
 
     for (const booking of confirmedBookings) {
       const slot = booking.schedule.slot as SlotType;
@@ -76,11 +82,13 @@ const checkGracePeriodCancellations = async () => {
       const effectiveCutoff = Math.max(slotStartCutoff, bookedAtCutoff);
 
       if (now.getTime() >= effectiveCutoff) {
-        expiredBookingIds.push(booking.id);
+        expiredBookings.push(booking);
       }
     }
 
-    if (expiredBookingIds.length > 0) {
+    if (expiredBookings.length > 0) {
+      const expiredBookingIds = expiredBookings.map((b) => b.id);
+
       const result = await prisma.booking.updateMany({
         where: {
           id: { in: expiredBookingIds },
@@ -96,10 +104,222 @@ const checkGracePeriodCancellations = async () => {
         console.log(
           `[Cron Scheduler] Grace Period Enforcer: Auto-cancelled ${result.count} unverified reservation(s) (Grace: ${graceMinutes}m).`
         );
+
+        // Dispatch cancellation email to each affected student
+        for (const b of expiredBookings) {
+          if (b.user?.email) {
+            const formattedDate = new Date(b.schedule.date).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            });
+            const slotInfo = slotConfig[b.schedule.slot as SlotType];
+            const timeRange = slotInfo ? `${slotInfo.startTime} – ${slotInfo.endTime}` : "";
+
+            emailService
+              .sendSeatNoShowCancellationEmail({
+                toEmail: b.user.email,
+                studentName: b.user.name,
+                seatNumber: b.seat.seatNumber,
+                zoneName: b.seat.zone.name,
+                dateStr: formattedDate,
+                slotName: b.schedule.slot,
+                timeRange,
+                graceMinutes,
+              })
+              .catch((err) =>
+                console.error(`[Cron Scheduler] Error sending no-show email to ${b.user.email}:`, err)
+              );
+          }
+        }
       }
     }
   } catch (error) {
     console.error("[Cron Scheduler] Error running grace period check:", error);
+  }
+};
+
+/**
+ * Slot ending warning worker:
+ * Runs every minute to dispatch an advance warning email to students 10 minutes before their booked time slot ends.
+ */
+export const checkSlotEndingWarnings = async () => {
+  try {
+    const slotConfig = await getActiveSlotConfig();
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+    const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
+
+    // Fetch active/confirmed bookings for today that haven't received the 10-minute warning email
+    const activeBookings = await prisma.booking.findMany({
+      where: {
+        status: { in: [BookingStatus.checked_in, BookingStatus.confirmed] },
+        slotWarningEmailSent: false,
+        schedule: {
+          date: todayDate,
+        },
+      },
+      include: {
+        schedule: true,
+        user: true,
+        seat: {
+          include: {
+            zone: true,
+          },
+        },
+      },
+    });
+
+    for (const booking of activeBookings) {
+      const slot = booking.schedule.slot as SlotType;
+      const slotInfo = slotConfig[slot];
+      if (!slotInfo || !slotInfo.enabled) continue;
+
+      const endMinutes = parseTimeToMinutes(slotInfo.endTime);
+      const endHour = Math.floor(endMinutes / 60);
+      const endMin = endMinutes % 60;
+
+      const slotEndTime = new Date(now);
+      slotEndTime.setHours(endHour, endMin, 0, 0);
+
+      const diffMs = slotEndTime.getTime() - now.getTime();
+      const minutesUntilEnd = diffMs / (60 * 1000);
+
+      // Trigger if within 10 minutes of slot end (0 < minutesUntilEnd <= 10)
+      if (minutesUntilEnd > 0 && minutesUntilEnd <= 10) {
+        const roundedMin = Math.max(1, Math.ceil(minutesUntilEnd));
+
+        // Mark flag immediately to guarantee single dispatch
+        await prisma.booking.update({
+          where: { id: booking.id },
+          data: { slotWarningEmailSent: true },
+        });
+
+        if (booking.user?.email) {
+          const formattedDate = new Date(booking.schedule.date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          });
+
+          emailService
+            .sendSeatSlotEndingWarningEmail({
+              toEmail: booking.user.email,
+              studentName: booking.user.name,
+              seatNumber: booking.seat.seatNumber,
+              zoneName: booking.seat.zone.name,
+              dateStr: formattedDate,
+              slotName: booking.schedule.slot,
+              slotEndTimeStr: slotInfo.endTime,
+              minutesRemaining: roundedMin,
+            })
+            .catch((err) =>
+              console.error(`[Cron Scheduler] Error sending 10-min warning to ${booking.user.email}:`, err)
+            );
+
+          console.log(
+            `[Cron Scheduler] Dispatched 10-minute warning email to ${booking.user.email} (Seat: ${booking.seat.seatNumber}, Slot: ${booking.schedule.slot}).`
+          );
+        }
+      }
+    }
+  } catch (error) {
+    console.error("[Cron Scheduler] Error running slot ending warning check:", error);
+  }
+};
+
+/**
+ * Dynamic slot expiration & seat release worker:
+ * Runs every minute to auto-complete active sessions and release seats when their booked time slot ends.
+ */
+export const checkSlotExpirationAndRelease = async () => {
+  try {
+    const slotConfig = await getActiveSlotConfig();
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+    const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        status: { in: [BookingStatus.checked_in, BookingStatus.confirmed] },
+        schedule: {
+          date: todayDate,
+        },
+      },
+      include: {
+        schedule: true,
+        seat: true,
+      },
+    });
+
+    const completedBookingIds: string[] = [];
+    const noShowBookingIds: string[] = [];
+    const seatIdsToFree: string[] = [];
+
+    for (const booking of bookings) {
+      const slot = booking.schedule.slot as SlotType;
+      const slotInfo = slotConfig[slot];
+      if (!slotInfo) continue;
+
+      const endMinutes = parseTimeToMinutes(slotInfo.endTime);
+      const endHour = Math.floor(endMinutes / 60);
+      const endMin = endMinutes % 60;
+
+      const slotEndTime = new Date(now);
+      slotEndTime.setHours(endHour, endMin, 0, 0);
+
+      // If slot has ended (now >= slotEndTime)
+      if (now.getTime() >= slotEndTime.getTime()) {
+        if (booking.status === BookingStatus.checked_in) {
+          completedBookingIds.push(booking.id);
+          seatIdsToFree.push(booking.seatId);
+        } else if (booking.status === BookingStatus.confirmed) {
+          noShowBookingIds.push(booking.id);
+          seatIdsToFree.push(booking.seatId);
+        }
+      }
+    }
+
+    if (completedBookingIds.length > 0 || noShowBookingIds.length > 0) {
+      await prisma.$transaction([
+        ...(completedBookingIds.length > 0
+          ? [
+              prisma.booking.updateMany({
+                where: { id: { in: completedBookingIds } },
+                data: {
+                  status: BookingStatus.completed,
+                  checkedOutAt: now,
+                },
+              }),
+            ]
+          : []),
+        ...(noShowBookingIds.length > 0
+          ? [
+              prisma.booking.updateMany({
+                where: { id: { in: noShowBookingIds } },
+                data: {
+                  status: BookingStatus.no_show,
+                  cancelReason: "Auto-cancelled: Time slot expired without check-in",
+                },
+              }),
+            ]
+          : []),
+        ...(seatIdsToFree.length > 0
+          ? [
+              prisma.seat.updateMany({
+                where: { id: { in: seatIdsToFree } },
+                data: { isOccupied: false },
+              }),
+            ]
+          : []),
+      ]);
+
+      console.log(
+        `[Cron Scheduler] Slot Expiration Enforcer: Released ${seatIdsToFree.length} seat(s) (Completed: ${completedBookingIds.length}, No-show: ${noShowBookingIds.length})`
+      );
+    }
+  } catch (error) {
+    console.error("[Cron Scheduler] Error running slot expiration & release worker:", error);
   }
 };
 
@@ -136,12 +356,13 @@ const processSlotCleanup = async (slot: SlotType) => {
       },
       data: {
         status: BookingStatus.no_show,
+        cancelReason: "Auto-cancelled: Time slot expired without check-in",
       },
     });
 
     console.log(`[Cron Scheduler] Marked ${noShowResult.count} bookings as no-show.`);
 
-    // Force checkout for checked_in bookings
+    // Force checkout for checked_in bookings and release seats
     const checkedInBookings = await prisma.booking.findMany({
       where: {
         scheduleId: schedule.id,
@@ -311,14 +532,20 @@ export const initCronJobs = () => {
     );
   });
 
-  // Run circulation check once on startup
+  // Run initial circulation and slot expiration checks once on startup
   checkCirculationRemindersAndFines().catch((err) =>
     console.error("[Cron Scheduler] Initial circulation check failed:", err)
   );
 
-  // 1. Run grace-period check every minute
-  cron.schedule("* * * * *", () => {
-    checkGracePeriodCancellations();
+  checkSlotExpirationAndRelease().catch((err) =>
+    console.error("[Cron Scheduler] Initial slot expiration check failed:", err)
+  );
+
+  // 1. Run 1-minute workers: grace-period cancellations, 10-minute slot warnings, and slot-end seat releases
+  cron.schedule("* * * * *", async () => {
+    await checkGracePeriodCancellations();
+    await checkSlotEndingWarnings();
+    await checkSlotExpirationAndRelease();
   });
 
   // 2. Circulation reminders & overdue fine accumulator: runs every 15 minutes

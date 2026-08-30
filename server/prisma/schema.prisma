@@ -136,6 +136,7 @@ model Booking {
   checkedOutAt DateTime?
   cancelledAt  DateTime?
   cancelReason String?
+  slotWarningEmailSent Boolean @default(false)
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   seat     Seat     @relation(fields: [seatId], references: [id], onDelete: Cascade)

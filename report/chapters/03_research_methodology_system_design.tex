@@ -68,14 +68,16 @@ Table~\ref{tab:frs_matrix} specifies the core functional requirements governing 
 \midrule
 FR-01 & User Authentication & Role-based authentication (Admin, Librarian, Student) with JWT HttpOnly cookies and password hashing. & High \\
 FR-02 & Seat Slot Reservation & Real-time interactive seat grid booking with concurrency protection against double-booking. & High \\
-FR-03 & Dynamic QR Verification & Tokenized QR code check-in/check-out with automatic no-show cancellation after grace periods. & High \\
+FR-03 & Dynamic QR Verification & Tokenized QR code check-in/check-out with automatic 15-minute no-show cancellation and email notification. & High \\
 FR-04 & Physical Book Indexing & Multi-criteria search mapping books to exact coordinates (Floor, Block, Rack, Shelf position). & High \\
 FR-05 & Digital PDF Repository & Uploading, previewing in-browser, and authorized downloading of electronic PDF versions of books. & High \\
 FR-06 & Circulation Issuance & Staff-managed checkout workflow associating specific physical copy barcodes with student accounts. & High \\
 FR-07 & Self-Service Renewal & Online student renewal requests validated against lending limits and approved/rejected by staff. & Medium \\
 FR-08 & Zone \& Seat Management & Administrative creation, color-coding, rule definition, and maintenance toggling for zones and seats. & Medium \\
-FR-09 & Lending Policy Control & Global configuration of loan durations, max borrow limits, grace periods, and overdue penalties. & Medium \\
-FR-10 & Reporting \& Analytics & Statistical analytics covering seat occupancy rates, popular books, and active circulation trends. & Low \\
+FR-09 & Slot Lifecycle Enforcer & 1-minute background cron worker issuing 10-min pre-expiration warnings and auto-releasing seats at slot end. & High \\
+FR-10 & Admin Seat Cancellation & Administrative cancellation with mandatory/custom audit reasons and automated student alert emails. & High \\
+FR-11 & Lending Policy Control & Global configuration of loan durations, max borrow limits, grace periods, and overdue penalties. & Medium \\
+FR-12 & Reporting \& Analytics & Statistical analytics covering seat occupancy rates, popular books, and active circulation trends. & Low \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -139,6 +141,7 @@ The system implements a decoupled, modern three-tier web architecture as depicte
 \subsection{Core Subsystem Modules}
 \begin{enumerate}
     \item \textbf{Seat Reservation Subsystem}: Manages zones, seat grids, slot schedules, real-time availability matrices, and automated status transitions (Confirmed $\rightarrow$ Checked-in $\rightarrow$ Completed / No-Show).
+    \item \textbf{Automated Background Cron \& Notification Engine}: Multi-worker scheduling daemon operating on a 1-minute resolution to enforce 15-minute check-in grace periods, dispatch pre-expiration (10-minute) warning emails, execute slot-end seat release procedures, and notify students upon administrative cancellations.
     \item \textbf{Physical Book Indexing Engine}: Resolves book searches to concrete bookshelf coordinates ($\text{Floor} \rightarrow \text{Block} \rightarrow \text{Rack} \rightarrow \text{Shelf Position}$), displaying spatial navigation cues.
     \item \textbf{Digital Media \& Book Catalog Subsystem}: Houses bibliographic records with cloud-hosted high-resolution cover images managed via Cloudinary CDN and in-memory Multer streams, incorporating automated asset deletion rollbacks on failed transactions, alongside digital PDF document reading and downloads.
     \item \textbf{Circulation \& Renewal Engine}: Manages lending transactions, due dates, renewal request validation, and overdue tracking with complete administrative governance.
@@ -207,6 +210,7 @@ The decomposed Level 1 DFD segregates system operations into discrete functional
     \item \textbf{Process 3.0 (QR Arrival Verification \& Attendance)}: Decrypts QR tokens, matches timestamps against active windows, and transitions booking states.
     \item \textbf{Process 4.0 (Bibliographic Search \& Shelf Coordinate Resolution)}: Queries book records and retrieves multi-tier physical coordinates (Floor, Block, Rack, Shelf).
     \item \textbf{Process 5.0 (Circulation \& Renewal Pipeline)}: Processes checkout loans, tracks due dates, and manages renewal requests.
+    \item \textbf{Process 6.0 (Automated Notification \& Seat Reclamation Engine)}: Evaluates active time windows, dispatches transactional emails for cancellations and expiration warnings, and auto-releases physical seats.
 \end{itemize}
 
 \section{Database Design and Relational Schema (ERD)}
@@ -223,8 +227,8 @@ The database architecture is designed with high normalization (3NF) to eliminate
 \begin{itemize}
     \item \textbf{User}: Stores identity attributes, hashed credentials, and role enumerations (\texttt{admin}, \texttt{librarian}, \texttt{student}).
     \item \textbf{Zone \& Seat}: Defines physical study zones with color tags, rules, and individual seats uniquely constrained by \texttt{[zoneId, seatNumber]}.
-    \item \textbf{Schedule \& Booking}: Manages discrete daily time slots (\texttt{morning}, \texttt{noon}, \texttt{afternoon}, \texttt{evening}) and seat reservations with composite unique key \texttt{[seatId, scheduleId]} to prevent double-booking.
+    \item \textbf{Schedule \& Booking}: Manages discrete daily time slots (\texttt{morning}, \texttt{noon}, \texttt{afternoon}, \texttt{evening}) and seat reservations with composite unique key \texttt{[seatId, scheduleId]} to prevent double-booking. Tracks reservation lifecycles via \texttt{status}, \texttt{qrToken}, \texttt{bookedAt}, \texttt{checkedInAt}, \texttt{checkedOutAt}, \texttt{cancelledAt}, \texttt{cancelReason}, and \texttt{slotWarningEmailSent}.
     \item \textbf{Book \& Category}: Houses bibliographic metadata (ISBN, title, author, edition, description, cover image URL, PDF URL) linked to specific thematic categories.
     \item \textbf{ShelfLocation \& BookCopy}: Maps individual physical copies (identified by unique barcodes) to spatial coordinates: \texttt{floor}, \texttt{blockNumber}, \texttt{rackNumber}, and \texttt{shelfPosition}.
-    \item \textbf{BorrowRecord \& BorrowRenewal}: Tracks lending lifecycles, due dates, return timestamps, renewal counters, and staff approval audit trails.
+    \item \textbf{BookLoan}: Tracks lending lifecycles, due dates, return timestamps, renewal counters, overdue fine statuses, payment methods, and automated email reminder tracking flags (\texttt{warningEmailSent}, \texttt{overdueEmailSent}).
 \end{itemize}

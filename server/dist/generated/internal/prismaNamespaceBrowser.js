@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SettingScalarFieldEnum = exports.BookingScalarFieldEnum = exports.ScheduleScalarFieldEnum = exports.SeatScalarFieldEnum = exports.ZoneScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
+exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.BookLoanScalarFieldEnum = exports.BookScalarFieldEnum = exports.SettingScalarFieldEnum = exports.BookingScalarFieldEnum = exports.ScheduleScalarFieldEnum = exports.SeatScalarFieldEnum = exports.ZoneScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/index-browser"));
 exports.Decimal = runtime.Decimal;
 exports.NullTypes = {
@@ -80,7 +80,9 @@ exports.ModelName = {
     Seat: 'Seat',
     Schedule: 'Schedule',
     Booking: 'Booking',
-    Setting: 'Setting'
+    Setting: 'Setting',
+    Book: 'Book',
+    BookLoan: 'BookLoan'
 };
 /*
  * Enums
@@ -140,13 +142,59 @@ exports.BookingScalarFieldEnum = {
     checkedInAt: 'checkedInAt',
     checkedOutAt: 'checkedOutAt',
     cancelledAt: 'cancelledAt',
-    cancelReason: 'cancelReason'
+    cancelReason: 'cancelReason',
+    slotWarningEmailSent: 'slotWarningEmailSent'
 };
 exports.SettingScalarFieldEnum = {
     id: 'id',
     key: 'key',
     value: 'value',
     description: 'description',
+    updatedAt: 'updatedAt'
+};
+exports.BookScalarFieldEnum = {
+    id: 'id',
+    title: 'title',
+    author: 'author',
+    isbn: 'isbn',
+    barcode: 'barcode',
+    category: 'category',
+    publisher: 'publisher',
+    publicationYear: 'publicationYear',
+    edition: 'edition',
+    description: 'description',
+    coverImage: 'coverImage',
+    pdfUrl: 'pdfUrl',
+    totalCopies: 'totalCopies',
+    availableCopies: 'availableCopies',
+    block: 'block',
+    shelfNumber: 'shelfNumber',
+    rowNumber: 'rowNumber',
+    callNumber: 'callNumber',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.BookLoanScalarFieldEnum = {
+    id: 'id',
+    bookId: 'bookId',
+    userId: 'userId',
+    borrowDate: 'borrowDate',
+    dueDate: 'dueDate',
+    returnDate: 'returnDate',
+    renewCount: 'renewCount',
+    status: 'status',
+    notes: 'notes',
+    approvedById: 'approvedById',
+    fineAmount: 'fineAmount',
+    fineStatus: 'fineStatus',
+    paymentMethod: 'paymentMethod',
+    chalanNumber: 'chalanNumber',
+    finePaidAt: 'finePaidAt',
+    fineReceivedById: 'fineReceivedById',
+    warningEmailSent: 'warningEmailSent',
+    overdueEmailSent: 'overdueEmailSent',
+    createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };
 exports.SortOrder = {

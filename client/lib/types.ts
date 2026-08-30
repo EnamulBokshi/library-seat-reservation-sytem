@@ -237,6 +237,7 @@ export interface Booking {
   checkedOutAt: string | null;
   cancelledAt: string | null;
   cancelReason: string | null;
+  slotWarningEmailSent?: boolean;
   seat?: BookingSeat;
   schedule?: Schedule;
   user?: Pick<User, "id" | "name" | "email" | "studentId">;

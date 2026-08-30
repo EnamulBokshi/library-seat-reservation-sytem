@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { bookService } from "@/services/book-service";
 import { loanService } from "@/services/loan-service";
-import { Book, StudentLoanSummary } from "@/lib/types";
+import { Book, BookLoan, StudentLoanSummary } from "@/lib/types";
 import {
   Search,
   BookOpen,

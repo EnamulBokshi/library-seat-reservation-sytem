@@ -28,6 +28,7 @@ import {
   Check,
   X,
   ExternalLink,
+  Bookmark,
 } from "lucide-react";
 
 export default function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {

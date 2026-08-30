@@ -3,14 +3,15 @@
 This chapter synthesizes the primary contributions and findings of the research, acknowledges current operational limitations, and identifies promising avenues for future research and architectural enhancement.
 
 \section{Summary}
-In this thesis, we developed the \textbf{Smart Library Management System}, an integrated, high-performance web platform that bridges critical gaps in academic library space allocation, physical book discovery, digital document access, and resource circulation. By unifying real-time slot-based seat reservation, multi-dimensional physical shelf indexing (Floor $\rightarrow$ Block $\rightarrow$ Rack $\rightarrow$ Shelf position), digital PDF viewing and downloading, and a staff-governed circulation workflow within a modern three-tier architecture (Next.js, Express.js, TypeScript, PostgreSQL, Prisma ORM), the platform transforms fragmented library workflows into a seamless student experience.
+In this thesis, we developed the \textbf{Smart Library Management System}, an integrated, high-performance web platform that bridges critical gaps in academic library space allocation, physical book discovery, digital document access, and resource circulation. By unifying real-time slot-based seat reservation with automated lifecycle governance (15-minute grace period no-show cancellation, administrative cancellation audit tracking, proactive 10-minute slot expiration warnings, and automatic seat releases upon slot conclusion), multi-dimensional physical shelf indexing (Floor $\rightarrow$ Block $\rightarrow$ Rack $\rightarrow$ Shelf position), digital PDF viewing and downloading, and an automated circulation and fine-settlement workflow within a modern three-tier architecture (Next.js, Express.js, TypeScript, PostgreSQL, Prisma ORM, Resend API / SMTP), the platform transforms fragmented library workflows into a seamless student experience.
 
 Empirical benchmark testing verified substantial operational improvements:
 \begin{itemize}
-    \item A **97.2\% reduction** in seat discovery and reservation time (from 14.5 minutes to 24.2 seconds).
-    \item A **78.4\% acceleration** in locating physical books through fine-grained spatial shelf coordinate guidance.
-    \item **Complete elimination (0.00\%) of seat double-booking collisions** under high-concurrency registration loads.
-    \item An **88.6\% financial saving** compared to commercial proprietary library software suites.
+    \item A \textbf{97.2\% reduction} in seat discovery and reservation time (from 14.5 minutes to 24.2 seconds).
+    \item A \textbf{78.4\% acceleration} in locating physical books through fine-grained spatial shelf coordinate guidance.
+    \item \textbf{Complete elimination (0.00\%) of seat double-booking collisions} under high-concurrency registration loads.
+    \item \textbf{Automated Resource Reclamation}: Instant 15-minute no-show seat recycling and 10-minute advance student warning alerts ensuring maximum seat utilization during peak study hours.
+    \item An \textbf{88.6\% financial saving} compared to commercial proprietary library software suites.
 \end{itemize}
 
 \section{Limitations}
@@ -27,5 +28,5 @@ Future iterations of this platform will explore the following engineering direct
     \item \textbf{Hardware IoT Seat Occupancy Sensors}: Deploying battery-efficient ESP32 infrared and pressure sensor nodes beneath study chairs to detect real-time physical seat vacancy without requiring manual QR check-ins.
     \item \textbf{RFID-Based Smart Bookshelves}: Integrating High-Frequency (HF) RFID antenna arrays along bookshelf tiers to enable automated inventory audits and real-time detection of misplaced volumes.
     \item \textbf{AI-Powered Recommendation Engine}: Formulating machine learning collaborative filtering algorithms to recommend related academic literature and research papers based on student borrowing histories and course enrollments.
-    \item \textbf{Automated Push and SMS Notifications}: Implementing real-time WebPush and SMS alerts for upcoming reservation expiration, overdue loan reminders, and newly acquired book arrivals.
+    \item \textbf{Multi-Channel Push and SMS Alerts}: Expanding the current automated email notification infrastructure (Resend API / SMTP) to include real-time mobile WebPush notifications and GSM SMS gateway integrations.
 \end{enumerate}

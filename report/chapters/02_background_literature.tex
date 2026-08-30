@@ -50,7 +50,7 @@ To prevent phantom occupancy where users book seats remotely without attending, 
 \tau_{\text{qr}} = \text{UUIDv4} \parallel \text{HMAC-SHA256}(u_{\text{id}} \parallel s_{\text{id}} \parallel \text{slot}_{\text{id}} \parallel \text{nonce}, K_{\text{secret}})
 \end{equation}
 
-When scanned at the library entry station or zone desk, the server validates the token against the active schedule window $W = [t_{\text{start}} - \Delta t_{\text{early}}, t_{\text{start}} + \Delta t_{\text{grace}}]$. If check-in fails within the grace period $\Delta t_{\text{grace}}$, the seat status transitions automatically to \texttt{no\_show}, immediately freeing the resource.
+When scanned at the library entry station or zone desk, the server validates the token against the active schedule window $W = [t_{\text{start}} - \Delta t_{\text{early}}, t_{\text{start}} + \Delta t_{\text{grace}}]$. If check-in fails within the grace period $\Delta t_{\text{grace}}$ (configured to 15 minutes), an automated background worker transitions the reservation status to \texttt{no\_show}, immediately frees the physical seat for other patrons, and triggers an automated notification email. Furthermore, to guarantee strict time-slot boundary adherence, proactive reminder signals are dispatched at $t_{\text{end}} - \Delta t_{\text{warn}}$ (10 minutes prior to slot expiration), followed by an automated session completion and physical seat release at $t_{\text{end}}$.
 
 \section{Systematic Literature Review}
 A comprehensive survey of contemporary peer-reviewed research on automated library systems, smart seat allocation, and digital repository workflows was conducted. Table~\ref{tab:lit_review_summary} provides a systematic summary of key studies and their identified research limitations.

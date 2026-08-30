@@ -714,10 +714,321 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
+// ─── 5. Seat No-Show Auto-Cancellation Email ─────────────────────────────────
+
+export interface SendSeatNoShowCancellationOptions {
+  toEmail: string;
+  studentName: string;
+  seatNumber: string;
+  zoneName: string;
+  dateStr: string;
+  slotName: string;
+  timeRange?: string;
+  graceMinutes?: number;
+}
+
+export const sendSeatNoShowCancellationEmail = async (opts: SendSeatNoShowCancellationOptions) => {
+  const {
+    toEmail,
+    studentName,
+    seatNumber,
+    zoneName,
+    dateStr,
+    slotName,
+    timeRange = "",
+    graceMinutes = 15,
+  } = opts;
+
+  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
+  const subject = `⚠️ Reservation Released: Seat ${seatNumber} (${zoneName}) — Check-in Window Expired`;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/><style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
+.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #fed7aa; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.header { background: #ea580c; color: #ffffff; padding: 26px; text-align: center; }
+.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.header p { margin: 6px 0 0 0; font-size: 12px; color: #ffedd5; }
+.body { padding: 28px; }
+.box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+.grid { display: table; width: 100%; margin-bottom: 16px; }
+.col { display: table-cell; width: 50%; padding: 6px; }
+.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
+.meta-val { font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px; }
+.notice { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 14px; font-size: 12px; color: #991b1b; line-height: 1.5; margin-bottom: 20px; }
+.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
+.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>Seat Reservation Cancelled</h1>
+    <p>Check-In Grace Period (${graceMinutes} min) Expired</p>
+  </div>
+  <div class="body">
+    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
+    <p style="font-size:13px;color:#475569;line-height:1.5;">
+      Your seat reservation was automatically cancelled and released because no QR check-in scan was recorded within the <strong>${graceMinutes}-minute grace period</strong> of the session start.
+    </p>
+    
+    <div class="box">
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Seat Number</div>
+          <div class="meta-val">${seatNumber}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Study Zone</div>
+          <div class="meta-val">${zoneName}</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Date</div>
+          <div class="meta-val">${dateStr}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Time Slot</div>
+          <div class="meta-val">${slotDisplay} ${timeRange ? `<span style="font-size:11px;color:#64748b;font-weight:400;">(${timeRange})</span>` : ""}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notice">
+      ℹ️ <strong>Why did this happen?</strong> To ensure fair seat availability for all university students, unclaimed seats are automatically released after ${graceMinutes} minutes. If you still need a workspace, you can browse available seats and make a new reservation.
+    </div>
+
+    <a href="${frontendUrl}/zones" class="btn">Reserve Another Seat</a>
+  </div>
+  <div class="footer">Smart Library Management System • Automated Policy Enforcer</div>
+</div>
+</body></html>
+  `;
+
+  return sendHtmlEmail(toEmail, subject, htmlContent);
+};
+
+// ─── 6. Booking Cancelled by Admin / Librarian Email ─────────────────────────
+
+export interface SendBookingCancelledByAdminOptions {
+  toEmail: string;
+  studentName: string;
+  seatNumber: string;
+  zoneName: string;
+  dateStr: string;
+  slotName: string;
+  timeRange?: string;
+  cancelReason?: string;
+}
+
+export const sendBookingCancelledByAdminEmail = async (opts: SendBookingCancelledByAdminOptions) => {
+  const {
+    toEmail,
+    studentName,
+    seatNumber,
+    zoneName,
+    dateStr,
+    slotName,
+    timeRange = "",
+    cancelReason = "Cancelled by Library Administration",
+  } = opts;
+
+  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
+  const subject = `ℹ️ Notice: Seat Reservation Cancelled (Seat ${seatNumber} • ${zoneName})`;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/><style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
+.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.header { background: #0f172a; color: #ffffff; padding: 26px; text-align: center; }
+.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.header p { margin: 6px 0 0 0; font-size: 12px; color: #94a3b8; }
+.body { padding: 28px; }
+.box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+.grid { display: table; width: 100%; margin-bottom: 16px; }
+.col { display: table-cell; width: 50%; padding: 6px; }
+.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
+.meta-val { font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px; }
+.reason-box { background: #fff1f2; border: 1px solid #ffe4e6; border-radius: 12px; padding: 14px; font-size: 13px; color: #9f1239; margin-bottom: 20px; font-weight: 600; }
+.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
+.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>Reservation Cancelled</h1>
+    <p>Smart Library Administration Desk</p>
+  </div>
+  <div class="body">
+    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
+    <p style="font-size:13px;color:#475569;line-height:1.5;">
+      Your library seat reservation has been cancelled by the library administrative desk.
+    </p>
+    
+    <div class="box">
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Seat Number</div>
+          <div class="meta-val">${seatNumber}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Study Zone</div>
+          <div class="meta-val">${zoneName}</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Date</div>
+          <div class="meta-val">${dateStr}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Time Slot</div>
+          <div class="meta-val">${slotDisplay} ${timeRange ? `<span style="font-size:11px;color:#64748b;font-weight:400;">(${timeRange})</span>` : ""}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reason-box">
+      📋 <strong>Cancellation Reason:</strong> ${cancelReason}
+    </div>
+
+    <p style="font-size:12px;color:#64748b;line-height:1.5;margin-bottom:20px;">
+      If you require a study seat, please visit the portal to view live zone availability and reserve another open seat.
+    </p>
+
+    <a href="${frontendUrl}/zones" class="btn">Browse Available Study Zones</a>
+  </div>
+  <div class="footer">Smart Library Management System • Administrative Notification</div>
+</div>
+</body></html>
+  `;
+
+  return sendHtmlEmail(toEmail, subject, htmlContent);
+};
+
+// ─── 7. Seat Slot 10-Minute Ending Warning Email ─────────────────────────────
+
+export interface SendSeatSlotEndingWarningOptions {
+  toEmail: string;
+  studentName: string;
+  seatNumber: string;
+  zoneName: string;
+  dateStr: string;
+  slotName: string;
+  slotEndTimeStr?: string;
+  minutesRemaining?: number;
+}
+
+export const sendSeatSlotEndingWarningEmail = async (opts: SendSeatSlotEndingWarningOptions) => {
+  const {
+    toEmail,
+    studentName,
+    seatNumber,
+    zoneName,
+    dateStr,
+    slotName,
+    slotEndTimeStr = "",
+    minutesRemaining = 10,
+  } = opts;
+
+  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
+  const subject = `⏰ Warning: Your Seat Reservation Ends in ${minutesRemaining} Minutes (Seat ${seatNumber})`;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/><style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
+.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #fef08a; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.header { background: #ca8a04; color: #ffffff; padding: 26px; text-align: center; }
+.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.header p { margin: 6px 0 0 0; font-size: 12px; color: #fef9c3; }
+.body { padding: 28px; }
+.timer-box { background: #fefce8; border: 1px solid #fef08a; border-radius: 14px; padding: 18px; margin-bottom: 20px; text-align: center; }
+.timer-text { font-size: 22px; font-weight: 900; color: #854d0e; }
+.box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+.grid { display: table; width: 100%; margin-bottom: 16px; }
+.col { display: table-cell; width: 50%; padding: 6px; }
+.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
+.meta-val { font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px; }
+.instructions { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 14px; font-size: 12px; color: #166534; line-height: 1.5; margin-bottom: 20px; }
+.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
+.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>Session Ending Soon</h1>
+    <p>Time Slot Expiration Warning (${minutesRemaining} Minutes Remaining)</p>
+  </div>
+  <div class="body">
+    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
+    <p style="font-size:13px;color:#475569;line-height:1.5;">
+      This is an automated reminder that your reserved library seat session for today is ending in <strong>${minutesRemaining} minutes</strong>${slotEndTimeStr ? ` at <strong>${slotEndTimeStr}</strong>` : ""}.
+    </p>
+    
+    <div class="timer-box">
+      <div style="font-size:11px;font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:0.5px;">Session Expiring</div>
+      <div class="timer-text">~${minutesRemaining} Minutes Left</div>
+      ${slotEndTimeStr ? `<div style="font-size:12px;color:#854d0e;margin-top:4px;font-weight:600;">Slot Ends At: ${slotEndTimeStr}</div>` : ""}
+    </div>
+
+    <div class="box">
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Seat Number</div>
+          <div class="meta-val">${seatNumber}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Study Zone</div>
+          <div class="meta-val">${zoneName}</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Date</div>
+          <div class="meta-val">${dateStr}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Time Slot</div>
+          <div class="meta-val">${slotDisplay} Slot</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="instructions">
+      ✅ <strong>Check-Out & Release Reminder:</strong>
+      <ul style="margin:6px 0 0 0;padding-left:18px;">
+        <li>Please start packing your belongings so the desk is clean.</li>
+        <li>Scan your pass at the exit scanner or your seat will be automatically released when the slot finishes so the next student can occupy it.</li>
+      </ul>
+    </div>
+
+    <a href="${frontendUrl}/bookings" class="btn">View My Reservation Pass</a>
+  </div>
+  <div class="footer">Smart Library Management System • Slot Expiration Monitor</div>
+</div>
+</body></html>
+  `;
+
+  return sendHtmlEmail(toEmail, subject, htmlContent);
+};
+
 export const emailService = {
   sendBookingConfirmationEmail,
   sendLoanConfirmationEmail,
   sendLoanDueDateWarningEmail,
   sendLoanOverdueAlertEmail,
   sendFinePaidReceiptEmail,
+  sendSeatNoShowCancellationEmail,
+  sendBookingCancelledByAdminEmail,
+  sendSeatSlotEndingWarningEmail,
 };
+

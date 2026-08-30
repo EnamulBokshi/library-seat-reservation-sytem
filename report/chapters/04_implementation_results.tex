@@ -10,6 +10,8 @@ The Smart Library Management System was implemented using modern, enterprise-gra
     \item \textbf{Database \& ORM}: PostgreSQL 16 relational database engine integrated via Prisma ORM for type-safe database queries and automated schema migrations.
     \item \textbf{Frontend Client}: Next.js 15 (React 19) utilizing the App Router architecture, styled with TailwindCSS, Lucide React icons, and Radix UI primitives.
     \item \textbf{Cloud Asset Storage \& Media}: Cloudinary CDN and in-memory Multer streaming for scalable cover image hosting, featuring automated transactional rollback cleanup.
+    \item \textbf{Email Notification Engine}: Dual-transport transactional delivery supporting Resend REST API and Nodemailer SMTP (TLS 587/465) with responsive, branded Flat UI HTML email templates.
+    \item \textbf{Background Cron Scheduler}: High-frequency multi-worker task runner implemented via \texttt{node-cron} executing 1-minute precision reservation lifecycle sweeps and circulation monitors.
     \item \textbf{Security \& Tokenization}: JSON Web Tokens (JWT) stored in secure \texttt{HttpOnly} cookies, Bcrypt for salt-hashed credential storage, and UUIDv4 for cryptographically random QR pass tokens.
     \item \textbf{Development \& Version Control}: PNPM package workspace, Git version control, and Postman for automated API test collections.
 \end{itemize}
@@ -51,6 +53,63 @@ export const createBooking = async (userId: string, seatId: string, scheduleId: 
 
     return newBooking;
   });
+};
+\end{lstlisting}
+
+\subsection{Automated Seat Lifecycle Enforcer and Expiration Warning Cron Engine}
+Listing~\ref{lst:seat_cron_algo} presents the automated background cron workers governing no-show auto-cancellations, proactive 10-minute slot expiration warnings, and automatic physical seat releases at slot boundaries.
+
+\begin{lstlisting}[language=Java, caption={Seat Reservation Lifecycle and Expiration Warning Engine}, label={lst:seat_cron_algo}]
+// Background Cron Workers for Seat Reclamation & Proactive Warnings
+export const checkGracePeriodCancellations = async () => {
+  const graceMinutes = await getGracePeriodMinutes(); // 15 mins default
+  const confirmedBookings = await prisma.booking.findMany({
+    where: { status: "confirmed", schedule: { date: todayDate } },
+    include: { schedule: true, user: true, seat: { include: { zone: true } } }
+  });
+
+  for (const b of confirmedBookings) {
+    const cutoff = getSlotStartCutoff(b.schedule.slot, graceMinutes, b.bookedAt);
+    if (Date.now() >= cutoff) {
+      await prisma.booking.update({
+        where: { id: b.id },
+        data: { status: "no_show", cancelReason: `Auto-cancelled: Missed ${graceMinutes}m grace period` }
+      });
+      await emailService.sendSeatNoShowCancellationEmail({
+        toEmail: b.user.email, studentName: b.user.name,
+        seatNumber: b.seat.seatNumber, zoneName: b.seat.zone.name
+      });
+    }
+  }
+};
+
+export const checkSlotEndingWarnings = async () => {
+  const activeBookings = await prisma.booking.findMany({
+    where: { status: { in: ["checked_in", "confirmed"] }, slotWarningEmailSent: false, schedule: { date: todayDate } },
+    include: { schedule: true, user: true, seat: { include: { zone: true } } }
+  });
+
+  for (const b of activeBookings) {
+    const minutesLeft = getMinutesUntilSlotEnd(b.schedule.slot);
+    if (minutesLeft > 0 && minutesLeft <= 10) {
+      await prisma.booking.update({ where: { id: b.id }, data: { slotWarningEmailSent: true } });
+      await emailService.sendSeatSlotEndingWarningEmail({
+        toEmail: b.user.email, studentName: b.user.name, seatNumber: b.seat.seatNumber,
+        zoneName: b.seat.zone.name, minutesRemaining: Math.ceil(minutesLeft)
+      });
+    }
+  }
+};
+
+export const checkSlotExpirationAndRelease = async () => {
+  const expiredBookings = await getBookingsWithEndedSlots(todayDate);
+  if (expiredBookings.length > 0) {
+    const seatIds = expiredBookings.map((b) => b.seatId);
+    await prisma.$transaction([
+      prisma.booking.updateMany({ where: { id: { in: expiredCheckedInIds } }, data: { status: "completed", checkedOutAt: new Date() } }),
+      prisma.seat.updateMany({ where: { id: { in: seatIds } }, data: { isOccupied: false } })
+    ]);
+  }
 };
 \end{lstlisting}
 
@@ -171,7 +230,9 @@ POST & /api/v1/auth/register & Public & Student account registration \\
 POST & /api/v1/auth/login & Public & User authentication and JWT issue \\
 GET & /api/v1/zone & Authenticated & Retrieve zones with active seat counts \\
 POST & /api/v1/booking & Student & Create slot reservation with QR pass \\
-POST & /api/v1/checkin/verify & Staff / Admin & Scan QR code and verify attendance \\
+GET & /api/v1/booking/my & Student & List student's own active and historical bookings \\
+DELETE & /api/v1/booking/:id & Student / Staff / Admin & Cancel reservation with reason audit and email alert \\
+POST & /api/v1/checkin/verify & Staff / Admin & Scan QR code and verify entry/exit attendance \\
 GET & /api/v1/book & Authenticated & Catalog query with spatial \& category filters \\
 POST & /api/v1/book/upload-image & Staff / Admin & Stream \& upload book cover to Cloudinary \\
 POST & /api/v1/book & Staff / Admin & Create book record with cover \& PDF asset \\
