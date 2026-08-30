@@ -9,6 +9,7 @@ The Smart Library Management System was implemented using modern, enterprise-gra
     \item \textbf{Backend Framework}: Node.js (v24 LTS) with Express.js and strict TypeScript typing for high-throughput asynchronous request handling.
     \item \textbf{Database \& ORM}: PostgreSQL 16 relational database engine integrated via Prisma ORM for type-safe database queries and automated schema migrations.
     \item \textbf{Frontend Client}: Next.js 15 (React 19) utilizing the App Router architecture, styled with TailwindCSS, Lucide React icons, and Radix UI primitives.
+    \item \textbf{Cloud Asset Storage \& Media}: Cloudinary CDN and in-memory Multer streaming for scalable cover image hosting, featuring automated transactional rollback cleanup.
     \item \textbf{Security \& Tokenization}: JSON Web Tokens (JWT) stored in secure \texttt{HttpOnly} cookies, Bcrypt for salt-hashed credential storage, and UUIDv4 for cryptographically random QR pass tokens.
     \item \textbf{Development \& Version Control}: PNPM package workspace, Git version control, and Postman for automated API test collections.
 \end{itemize}
@@ -162,7 +163,7 @@ Table~\ref{tab:api_endpoints} outlines the primary REST API endpoints exposed by
 \caption{Core RESTful API Endpoint Specifications}
 \label{tab:api_endpoints}
 \small
-\begin{tabularx}{\textwidth}{>{\ttfamily\arraybackslash}p{2.0cm} >{\ttfamily\arraybackslash}p{4.8cm} >{\centering\arraybackslash}p{2.4cm} >{\raggedright\arraybackslash}X}
+\begin{tabularx}{\textwidth}{>{\ttfamily\arraybackslash}p{1.8cm} >{\ttfamily\arraybackslash}p{4.6cm} >{\centering\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}X}
 \toprule
 \textbf{Method} & \textbf{Endpoint Path} & \textbf{Auth Level} & \textbf{Operational Function} \\
 \midrule
@@ -171,11 +172,14 @@ POST & /api/v1/auth/login & Public & User authentication and JWT issue \\
 GET & /api/v1/zone & Authenticated & Retrieve zones with active seat counts \\
 POST & /api/v1/booking & Student & Create slot reservation with QR pass \\
 POST & /api/v1/checkin/verify & Staff / Admin & Scan QR code and verify attendance \\
-GET & /api/v1/books/search & Authenticated & Multi-criteria book \& shelf location search \\
-POST & /api/v1/books & Admin & Create book record with PDF asset \\
-POST & /api/v1/circulation/issue & Staff & Issue physical book copy to student \\
-POST & /api/v1/circulation/renew & Student / Staff & Request or approve loan renewal \\
-POST & /api/v1/circulation/return & Staff & Process book return and update status \\
+GET & /api/v1/book & Authenticated & Catalog query with spatial \& category filters \\
+POST & /api/v1/book/upload-image & Staff / Admin & Stream \& upload book cover to Cloudinary \\
+POST & /api/v1/book & Staff / Admin & Create book record with cover \& PDF asset \\
+PATCH & /api/v1/book/:id & Staff / Admin & Update book metadata and cover image \\
+DELETE & /api/v1/book/:id & Staff / Admin & Deactivate book and clean up cloud assets \\
+POST & /api/v1/loan/issue & Staff & Issue physical book copy to student \\
+POST & /api/v1/loan/renew & Student / Staff & Request or approve loan renewal \\
+POST & /api/v1/loan/return & Staff & Process book return and update status \\
 \bottomrule
 \end{tabularx}
 \end{table}

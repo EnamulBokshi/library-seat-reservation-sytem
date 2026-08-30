@@ -51,6 +51,23 @@ export const bookService = {
   },
 
   /**
+   * Upload book cover image to Cloudinary (converts to WebP)
+   */
+  async uploadImage(file: File): Promise<ApiResponse<{ url: string; publicId: string; format: string }>> {
+    const formData = new FormData();
+    formData.append("image", file);
+    return apiClient.post<unknown, ApiResponse<{ url: string; publicId: string; format: string }>>(
+      "/book/upload-image",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+  },
+
+  /**
    * Deactivate / Delete book (Admin / Librarian)
    */
   async delete(id: string): Promise<ApiResponse<Book>> {

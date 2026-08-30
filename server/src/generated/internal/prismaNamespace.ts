@@ -1129,6 +1129,7 @@ export const BookScalarFieldEnum = {
   title: 'title',
   author: 'author',
   isbn: 'isbn',
+  barcode: 'barcode',
   category: 'category',
   publisher: 'publisher',
   publicationYear: 'publicationYear',
@@ -1161,6 +1162,14 @@ export const BookLoanScalarFieldEnum = {
   status: 'status',
   notes: 'notes',
   approvedById: 'approvedById',
+  fineAmount: 'fineAmount',
+  fineStatus: 'fineStatus',
+  paymentMethod: 'paymentMethod',
+  chalanNumber: 'chalanNumber',
+  finePaidAt: 'finePaidAt',
+  fineReceivedById: 'fineReceivedById',
+  warningEmailSent: 'warningEmailSent',
+  overdueEmailSent: 'overdueEmailSent',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1314,6 +1323,34 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
  * Reference to a field of type 'Float[]'
  */
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
+ * Reference to a field of type 'FineStatus'
+ */
+export type EnumFineStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FineStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'FineStatus[]'
+ */
+export type ListEnumFineStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FineStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'PaymentMethod'
+ */
+export type EnumPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentMethod'>
+    
+
+
+/**
+ * Reference to a field of type 'PaymentMethod[]'
+ */
+export type ListEnumPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentMethod[]'>
     
 
 /**

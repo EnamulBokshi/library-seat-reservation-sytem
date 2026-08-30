@@ -21,6 +21,16 @@ const createBook = async (payload: ICreateBookPayload) => {
     }
   }
 
+  // If Barcode is provided, check uniqueness
+  if (payload.barcode) {
+    const existingBarcode = await prisma.book.findFirst({
+      where: { barcode: payload.barcode, isActive: true },
+    });
+    if (existingBarcode) {
+      throw new AppError(status.CONFLICT, `A book with Barcode ${payload.barcode} already exists.`);
+    }
+  }
+
   const book = await prisma.book.create({
     data: {
       ...payload,
@@ -64,6 +74,7 @@ const getAllBooks = async (options: IBookFilterOptions) => {
         { title: { contains: searchTerm, mode: "insensitive" } },
         { author: { contains: searchTerm, mode: "insensitive" } },
         { isbn: { contains: searchTerm, mode: "insensitive" } },
+        { barcode: { contains: searchTerm, mode: "insensitive" } },
         { category: { contains: searchTerm, mode: "insensitive" } },
         { callNumber: { contains: searchTerm, mode: "insensitive" } },
         { publisher: { contains: searchTerm, mode: "insensitive" } },

@@ -22,7 +22,12 @@ interface EnvConfig {
         SMTP_PORT: number;
         SMTP_USER: string;
         SMTP_PASS: string;
-    }
+    };
+    CLOUDINARY: {
+        CLOUD_NAME: string;
+        API_KEY: string;
+        API_SECRET: string;
+    };
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -61,7 +66,12 @@ const loadEnvVariables = (): EnvConfig => {
             SMTP_PORT: parseInt(process.env.SMTP_PORT || "587", 10),
             SMTP_USER: process.env.SMTP_USER || "[EMAIL_ADDRESS]",
             SMTP_PASS: process.env.SMTP_PASS || "[PASSWORD]",
-        }
+        },
+        CLOUDINARY: {
+            CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || "",
+            API_KEY: process.env.CLOUDINARY_API_KEY || "492624981316583",
+            API_SECRET: process.env.CLOUDINARY_API_SECRET || "63MbbUPC8eMSyKlNfpGCZ5ZPPOg",
+        },
     };
 };
 

@@ -140,7 +140,7 @@ The system implements a decoupled, modern three-tier web architecture as depicte
 \begin{enumerate}
     \item \textbf{Seat Reservation Subsystem}: Manages zones, seat grids, slot schedules, real-time availability matrices, and automated status transitions (Confirmed $\rightarrow$ Checked-in $\rightarrow$ Completed / No-Show).
     \item \textbf{Physical Book Indexing Engine}: Resolves book searches to concrete bookshelf coordinates ($\text{Floor} \rightarrow \text{Block} \rightarrow \text{Rack} \rightarrow \text{Shelf Position}$), displaying spatial navigation cues.
-    \item \textbf{Digital PDF Repository}: Provides secured cloud/local storage of digitized literature with embedded PDF viewers and download endpoints.
+    \item \textbf{Digital Media \& Book Catalog Subsystem}: Houses bibliographic records with cloud-hosted high-resolution cover images managed via Cloudinary CDN and in-memory Multer streams, incorporating automated asset deletion rollbacks on failed transactions, alongside digital PDF document reading and downloads.
     \item \textbf{Circulation \& Renewal Engine}: Manages lending transactions, due dates, renewal request validation, and overdue tracking with complete administrative governance.
 \end{enumerate}
 
@@ -224,7 +224,7 @@ The database architecture is designed with high normalization (3NF) to eliminate
     \item \textbf{User}: Stores identity attributes, hashed credentials, and role enumerations (\texttt{admin}, \texttt{librarian}, \texttt{student}).
     \item \textbf{Zone \& Seat}: Defines physical study zones with color tags, rules, and individual seats uniquely constrained by \texttt{[zoneId, seatNumber]}.
     \item \textbf{Schedule \& Booking}: Manages discrete daily time slots (\texttt{morning}, \texttt{noon}, \texttt{afternoon}, \texttt{evening}) and seat reservations with composite unique key \texttt{[seatId, scheduleId]} to prevent double-booking.
-    \item \textbf{Book \& Category}: Houses bibliographic metadata (ISBN, title, author, edition, description, PDF URL) linked to specific thematic categories.
+    \item \textbf{Book \& Category}: Houses bibliographic metadata (ISBN, title, author, edition, description, cover image URL, PDF URL) linked to specific thematic categories.
     \item \textbf{ShelfLocation \& BookCopy}: Maps individual physical copies (identified by unique barcodes) to spatial coordinates: \texttt{floor}, \texttt{blockNumber}, \texttt{rackNumber}, and \texttt{shelfPosition}.
     \item \textbf{BorrowRecord \& BorrowRenewal}: Tracks lending lifecycles, due dates, return timestamps, renewal counters, and staff approval audit trails.
 \end{itemize}

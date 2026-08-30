@@ -4,6 +4,28 @@ import catchAsync from "../../helpers/CatchAsync";
 import { sendResponse } from "../../helpers/SendResponse";
 import { LoanService } from "./loan.service";
 
+const lookupBook = catchAsync(async (req: Request, res: Response) => {
+  const result = await LoanService.lookupBook(req.params.identifier as string);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Book found successfully.",
+    data: result,
+  });
+});
+
+const lookupStudent = catchAsync(async (req: Request, res: Response) => {
+  const result = await LoanService.lookupStudent(req.params.identifier as string);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Student eligibility verified.",
+    data: result,
+  });
+});
+
 const requestLoan = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
   const result = await LoanService.requestLoan(userId, req.body);
@@ -30,7 +52,7 @@ const directIssueLoan = catchAsync(async (req: Request, res: Response) => {
 
 const updateLoanStatus = catchAsync(async (req: Request, res: Response) => {
   const adminId = req.user.userId;
-  const result = await LoanService.updateLoanStatus(adminId, req.params.id as string, req.body);
+  const result = await LoanService.updateLoanStatus(req.params.id as string, req.body, adminId);
 
   sendResponse(res, {
     httpStatusCode: status.OK,
@@ -42,19 +64,33 @@ const updateLoanStatus = catchAsync(async (req: Request, res: Response) => {
 
 const returnBook = catchAsync(async (req: Request, res: Response) => {
   const adminId = req.user.userId;
-  const result = await LoanService.returnBook(adminId, req.params.id as string);
+  const result = await LoanService.returnLoan(req.params.id as string, adminId);
 
   sendResponse(res, {
     httpStatusCode: status.OK,
     success: true,
-    message: "Book successfully marked as returned and inventory updated.",
+    message: result.fineAmount > 0
+      ? `Book returned with ${result.daysOverdue} days overdue. Fine of ${result.fineAmount} BDT recorded.`
+      : "Book successfully marked as returned and physical inventory restored.",
+    data: result,
+  });
+});
+
+const payLoanFine = catchAsync(async (req: Request, res: Response) => {
+  const librarianId = req.user.userId;
+  const result = await LoanService.payLoanFine(req.params.id as string, req.body, librarianId);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: `Fine payment of ${result.fineAmount} BDT recorded via ${result.paymentMethod}. Student borrowing access restored.`,
     data: result,
   });
 });
 
 const renewLoan = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.userId;
-  const result = await LoanService.renewLoan(userId, req.params.id as string);
+  const result = await LoanService.renewLoan(req.params.id as string, userId);
 
   sendResponse(res, {
     httpStatusCode: status.OK,
@@ -65,8 +101,7 @@ const renewLoan = catchAsync(async (req: Request, res: Response) => {
 });
 
 const adminRenewLoan = catchAsync(async (req: Request, res: Response) => {
-  const adminId = req.user.userId;
-  const result = await LoanService.adminRenewLoan(adminId, req.params.id as string, req.body);
+  const result = await LoanService.adminRenewLoan(req.params.id as string, req.body);
 
   sendResponse(res, {
     httpStatusCode: status.OK,
@@ -91,6 +126,7 @@ const getMyLoans = catchAsync(async (req: Request, res: Response) => {
 const getAllLoans = catchAsync(async (req: Request, res: Response) => {
   const options = {
     status: req.query.status as any,
+    fineStatus: req.query.fineStatus as any,
     userId: req.query.userId as string,
     bookId: req.query.bookId as string,
     searchTerm: req.query.searchTerm as string,
@@ -123,10 +159,13 @@ const getCirculationStats = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const LoanController = {
+  lookupBook,
+  lookupStudent,
   requestLoan,
   directIssueLoan,
   updateLoanStatus,
   returnBook,
+  payLoanFine,
   renewLoan,
   adminRenewLoan,
   getMyLoans,

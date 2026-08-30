@@ -1,7 +1,9 @@
 import cron from "node-cron";
 import prisma from "../lib/prisma";
-import { BookingStatus, SlotType } from "../generated/enums";
+import { BookingStatus, SlotType, LoanStatus } from "../generated/enums";
 import { BookingService } from "../modules/booking/booking.service";
+import { SettingService } from "../modules/setting/setting.service";
+import { emailService } from "./email.service";
 import { getActiveSlotConfig, getAdvanceBookingDays, parseTimeToMinutes } from "../utils/time";
 
 // Default grace period in minutes if not configured in DB
@@ -185,10 +187,122 @@ const processSlotCleanup = async (slot: SlotType) => {
 };
 
 /**
+ * Automated Circulation Engine:
+ * 1. Dispatches 48-hour advance reminder emails for active loans.
+ * 2. Identifies overdue loans, computes dynamic fines, updates status to 'overdue' and 'unpaid', and sends overdue alert emails.
+ */
+export const checkCirculationRemindersAndFines = async () => {
+  try {
+    const now = new Date();
+    const fineConfig = await SettingService.getFineConfig();
+    const warningDaysMs = fineConfig.warningDays * 24 * 60 * 60 * 1000;
+
+    // ── 1. Check 2-Day Pre-Due Reminders ──
+    const upcomingDueLoans = await prisma.bookLoan.findMany({
+      where: {
+        status: LoanStatus.issued,
+        warningEmailSent: false,
+        dueDate: {
+          gte: now,
+          lte: new Date(now.getTime() + warningDaysMs),
+        },
+      },
+      include: {
+        book: true,
+        user: true,
+      },
+    });
+
+    for (const loan of upcomingDueLoans) {
+      try {
+        const diffMs = new Date(loan.dueDate).getTime() - now.getTime();
+        const daysRemaining = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+        await emailService.sendLoanDueDateWarningEmail({
+          toEmail: loan.user.email,
+          studentName: loan.user.name,
+          bookTitle: loan.book.title,
+          dueDateStr: new Date(loan.dueDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+          daysRemaining,
+          fineRatePerDay: fineConfig.defaultRate,
+        });
+
+        await prisma.bookLoan.update({
+          where: { id: loan.id },
+          data: { warningEmailSent: true },
+        });
+
+        console.log(`[Cron Scheduler] Dispatched 2-day reminder to ${loan.user.email} for book "${loan.book.title}".`);
+      } catch (err) {
+        console.error(`[Cron Scheduler] Error sending warning reminder for loan ${loan.id}:`, err);
+      }
+    }
+
+    // ── 2. Check Overdue Loans and Accumulate Fines ──
+    const overdueLoans = await prisma.bookLoan.findMany({
+      where: {
+        status: { in: [LoanStatus.issued, LoanStatus.overdue] },
+        dueDate: {
+          lt: now,
+        },
+      },
+      include: {
+        book: true,
+        user: true,
+      },
+    });
+
+    for (const loan of overdueLoans) {
+      try {
+        const { daysOverdue, fineAmount } = await SettingService.calculateLoanFine(loan.dueDate, now);
+
+        const shouldSendOverdueAlert = !loan.overdueEmailSent;
+
+        await prisma.bookLoan.update({
+          where: { id: loan.id },
+          data: {
+            status: LoanStatus.overdue,
+            fineStatus: loan.fineStatus === "paid" ? "paid" : "unpaid",
+            fineAmount,
+            overdueEmailSent: true,
+          },
+        });
+
+        if (shouldSendOverdueAlert) {
+          await emailService.sendLoanOverdueAlertEmail({
+            toEmail: loan.user.email,
+            studentName: loan.user.name,
+            bookTitle: loan.book.title,
+            dueDateStr: new Date(loan.dueDate).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+            daysOverdue,
+            fineAmount,
+            fineRatePerDay: fineConfig.defaultRate,
+          });
+
+          console.log(`[Cron Scheduler] Overdue alert dispatched to ${loan.user.email} (Fine: ${fineAmount} BDT).`);
+        }
+      } catch (err) {
+        console.error(`[Cron Scheduler] Error processing overdue loan ${loan.id}:`, err);
+      }
+    }
+  } catch (error) {
+    console.error("[Cron Scheduler] Error running circulation cron:", error);
+  }
+};
+
+/**
  * Initialize all scheduled cron services.
  */
 export const initCronJobs = () => {
-  console.log("[Cron Scheduler] Initializing seat booking cron services...");
+  console.log("[Cron Scheduler] Initializing seat booking & circulation cron services...");
 
   // 0. Ensure upcoming schedules exist immediately on startup
   getAdvanceBookingDays().then((days) => {
@@ -197,18 +311,28 @@ export const initCronJobs = () => {
     );
   });
 
+  // Run circulation check once on startup
+  checkCirculationRemindersAndFines().catch((err) =>
+    console.error("[Cron Scheduler] Initial circulation check failed:", err)
+  );
+
   // 1. Run grace-period check every minute
   cron.schedule("* * * * *", () => {
     checkGracePeriodCancellations();
   });
 
-  // 2. Boundary cleanup for slot end times
+  // 2. Circulation reminders & overdue fine accumulator: runs every 15 minutes
+  cron.schedule("*/15 * * * *", () => {
+    checkCirculationRemindersAndFines();
+  });
+
+  // 3. Boundary cleanup for slot end times
   cron.schedule("0 12 * * *", () => processSlotCleanup(SlotType.morning));
   cron.schedule("0 14 * * *", () => processSlotCleanup(SlotType.noon));
   cron.schedule("0 18 * * *", () => processSlotCleanup(SlotType.afternoon));
   cron.schedule("0 21 * * *", () => processSlotCleanup(SlotType.evening));
 
-  // 3. Roll over schedules daily at midnight
+  // 4. Roll over schedules daily at midnight
   cron.schedule("0 0 * * *", async () => {
     try {
       const advanceDays = await getAdvanceBookingDays();

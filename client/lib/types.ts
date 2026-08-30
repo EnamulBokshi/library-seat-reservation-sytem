@@ -325,11 +325,15 @@ export interface DashboardStats {
 
 // ─── Books & Borrowing Types ──────────────────────────────────────────────────
 
+export type FineStatus = "none" | "unpaid" | "paid" | "waived";
+export type PaymentMethod = "cash" | "chalan" | "online";
+
 export interface Book {
   id: string;
   title: string;
   author: string;
   isbn?: string | null;
+  barcode?: string | null;
   category: string;
   publisher?: string | null;
   publicationYear?: number | null;
@@ -362,6 +366,14 @@ export interface BookLoan {
   status: LoanStatus;
   notes?: string | null;
   approvedById?: string | null;
+  fineAmount: number;
+  fineStatus: FineStatus;
+  paymentMethod?: PaymentMethod | null;
+  chalanNumber?: string | null;
+  finePaidAt?: string | null;
+  fineReceivedById?: string | null;
+  warningEmailSent?: boolean;
+  overdueEmailSent?: boolean;
   createdAt: string;
   updatedAt: string;
   book?: Book;
@@ -381,18 +393,49 @@ export interface StudentLoanSummary {
     pendingRequests: number;
     availableQuota: number;
   };
+  fines: {
+    totalDueBDT: number;
+    totalPaidBDT: number;
+    hasUnpaidDues: boolean;
+    unpaidFines: BookLoan[];
+    paidFines: BookLoan[];
+  };
   activeLoans: BookLoan[];
   pendingRequests: BookLoan[];
   returnedHistory: BookLoan[];
   allLoans: BookLoan[];
 }
 
+export interface StudentLookupResult {
+  student: {
+    id: string;
+    name: string;
+    email: string;
+    studentId?: string | null;
+    role: string;
+  };
+  activeLoans: BookLoan[];
+  pendingRequests: BookLoan[];
+  unpaidFines: BookLoan[];
+  stats: {
+    maxBorrowLimit: number;
+    currentlyBorrowed: number;
+    availableQuota: number;
+    totalUnpaidFineBDT: number;
+    isEligible: boolean;
+    ineligibilityReason: string | null;
+  };
+}
+
 export interface CirculationStats {
-  totalBooks: number;
+  totalLoans: number;
   activeLoans: number;
   pendingRequests: number;
   overdueLoans: number;
   totalReturned: number;
+  totalFinesCollected: number;
+  totalOutstandingFines: number;
+  unpaidFinesCount: number;
 }
 
 export interface BookQueryParams {
@@ -413,6 +456,7 @@ export interface CreateBookPayload {
   title: string;
   author: string;
   isbn?: string;
+  barcode?: string;
   category?: string;
   publisher?: string;
   publicationYear?: number;
@@ -434,6 +478,7 @@ export interface UpdateBookPayload extends Partial<CreateBookPayload> {
 
 export interface LoanQueryParams {
   status?: LoanStatus | "active" | "all";
+  fineStatus?: FineStatus;
   userId?: string;
   bookId?: string;
   searchTerm?: string;

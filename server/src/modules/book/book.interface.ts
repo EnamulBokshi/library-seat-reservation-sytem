@@ -16,6 +16,7 @@ export interface ICreateBookPayload {
   title: string;
   author: string;
   isbn?: string;
+  barcode?: string;
   category?: string;
   publisher?: string;
   publicationYear?: number;
@@ -35,6 +36,7 @@ export interface IUpdateBookPayload {
   title?: string;
   author?: string;
   isbn?: string;
+  barcode?: string;
   category?: string;
   publisher?: string;
   publicationYear?: number;

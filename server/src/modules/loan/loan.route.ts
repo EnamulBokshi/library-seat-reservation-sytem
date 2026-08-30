@@ -26,6 +26,19 @@ loanRoute.post(
   LoanController.renewLoan
 );
 
+// Admin / Librarian Fast Scanning & Lookup Endpoints
+loanRoute.get(
+  "/lookup-book/:identifier",
+  authCheck("admin", "librarian"),
+  LoanController.lookupBook
+);
+
+loanRoute.get(
+  "/lookup-student/:identifier",
+  authCheck("admin", "librarian"),
+  LoanController.lookupStudent
+);
+
 // Admin / Librarian Circulation Desk Endpoints
 loanRoute.get(
   "/stats",
@@ -57,6 +70,13 @@ loanRoute.post(
   "/:id/return",
   authCheck("admin", "librarian"),
   LoanController.returnBook
+);
+
+loanRoute.post(
+  "/:id/pay-fine",
+  authCheck("admin", "librarian"),
+  requestValidator(LoanValidation.payFineSchema),
+  LoanController.payLoanFine
 );
 
 loanRoute.post(

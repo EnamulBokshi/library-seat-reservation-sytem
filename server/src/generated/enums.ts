@@ -50,3 +50,22 @@ export const LoanStatus = {
 } as const
 
 export type LoanStatus = (typeof LoanStatus)[keyof typeof LoanStatus]
+
+
+export const FineStatus = {
+  none: 'none',
+  unpaid: 'unpaid',
+  paid: 'paid',
+  waived: 'waived'
+} as const
+
+export type FineStatus = (typeof FineStatus)[keyof typeof FineStatus]
+
+
+export const PaymentMethod = {
+  cash: 'cash',
+  chalan: 'chalan',
+  online: 'online'
+} as const
+
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
