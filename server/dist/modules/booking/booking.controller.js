@@ -54,7 +54,8 @@ const cancelBooking = (0, CatchAsync_1.default)(async (req, res) => {
     const bookingId = req.params.id;
     const userId = req.user.userId;
     const role = req.user.role;
-    const result = await booking_service_1.BookingService.cancelBooking(bookingId, userId, role);
+    const cancelReason = (req.body?.cancelReason || req.query?.cancelReason);
+    const result = await booking_service_1.BookingService.cancelBooking(bookingId, userId, role, cancelReason);
     (0, SendResponse_1.sendResponse)(res, {
         httpStatusCode: http_status_1.default.OK,
         success: true,

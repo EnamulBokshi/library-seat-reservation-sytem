@@ -162,7 +162,8 @@ export const BookingScalarFieldEnum = {
   checkedInAt: 'checkedInAt',
   checkedOutAt: 'checkedOutAt',
   cancelledAt: 'cancelledAt',
-  cancelReason: 'cancelReason'
+  cancelReason: 'cancelReason',
+  slotWarningEmailSent: 'slotWarningEmailSent'
 } as const
 
 export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeof BookingScalarFieldEnum]
@@ -184,6 +185,7 @@ export const BookScalarFieldEnum = {
   title: 'title',
   author: 'author',
   isbn: 'isbn',
+  barcode: 'barcode',
   category: 'category',
   publisher: 'publisher',
   publicationYear: 'publicationYear',
@@ -216,6 +218,14 @@ export const BookLoanScalarFieldEnum = {
   status: 'status',
   notes: 'notes',
   approvedById: 'approvedById',
+  fineAmount: 'fineAmount',
+  fineStatus: 'fineStatus',
+  paymentMethod: 'paymentMethod',
+  chalanNumber: 'chalanNumber',
+  finePaidAt: 'finePaidAt',
+  fineReceivedById: 'fineReceivedById',
+  warningEmailSent: 'warningEmailSent',
+  overdueEmailSent: 'overdueEmailSent',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

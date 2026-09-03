@@ -62,6 +62,13 @@ export function Navbar() {
   const isStudent = user?.role === "student";
   const canManage = isAdmin || isLibrarian;
 
+  const isBookSeatActive = pathname === "/book" || pathname.startsWith("/book/") || pathname.startsWith("/zones");
+  const isCatalogActive = pathname === "/books" || pathname.startsWith("/books/");
+  const isMySeatsActive = pathname === "/bookings" || pathname.startsWith("/bookings/");
+  const isMyLoansActive = pathname === "/loans" || pathname.startsWith("/loans/");
+  const isCheckinActive = pathname.startsWith("/admin/checkin");
+  const isAdminActive = pathname.startsWith("/admin") && !isCheckinActive;
+
   // Close dropdown on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -106,13 +113,13 @@ export function Navbar() {
                 href="/book"
                 icon={Armchair}
                 label="Book Seat"
-                active={pathname.startsWith("/book") || pathname.startsWith("/zones")}
+                active={isBookSeatActive}
               />
               <NavLink
                 href="/books"
                 icon={BookOpen}
                 label="Catalog"
-                active={pathname.startsWith("/books")}
+                active={isCatalogActive}
               />
 
               {/* Student Only Passes */}
@@ -123,13 +130,13 @@ export function Navbar() {
                     href="/bookings"
                     icon={ClipboardList}
                     label="My Seats"
-                    active={pathname.startsWith("/bookings")}
+                    active={isMySeatsActive}
                   />
                   <NavLink
                     href="/loans"
                     icon={Bookmark}
                     label="My Loans"
-                    active={pathname.startsWith("/loans")}
+                    active={isMyLoansActive}
                   />
                 </>
               )}
@@ -141,7 +148,7 @@ export function Navbar() {
                   <Link
                     href="/admin/checkin"
                     className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
-                      pathname.startsWith("/admin/checkin")
+                      isCheckinActive
                         ? "bg-white text-slate-900 shadow-2xs border border-slate-200/90 font-extrabold"
                         : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
                     }`}
@@ -156,7 +163,7 @@ export function Navbar() {
                       type="button"
                       onClick={() => setIsAdminMenuOpen((prev) => !prev)}
                       className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
-                        isAdminMenuOpen || pathname.startsWith("/admin")
+                        isAdminMenuOpen || isAdminActive
                           ? "bg-slate-900 text-white shadow-2xs font-extrabold"
                           : "bg-slate-900 text-white hover:bg-slate-800 shadow-2xs"
                       }`}
@@ -296,16 +303,14 @@ export function Navbar() {
           <Link
             href="/book"
             className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
-              pathname.startsWith("/book") || pathname.startsWith("/zones")
+              isBookSeatActive
                 ? "text-slate-900 font-extrabold"
                 : "text-slate-400 font-medium"
             }`}
           >
             <Armchair
               className={`h-4.5 w-4.5 ${
-                pathname.startsWith("/book") || pathname.startsWith("/zones")
-                  ? "text-slate-900"
-                  : "text-slate-400"
+                isBookSeatActive ? "text-slate-900" : "text-slate-400"
               }`}
             />
             <span className="text-[10px] whitespace-nowrap">Book Seat</span>
@@ -314,12 +319,12 @@ export function Navbar() {
           <Link
             href="/books"
             className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
-              pathname.startsWith("/books") ? "text-slate-900 font-extrabold" : "text-slate-400"
+              isCatalogActive ? "text-slate-900 font-extrabold" : "text-slate-400"
             }`}
           >
             <BookOpen
               className={`h-4.5 w-4.5 ${
-                pathname.startsWith("/books") ? "text-slate-900" : "text-slate-400"
+                isCatalogActive ? "text-slate-900" : "text-slate-400"
               }`}
             />
             <span className="text-[10px] whitespace-nowrap">Catalog</span>
@@ -330,14 +335,14 @@ export function Navbar() {
               <Link
                 href="/bookings"
                 className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
-                  pathname.startsWith("/bookings")
+                  isMySeatsActive
                     ? "text-slate-900 font-extrabold"
                     : "text-slate-400"
                 }`}
               >
                 <ClipboardList
                   className={`h-4.5 w-4.5 ${
-                    pathname.startsWith("/bookings") ? "text-slate-900" : "text-slate-400"
+                    isMySeatsActive ? "text-slate-900" : "text-slate-400"
                   }`}
                 />
                 <span className="text-[10px] whitespace-nowrap">My Seats</span>
@@ -345,12 +350,12 @@ export function Navbar() {
               <Link
                 href="/loans"
                 className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
-                  pathname.startsWith("/loans") ? "text-slate-900 font-extrabold" : "text-slate-400"
+                  isMyLoansActive ? "text-slate-900 font-extrabold" : "text-slate-400"
                 }`}
               >
                 <Bookmark
                   className={`h-4.5 w-4.5 ${
-                    pathname.startsWith("/loans") ? "text-slate-900" : "text-slate-400"
+                    isMyLoansActive ? "text-slate-900" : "text-slate-400"
                   }`}
                 />
                 <span className="text-[10px] whitespace-nowrap">My Loans</span>
@@ -363,14 +368,14 @@ export function Navbar() {
               <Link
                 href="/admin/checkin"
                 className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
-                  pathname.startsWith("/admin/checkin")
+                  isCheckinActive
                     ? "text-indigo-600 font-extrabold"
                     : "text-slate-400 font-medium"
                 }`}
               >
                 <ScanLine
                   className={`h-4.5 w-4.5 ${
-                    pathname.startsWith("/admin/checkin") ? "text-indigo-600" : "text-slate-400"
+                    isCheckinActive ? "text-indigo-600" : "text-slate-400"
                   }`}
                 />
                 <span className="text-[10px] whitespace-nowrap">Scan QR</span>
@@ -378,12 +383,12 @@ export function Navbar() {
               <Link
                 href="/admin"
                 className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
-                  pathname.startsWith("/admin") ? "text-slate-900 font-extrabold" : "text-slate-400"
+                  isAdminActive ? "text-slate-900 font-extrabold" : "text-slate-400"
                 }`}
               >
                 <Shield
                   className={`h-4.5 w-4.5 ${
-                    pathname.startsWith("/admin") ? "text-slate-900" : "text-slate-400"
+                    isAdminActive ? "text-slate-900" : "text-slate-400"
                   }`}
                 />
                 <span className="text-[10px] whitespace-nowrap">Admin</span>

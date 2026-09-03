@@ -49,10 +49,17 @@ export function SettingsView() {
   const [borrowPeriodDays, setBorrowPeriodDays] = useState("10");
   const [maxRenewalLimit, setMaxRenewalLimit] = useState("3");
 
+  // Overdue Fine & Warning Policy states
+  const [fineRatePerDay, setFineRatePerDay] = useState("5");
+  const [warningDaysBefore, setWarningDaysBefore] = useState("2");
+  const [tierDaysThreshold, setTierDaysThreshold] = useState("7");
+  const [tierLateRate, setTierLateRate] = useState("10");
+
   const [isSavingGrace, setIsSavingGrace] = useState(false);
   const [isSavingAdvance, setIsSavingAdvance] = useState(false);
   const [isSavingSlots, setIsSavingSlots] = useState(false);
   const [isSavingBorrowPolicy, setIsSavingBorrowPolicy] = useState(false);
+  const [isSavingFinePolicy, setIsSavingFinePolicy] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
@@ -85,6 +92,25 @@ export function SettingsView() {
       const maxRenewalItem = list.find((s) => s.key === "MAX_RENEWAL_LIMIT");
       if (maxRenewalItem) {
         setMaxRenewalLimit(maxRenewalItem.value);
+      }
+
+      const fineRateItem = list.find((s) => s.key === "FINE_RATE_PER_DAY");
+      if (fineRateItem) setFineRatePerDay(fineRateItem.value);
+
+      const warningDaysItem = list.find((s) => s.key === "WARNING_REMINDER_DAYS_BEFORE");
+      if (warningDaysItem) setWarningDaysBefore(warningDaysItem.value);
+
+      const fineTiersItem = list.find((s) => s.key === "FINE_TIERS");
+      if (fineTiersItem) {
+        try {
+          const parsed = JSON.parse(fineTiersItem.value);
+          if (Array.isArray(parsed) && parsed.length >= 2) {
+            setTierDaysThreshold(String(parsed[1].minDays - 1));
+            setTierLateRate(String(parsed[1].rate));
+          }
+        } catch {
+          // fallback to default
+        }
       }
 
       const slotItem = list.find((s) => s.key === "SLOT_CONFIG");
@@ -218,6 +244,64 @@ export function SettingsView() {
       setError(apiErr?.message ?? "Failed to update borrowing policies.");
     } finally {
       setIsSavingBorrowPolicy(false);
+    }
+  };
+
+  // ── Save Fine Policy ──────────────────────────────────────────────────────
+  const handleSaveFinePolicy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
+    const baseRate = parseFloat(fineRatePerDay);
+    const warnDays = parseInt(warningDaysBefore, 10);
+    const tierDays = parseInt(tierDaysThreshold, 10);
+    const lateRate = parseFloat(tierLateRate);
+
+    if (isNaN(baseRate) || baseRate < 0 || baseRate > 1000) {
+      setError("Daily fine rate must be between 0 and 1000 BDT.");
+      return;
+    }
+    if (isNaN(warnDays) || warnDays < 1 || warnDays > 14) {
+      setError("Warning reminder days must be between 1 and 14 days.");
+      return;
+    }
+    if (isNaN(tierDays) || tierDays < 1 || isNaN(lateRate) || lateRate < 0) {
+      setError("Please provide valid tiered threshold days and late rates.");
+      return;
+    }
+
+    const tiersJson = JSON.stringify([
+      { minDays: 1, rate: baseRate },
+      { minDays: tierDays + 1, rate: lateRate },
+    ]);
+
+    setIsSavingFinePolicy(true);
+    try {
+      await Promise.all([
+        settingService.update(
+          "FINE_RATE_PER_DAY",
+          fineRatePerDay.trim(),
+          "Overdue fine rate per day in BDT (Default: 5 Tk)"
+        ),
+        settingService.update(
+          "WARNING_REMINDER_DAYS_BEFORE",
+          warningDaysBefore.trim(),
+          "Days before loan due date to dispatch warning email"
+        ),
+        settingService.update(
+          "FINE_TIERS",
+          tiersJson,
+          "Configurable tiered fine rates by days overdue"
+        ),
+      ]);
+      setSuccessMessage("Overdue fine rates and email warning policies saved successfully!");
+      fetchSettings();
+    } catch (err: unknown) {
+      const apiErr = err as ApiError;
+      setError(apiErr?.message ?? "Failed to update fine policies.");
+    } finally {
+      setIsSavingFinePolicy(false);
     }
   };
 
@@ -642,6 +726,111 @@ export function SettingsView() {
                       <Save className="h-4 w-4" />
                     )}
                     <span>Save Circulation Policy</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* ── CARD 5: Overdue Fines & Email Warning Policy ── */}
+            <div className="pulse-card p-6 shadow-sm space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-700 border border-rose-100 shrink-0">
+                  <BookOpen className="h-6 w-6 text-rose-600" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-extrabold text-slate-900">
+                    Overdue Fines & Pre-Due Warning Alerts
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed font-medium">
+                    Configure daily late fines, tiered rates for prolonged overdue durations, and automatic advance warning email triggers.
+                    Students with any unpaid fines are automatically locked from borrowing new books until cleared.
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveFinePolicy} className="space-y-4 pt-2 border-t border-slate-100">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Standard Fine (BDT/Day)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="1000"
+                      value={fineRatePerDay}
+                      onChange={(e) => setFineRatePerDay(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      Default: 5 Tk / day
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Tier 2 Threshold (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={tierDaysThreshold}
+                      onChange={(e) => setTierDaysThreshold(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      e.g., After 7 days late
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Tier 2 Rate (BDT/Day)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="1000"
+                      value={tierLateRate}
+                      onChange={(e) => setTierLateRate(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      e.g., 10 Tk / day for 8+ days
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Warning Email (Days Before)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="7"
+                      value={warningDaysBefore}
+                      onChange={(e) => setWarningDaysBefore(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      Default: 2 days before due
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isSavingFinePolicy}
+                    className="pulse-button-primary py-2.5 px-5 text-xs inline-flex items-center gap-2"
+                  >
+                    {isSavingFinePolicy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span>Save Fine & Alert Policy</span>
                   </button>
                 </div>
               </form>

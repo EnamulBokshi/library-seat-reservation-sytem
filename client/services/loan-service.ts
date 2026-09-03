@@ -1,14 +1,31 @@
 import apiClient from "./api-client";
 import {
+  Book,
   BookLoan,
   StudentLoanSummary,
+  StudentLookupResult,
   CirculationStats,
   LoanQueryParams,
   LoanStatus,
+  PaymentMethod,
   ApiResponse,
 } from "@/lib/types";
 
 export const loanService = {
+  /**
+   * Fast lookup book by barcode, ISBN, call number, or UUID (Admin / Librarian)
+   */
+  async lookupBook(identifier: string): Promise<ApiResponse<Book>> {
+    return apiClient.get<unknown, ApiResponse<Book>>(`/loan/lookup-book/${encodeURIComponent(identifier)}`);
+  },
+
+  /**
+   * Fast lookup student by studentId, email, or UUID with live eligibility check (Admin / Librarian)
+   */
+  async lookupStudent(identifier: string): Promise<ApiResponse<StudentLookupResult>> {
+    return apiClient.get<unknown, ApiResponse<StudentLookupResult>>(`/loan/lookup-student/${encodeURIComponent(identifier)}`);
+  },
+
   /**
    * Student submits a borrow request
    */
@@ -24,7 +41,7 @@ export const loanService = {
   },
 
   /**
-   * Get student's personal loans and quota summary
+   * Get student's personal loans, fines, and quota summary
    */
   async getMyLoans(): Promise<ApiResponse<StudentLoanSummary>> {
     return apiClient.get<unknown, ApiResponse<StudentLoanSummary>>("/loan/my-loans");
@@ -45,10 +62,10 @@ export const loanService = {
   },
 
   /**
-   * Admin direct issue book to a student ID/email
+   * Admin direct issue book to a student (Barcode/ISBN + Student ID/Email)
    */
   async directIssue(payload: {
-    bookId: string;
+    bookIdentifier: string;
     studentIdentifier: string;
     dueDate?: string;
     notes?: string;
@@ -64,10 +81,24 @@ export const loanService = {
   },
 
   /**
-   * Admin marks book as returned (restores stock)
+   * Admin marks book as returned (restores stock, computes fine)
    */
-  async returnBook(loanId: string): Promise<ApiResponse<BookLoan>> {
-    return apiClient.post<unknown, ApiResponse<BookLoan>>(`/loan/${loanId}/return`);
+  async returnBook(loanId: string): Promise<ApiResponse<{ loan: BookLoan; daysOverdue: number; fineAmount: number; fineStatus: string }>> {
+    return apiClient.post<unknown, ApiResponse<{ loan: BookLoan; daysOverdue: number; fineAmount: number; fineStatus: string }>>(`/loan/${loanId}/return`);
+  },
+
+  /**
+   * Admin settles and clears student fine via Cash or Bank Chalan
+   */
+  async payFine(
+    loanId: string,
+    payload: {
+      paymentMethod: PaymentMethod;
+      chalanNumber?: string;
+      notes?: string;
+    }
+  ): Promise<ApiResponse<BookLoan>> {
+    return apiClient.post<unknown, ApiResponse<BookLoan>>(`/loan/${loanId}/pay-fine`, payload);
   },
 
   /**

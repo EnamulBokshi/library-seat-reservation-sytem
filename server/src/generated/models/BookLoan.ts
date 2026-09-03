@@ -28,10 +28,12 @@ export type AggregateBookLoan = {
 
 export type BookLoanAvgAggregateOutputType = {
   renewCount: number | null
+  fineAmount: number | null
 }
 
 export type BookLoanSumAggregateOutputType = {
   renewCount: number | null
+  fineAmount: number | null
 }
 
 export type BookLoanMinAggregateOutputType = {
@@ -45,6 +47,14 @@ export type BookLoanMinAggregateOutputType = {
   status: $Enums.LoanStatus | null
   notes: string | null
   approvedById: string | null
+  fineAmount: number | null
+  fineStatus: $Enums.FineStatus | null
+  paymentMethod: $Enums.PaymentMethod | null
+  chalanNumber: string | null
+  finePaidAt: Date | null
+  fineReceivedById: string | null
+  warningEmailSent: boolean | null
+  overdueEmailSent: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -60,6 +70,14 @@ export type BookLoanMaxAggregateOutputType = {
   status: $Enums.LoanStatus | null
   notes: string | null
   approvedById: string | null
+  fineAmount: number | null
+  fineStatus: $Enums.FineStatus | null
+  paymentMethod: $Enums.PaymentMethod | null
+  chalanNumber: string | null
+  finePaidAt: Date | null
+  fineReceivedById: string | null
+  warningEmailSent: boolean | null
+  overdueEmailSent: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -75,6 +93,14 @@ export type BookLoanCountAggregateOutputType = {
   status: number
   notes: number
   approvedById: number
+  fineAmount: number
+  fineStatus: number
+  paymentMethod: number
+  chalanNumber: number
+  finePaidAt: number
+  fineReceivedById: number
+  warningEmailSent: number
+  overdueEmailSent: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -83,10 +109,12 @@ export type BookLoanCountAggregateOutputType = {
 
 export type BookLoanAvgAggregateInputType = {
   renewCount?: true
+  fineAmount?: true
 }
 
 export type BookLoanSumAggregateInputType = {
   renewCount?: true
+  fineAmount?: true
 }
 
 export type BookLoanMinAggregateInputType = {
@@ -100,6 +128,14 @@ export type BookLoanMinAggregateInputType = {
   status?: true
   notes?: true
   approvedById?: true
+  fineAmount?: true
+  fineStatus?: true
+  paymentMethod?: true
+  chalanNumber?: true
+  finePaidAt?: true
+  fineReceivedById?: true
+  warningEmailSent?: true
+  overdueEmailSent?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -115,6 +151,14 @@ export type BookLoanMaxAggregateInputType = {
   status?: true
   notes?: true
   approvedById?: true
+  fineAmount?: true
+  fineStatus?: true
+  paymentMethod?: true
+  chalanNumber?: true
+  finePaidAt?: true
+  fineReceivedById?: true
+  warningEmailSent?: true
+  overdueEmailSent?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -130,6 +174,14 @@ export type BookLoanCountAggregateInputType = {
   status?: true
   notes?: true
   approvedById?: true
+  fineAmount?: true
+  fineStatus?: true
+  paymentMethod?: true
+  chalanNumber?: true
+  finePaidAt?: true
+  fineReceivedById?: true
+  warningEmailSent?: true
+  overdueEmailSent?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -232,6 +284,14 @@ export type BookLoanGroupByOutputType = {
   status: $Enums.LoanStatus
   notes: string | null
   approvedById: string | null
+  fineAmount: number
+  fineStatus: $Enums.FineStatus
+  paymentMethod: $Enums.PaymentMethod | null
+  chalanNumber: string | null
+  finePaidAt: Date | null
+  fineReceivedById: string | null
+  warningEmailSent: boolean
+  overdueEmailSent: boolean
   createdAt: Date
   updatedAt: Date
   _count: BookLoanCountAggregateOutputType | null
@@ -270,6 +330,14 @@ export type BookLoanWhereInput = {
   status?: Prisma.EnumLoanStatusFilter<"BookLoan"> | $Enums.LoanStatus
   notes?: Prisma.StringNullableFilter<"BookLoan"> | string | null
   approvedById?: Prisma.StringNullableFilter<"BookLoan"> | string | null
+  fineAmount?: Prisma.FloatFilter<"BookLoan"> | number
+  fineStatus?: Prisma.EnumFineStatusFilter<"BookLoan"> | $Enums.FineStatus
+  paymentMethod?: Prisma.EnumPaymentMethodNullableFilter<"BookLoan"> | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.StringNullableFilter<"BookLoan"> | string | null
+  finePaidAt?: Prisma.DateTimeNullableFilter<"BookLoan"> | Date | string | null
+  fineReceivedById?: Prisma.StringNullableFilter<"BookLoan"> | string | null
+  warningEmailSent?: Prisma.BoolFilter<"BookLoan"> | boolean
+  overdueEmailSent?: Prisma.BoolFilter<"BookLoan"> | boolean
   createdAt?: Prisma.DateTimeFilter<"BookLoan"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"BookLoan"> | Date | string
   book?: Prisma.XOR<Prisma.BookScalarRelationFilter, Prisma.BookWhereInput>
@@ -287,6 +355,14 @@ export type BookLoanOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   approvedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
+  fineStatus?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
+  chalanNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  finePaidAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  fineReceivedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  warningEmailSent?: Prisma.SortOrder
+  overdueEmailSent?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   book?: Prisma.BookOrderByWithRelationInput
@@ -307,6 +383,14 @@ export type BookLoanWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumLoanStatusFilter<"BookLoan"> | $Enums.LoanStatus
   notes?: Prisma.StringNullableFilter<"BookLoan"> | string | null
   approvedById?: Prisma.StringNullableFilter<"BookLoan"> | string | null
+  fineAmount?: Prisma.FloatFilter<"BookLoan"> | number
+  fineStatus?: Prisma.EnumFineStatusFilter<"BookLoan"> | $Enums.FineStatus
+  paymentMethod?: Prisma.EnumPaymentMethodNullableFilter<"BookLoan"> | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.StringNullableFilter<"BookLoan"> | string | null
+  finePaidAt?: Prisma.DateTimeNullableFilter<"BookLoan"> | Date | string | null
+  fineReceivedById?: Prisma.StringNullableFilter<"BookLoan"> | string | null
+  warningEmailSent?: Prisma.BoolFilter<"BookLoan"> | boolean
+  overdueEmailSent?: Prisma.BoolFilter<"BookLoan"> | boolean
   createdAt?: Prisma.DateTimeFilter<"BookLoan"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"BookLoan"> | Date | string
   book?: Prisma.XOR<Prisma.BookScalarRelationFilter, Prisma.BookWhereInput>
@@ -324,6 +408,14 @@ export type BookLoanOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   approvedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
+  fineStatus?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
+  chalanNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  finePaidAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  fineReceivedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  warningEmailSent?: Prisma.SortOrder
+  overdueEmailSent?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.BookLoanCountOrderByAggregateInput
@@ -347,6 +439,14 @@ export type BookLoanScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumLoanStatusWithAggregatesFilter<"BookLoan"> | $Enums.LoanStatus
   notes?: Prisma.StringNullableWithAggregatesFilter<"BookLoan"> | string | null
   approvedById?: Prisma.StringNullableWithAggregatesFilter<"BookLoan"> | string | null
+  fineAmount?: Prisma.FloatWithAggregatesFilter<"BookLoan"> | number
+  fineStatus?: Prisma.EnumFineStatusWithAggregatesFilter<"BookLoan"> | $Enums.FineStatus
+  paymentMethod?: Prisma.EnumPaymentMethodNullableWithAggregatesFilter<"BookLoan"> | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.StringNullableWithAggregatesFilter<"BookLoan"> | string | null
+  finePaidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"BookLoan"> | Date | string | null
+  fineReceivedById?: Prisma.StringNullableWithAggregatesFilter<"BookLoan"> | string | null
+  warningEmailSent?: Prisma.BoolWithAggregatesFilter<"BookLoan"> | boolean
+  overdueEmailSent?: Prisma.BoolWithAggregatesFilter<"BookLoan"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"BookLoan"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"BookLoan"> | Date | string
 }
@@ -360,6 +460,14 @@ export type BookLoanCreateInput = {
   status?: $Enums.LoanStatus
   notes?: string | null
   approvedById?: string | null
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   book: Prisma.BookCreateNestedOneWithoutLoansInput
@@ -377,6 +485,14 @@ export type BookLoanUncheckedCreateInput = {
   status?: $Enums.LoanStatus
   notes?: string | null
   approvedById?: string | null
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -390,6 +506,14 @@ export type BookLoanUpdateInput = {
   status?: Prisma.EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  overdueEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   book?: Prisma.BookUpdateOneRequiredWithoutLoansNestedInput
@@ -407,6 +531,14 @@ export type BookLoanUncheckedUpdateInput = {
   status?: Prisma.EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  overdueEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -422,6 +554,14 @@ export type BookLoanCreateManyInput = {
   status?: $Enums.LoanStatus
   notes?: string | null
   approvedById?: string | null
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -435,6 +575,14 @@ export type BookLoanUpdateManyMutationInput = {
   status?: Prisma.EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  overdueEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -450,6 +598,14 @@ export type BookLoanUncheckedUpdateManyInput = {
   status?: Prisma.EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  overdueEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -475,12 +631,21 @@ export type BookLoanCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   approvedById?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
+  fineStatus?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrder
+  chalanNumber?: Prisma.SortOrder
+  finePaidAt?: Prisma.SortOrder
+  fineReceivedById?: Prisma.SortOrder
+  warningEmailSent?: Prisma.SortOrder
+  overdueEmailSent?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type BookLoanAvgOrderByAggregateInput = {
   renewCount?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
 }
 
 export type BookLoanMaxOrderByAggregateInput = {
@@ -494,6 +659,14 @@ export type BookLoanMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   approvedById?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
+  fineStatus?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrder
+  chalanNumber?: Prisma.SortOrder
+  finePaidAt?: Prisma.SortOrder
+  fineReceivedById?: Prisma.SortOrder
+  warningEmailSent?: Prisma.SortOrder
+  overdueEmailSent?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -509,12 +682,21 @@ export type BookLoanMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   approvedById?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
+  fineStatus?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrder
+  chalanNumber?: Prisma.SortOrder
+  finePaidAt?: Prisma.SortOrder
+  fineReceivedById?: Prisma.SortOrder
+  warningEmailSent?: Prisma.SortOrder
+  overdueEmailSent?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type BookLoanSumOrderByAggregateInput = {
   renewCount?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
 }
 
 export type BookLoanCreateNestedManyWithoutUserInput = {
@@ -605,6 +787,22 @@ export type EnumLoanStatusFieldUpdateOperationsInput = {
   set?: $Enums.LoanStatus
 }
 
+export type FloatFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type EnumFineStatusFieldUpdateOperationsInput = {
+  set?: $Enums.FineStatus
+}
+
+export type NullableEnumPaymentMethodFieldUpdateOperationsInput = {
+  set?: $Enums.PaymentMethod | null
+}
+
 export type BookLoanCreateWithoutUserInput = {
   id?: string
   borrowDate?: Date | string
@@ -614,6 +812,14 @@ export type BookLoanCreateWithoutUserInput = {
   status?: $Enums.LoanStatus
   notes?: string | null
   approvedById?: string | null
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   book: Prisma.BookCreateNestedOneWithoutLoansInput
@@ -629,6 +835,14 @@ export type BookLoanUncheckedCreateWithoutUserInput = {
   status?: $Enums.LoanStatus
   notes?: string | null
   approvedById?: string | null
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -673,6 +887,14 @@ export type BookLoanScalarWhereInput = {
   status?: Prisma.EnumLoanStatusFilter<"BookLoan"> | $Enums.LoanStatus
   notes?: Prisma.StringNullableFilter<"BookLoan"> | string | null
   approvedById?: Prisma.StringNullableFilter<"BookLoan"> | string | null
+  fineAmount?: Prisma.FloatFilter<"BookLoan"> | number
+  fineStatus?: Prisma.EnumFineStatusFilter<"BookLoan"> | $Enums.FineStatus
+  paymentMethod?: Prisma.EnumPaymentMethodNullableFilter<"BookLoan"> | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.StringNullableFilter<"BookLoan"> | string | null
+  finePaidAt?: Prisma.DateTimeNullableFilter<"BookLoan"> | Date | string | null
+  fineReceivedById?: Prisma.StringNullableFilter<"BookLoan"> | string | null
+  warningEmailSent?: Prisma.BoolFilter<"BookLoan"> | boolean
+  overdueEmailSent?: Prisma.BoolFilter<"BookLoan"> | boolean
   createdAt?: Prisma.DateTimeFilter<"BookLoan"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"BookLoan"> | Date | string
 }
@@ -686,6 +908,14 @@ export type BookLoanCreateWithoutBookInput = {
   status?: $Enums.LoanStatus
   notes?: string | null
   approvedById?: string | null
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutLoansInput
@@ -701,6 +931,14 @@ export type BookLoanUncheckedCreateWithoutBookInput = {
   status?: $Enums.LoanStatus
   notes?: string | null
   approvedById?: string | null
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -741,6 +979,14 @@ export type BookLoanCreateManyUserInput = {
   status?: $Enums.LoanStatus
   notes?: string | null
   approvedById?: string | null
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -754,6 +1000,14 @@ export type BookLoanUpdateWithoutUserInput = {
   status?: Prisma.EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  overdueEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   book?: Prisma.BookUpdateOneRequiredWithoutLoansNestedInput
@@ -769,6 +1023,14 @@ export type BookLoanUncheckedUpdateWithoutUserInput = {
   status?: Prisma.EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  overdueEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -783,6 +1045,14 @@ export type BookLoanUncheckedUpdateManyWithoutUserInput = {
   status?: Prisma.EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  overdueEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -797,6 +1067,14 @@ export type BookLoanCreateManyBookInput = {
   status?: $Enums.LoanStatus
   notes?: string | null
   approvedById?: string | null
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -810,6 +1088,14 @@ export type BookLoanUpdateWithoutBookInput = {
   status?: Prisma.EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  overdueEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutLoansNestedInput
@@ -825,6 +1111,14 @@ export type BookLoanUncheckedUpdateWithoutBookInput = {
   status?: Prisma.EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  overdueEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -839,6 +1133,14 @@ export type BookLoanUncheckedUpdateManyWithoutBookInput = {
   status?: Prisma.EnumLoanStatusFieldUpdateOperationsInput | $Enums.LoanStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  overdueEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -856,6 +1158,14 @@ export type BookLoanSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   status?: boolean
   notes?: boolean
   approvedById?: boolean
+  fineAmount?: boolean
+  fineStatus?: boolean
+  paymentMethod?: boolean
+  chalanNumber?: boolean
+  finePaidAt?: boolean
+  fineReceivedById?: boolean
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   book?: boolean | Prisma.BookDefaultArgs<ExtArgs>
@@ -873,6 +1183,14 @@ export type BookLoanSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   status?: boolean
   notes?: boolean
   approvedById?: boolean
+  fineAmount?: boolean
+  fineStatus?: boolean
+  paymentMethod?: boolean
+  chalanNumber?: boolean
+  finePaidAt?: boolean
+  fineReceivedById?: boolean
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   book?: boolean | Prisma.BookDefaultArgs<ExtArgs>
@@ -890,6 +1208,14 @@ export type BookLoanSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   status?: boolean
   notes?: boolean
   approvedById?: boolean
+  fineAmount?: boolean
+  fineStatus?: boolean
+  paymentMethod?: boolean
+  chalanNumber?: boolean
+  finePaidAt?: boolean
+  fineReceivedById?: boolean
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   book?: boolean | Prisma.BookDefaultArgs<ExtArgs>
@@ -907,11 +1233,19 @@ export type BookLoanSelectScalar = {
   status?: boolean
   notes?: boolean
   approvedById?: boolean
+  fineAmount?: boolean
+  fineStatus?: boolean
+  paymentMethod?: boolean
+  chalanNumber?: boolean
+  finePaidAt?: boolean
+  fineReceivedById?: boolean
+  warningEmailSent?: boolean
+  overdueEmailSent?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type BookLoanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "bookId" | "userId" | "borrowDate" | "dueDate" | "returnDate" | "renewCount" | "status" | "notes" | "approvedById" | "createdAt" | "updatedAt", ExtArgs["result"]["bookLoan"]>
+export type BookLoanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "bookId" | "userId" | "borrowDate" | "dueDate" | "returnDate" | "renewCount" | "status" | "notes" | "approvedById" | "fineAmount" | "fineStatus" | "paymentMethod" | "chalanNumber" | "finePaidAt" | "fineReceivedById" | "warningEmailSent" | "overdueEmailSent" | "createdAt" | "updatedAt", ExtArgs["result"]["bookLoan"]>
 export type BookLoanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   book?: boolean | Prisma.BookDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -942,6 +1276,14 @@ export type $BookLoanPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     status: $Enums.LoanStatus
     notes: string | null
     approvedById: string | null
+    fineAmount: number
+    fineStatus: $Enums.FineStatus
+    paymentMethod: $Enums.PaymentMethod | null
+    chalanNumber: string | null
+    finePaidAt: Date | null
+    fineReceivedById: string | null
+    warningEmailSent: boolean
+    overdueEmailSent: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["bookLoan"]>
@@ -1379,6 +1721,14 @@ export interface BookLoanFieldRefs {
   readonly status: Prisma.FieldRef<"BookLoan", 'LoanStatus'>
   readonly notes: Prisma.FieldRef<"BookLoan", 'String'>
   readonly approvedById: Prisma.FieldRef<"BookLoan", 'String'>
+  readonly fineAmount: Prisma.FieldRef<"BookLoan", 'Float'>
+  readonly fineStatus: Prisma.FieldRef<"BookLoan", 'FineStatus'>
+  readonly paymentMethod: Prisma.FieldRef<"BookLoan", 'PaymentMethod'>
+  readonly chalanNumber: Prisma.FieldRef<"BookLoan", 'String'>
+  readonly finePaidAt: Prisma.FieldRef<"BookLoan", 'DateTime'>
+  readonly fineReceivedById: Prisma.FieldRef<"BookLoan", 'String'>
+  readonly warningEmailSent: Prisma.FieldRef<"BookLoan", 'Boolean'>
+  readonly overdueEmailSent: Prisma.FieldRef<"BookLoan", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"BookLoan", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"BookLoan", 'DateTime'>
 }

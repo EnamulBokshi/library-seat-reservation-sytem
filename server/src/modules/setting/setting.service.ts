@@ -64,9 +64,104 @@ const getSettingByKey = async (key: string) => {
         updatedAt: new Date(),
       };
     }
+    if (key === "FINE_RATE_PER_DAY") {
+      return {
+        id: "default-fine-rate",
+        key: "FINE_RATE_PER_DAY",
+        value: "5",
+        description: "Overdue fine rate per day in BDT (Default: 5 Tk)",
+        updatedAt: new Date(),
+      };
+    }
+    if (key === "FINE_TIERS") {
+      return {
+        id: "default-fine-tiers",
+        key: "FINE_TIERS",
+        value: JSON.stringify([
+          { minDays: 1, rate: 5 },
+          { minDays: 8, rate: 10 },
+        ]),
+        description: "Configurable tiered fine rates by days overdue",
+        updatedAt: new Date(),
+      };
+    }
+    if (key === "WARNING_REMINDER_DAYS_BEFORE") {
+      return {
+        id: "default-warning-days",
+        key: "WARNING_REMINDER_DAYS_BEFORE",
+        value: "2",
+        description: "Days before loan due date to dispatch warning email",
+        updatedAt: new Date(),
+      };
+    }
   }
 
   return setting;
+};
+
+export interface IFineTier {
+  minDays: number;
+  rate: number;
+}
+
+/**
+ * Helper to get fine policy configuration
+ */
+const getFineConfig = async () => {
+  const [rateSetting, tiersSetting, warningDaysSetting] = await Promise.all([
+    getSettingByKey("FINE_RATE_PER_DAY"),
+    getSettingByKey("FINE_TIERS"),
+    getSettingByKey("WARNING_REMINDER_DAYS_BEFORE"),
+  ]);
+
+  const defaultRate = parseFloat(rateSetting?.value || "5") || 5;
+  let tiers: IFineTier[] = [];
+  try {
+    if (tiersSetting?.value) {
+      tiers = JSON.parse(tiersSetting.value);
+    }
+  } catch {
+    tiers = [];
+  }
+
+  const warningDays = parseInt(warningDaysSetting?.value || "2", 10) || 2;
+
+  return {
+    defaultRate,
+    tiers,
+    warningDays,
+  };
+};
+
+/**
+ * Calculates accumulated loan fine dynamically based on overdue days and tiered policy.
+ */
+const calculateLoanFine = async (dueDate: Date, returnDateOrNow: Date = new Date()) => {
+  const due = new Date(dueDate).getTime();
+  const end = new Date(returnDateOrNow).getTime();
+
+  if (end <= due) {
+    return { daysOverdue: 0, fineAmount: 0 };
+  }
+
+  const diffMs = end - due;
+  const daysOverdue = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  const config = await getFineConfig();
+
+  if (config.tiers && config.tiers.length > 0) {
+    const sortedTiers = [...config.tiers].sort((a, b) => b.minDays - a.minDays);
+    let totalFine = 0;
+
+    for (let day = 1; day <= daysOverdue; day++) {
+      const matchingTier = sortedTiers.find((t) => day >= t.minDays);
+      const rateForDay = matchingTier ? matchingTier.rate : config.defaultRate;
+      totalFine += rateForDay;
+    }
+    return { daysOverdue, fineAmount: totalFine };
+  }
+
+  return { daysOverdue, fineAmount: daysOverdue * config.defaultRate };
 };
 
 /**
@@ -121,5 +216,7 @@ export const SettingService = {
   getSettingByKey,
   getPublicConfig,
   getBorrowConfig,
+  getFineConfig,
+  calculateLoanFine,
   updateSetting,
 };

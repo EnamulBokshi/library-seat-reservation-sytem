@@ -582,18 +582,43 @@ const getBookingById = async (id: string, userId: string, role: Role) => {
 /**
  * Cancel a booking.
  */
-const cancelBooking = async (id: string, userId: string, role: Role) => {
+const cancelBooking = async (
+    id: string,
+    userId: string,
+    role: Role,
+    customCancelReason?: string
+) => {
     const booking = await prisma.booking.findUnique({
         where: { id },
         include: {
-            seat: true,
-            bookingSeats: true,
+            seat: {
+                include: {
+                    zone: true,
+                },
+            },
+            bookingSeats: {
+                include: {
+                    seat: {
+                        include: {
+                            zone: true,
+                        },
+                    },
+                },
+            },
+            user: true,
+            schedule: true,
         },
     });
 
     if (!booking) {
         throw new AppError(status.NOT_FOUND, "Booking not found");
     }
+
+    const isAdminOrLibrarian = role === Role.admin || role === Role.librarian;
+    const defaultReason = isAdminOrLibrarian
+        ? "Cancelled by Library Administration"
+        : "Cancelled by Student";
+    const finalCancelReason = customCancelReason?.trim() || defaultReason;
 
     // If student, check ownership and restrict cancellation
     if (role === Role.student) {
@@ -627,6 +652,7 @@ const cancelBooking = async (id: string, userId: string, role: Role) => {
             data: {
                 status: BookingStatus.cancelled,
                 cancelledAt: new Date(),
+                cancelReason: finalCancelReason,
             },
         });
 
@@ -645,6 +671,36 @@ const cancelBooking = async (id: string, userId: string, role: Role) => {
 
         return updated;
     });
+
+    // If cancelled by admin/librarian, dispatch email to the student
+    if (isAdminOrLibrarian && booking.user?.email) {
+        const formattedDate = new Date(booking.schedule.date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        });
+
+        const seatNumber = booking.bookingSeats?.length > 0
+            ? booking.bookingSeats.map((bs) => bs.seat.seatNumber).join(", ")
+            : booking.seat?.seatNumber ?? "Seat";
+        const zoneName = booking.bookingSeats?.length > 0
+            ? booking.bookingSeats[0]?.seat?.zone?.name ?? "Library Hall"
+            : booking.seat?.zone?.name ?? "Library Hall";
+
+        emailService
+            .sendBookingCancelledByAdminEmail({
+                toEmail: booking.user.email,
+                studentName: booking.user.name,
+                seatNumber,
+                zoneName,
+                dateStr: formattedDate,
+                slotName: booking.schedule.slot,
+                cancelReason: finalCancelReason,
+            })
+            .catch((err) =>
+                console.error("[Booking Service] Error sending admin cancellation email:", err)
+            );
+    }
 
     return cancelledBooking;
 };

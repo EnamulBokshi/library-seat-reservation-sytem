@@ -47,6 +47,7 @@ export type BookingMinAggregateOutputType = {
   checkedOutAt: Date | null
   cancelledAt: Date | null
   cancelReason: string | null
+  slotWarningEmailSent: boolean | null
 }
 
 export type BookingMaxAggregateOutputType = {
@@ -62,6 +63,7 @@ export type BookingMaxAggregateOutputType = {
   checkedOutAt: Date | null
   cancelledAt: Date | null
   cancelReason: string | null
+  slotWarningEmailSent: boolean | null
 }
 
 export type BookingCountAggregateOutputType = {
@@ -77,6 +79,7 @@ export type BookingCountAggregateOutputType = {
   checkedOutAt: number
   cancelledAt: number
   cancelReason: number
+  slotWarningEmailSent: number
   _all: number
 }
 
@@ -102,6 +105,7 @@ export type BookingMinAggregateInputType = {
   checkedOutAt?: true
   cancelledAt?: true
   cancelReason?: true
+  slotWarningEmailSent?: true
 }
 
 export type BookingMaxAggregateInputType = {
@@ -117,6 +121,7 @@ export type BookingMaxAggregateInputType = {
   checkedOutAt?: true
   cancelledAt?: true
   cancelReason?: true
+  slotWarningEmailSent?: true
 }
 
 export type BookingCountAggregateInputType = {
@@ -132,6 +137,7 @@ export type BookingCountAggregateInputType = {
   checkedOutAt?: true
   cancelledAt?: true
   cancelReason?: true
+  slotWarningEmailSent?: true
   _all?: true
 }
 
@@ -234,6 +240,7 @@ export type BookingGroupByOutputType = {
   checkedOutAt: Date | null
   cancelledAt: Date | null
   cancelReason: string | null
+  slotWarningEmailSent: boolean
   _count: BookingCountAggregateOutputType | null
   _avg: BookingAvgAggregateOutputType | null
   _sum: BookingSumAggregateOutputType | null
@@ -272,6 +279,7 @@ export type BookingWhereInput = {
   checkedOutAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   cancelReason?: Prisma.StringNullableFilter<"Booking"> | string | null
+  slotWarningEmailSent?: Prisma.BoolFilter<"Booking"> | boolean
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   seat?: Prisma.XOR<Prisma.SeatNullableScalarRelationFilter, Prisma.SeatWhereInput> | null
   schedule?: Prisma.XOR<Prisma.ScheduleScalarRelationFilter, Prisma.ScheduleWhereInput>
@@ -291,6 +299,7 @@ export type BookingOrderByWithRelationInput = {
   checkedOutAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  slotWarningEmailSent?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   seat?: Prisma.SeatOrderByWithRelationInput
   schedule?: Prisma.ScheduleOrderByWithRelationInput
@@ -313,6 +322,7 @@ export type BookingWhereUniqueInput = Prisma.AtLeast<{
   checkedOutAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   cancelReason?: Prisma.StringNullableFilter<"Booking"> | string | null
+  slotWarningEmailSent?: Prisma.BoolFilter<"Booking"> | boolean
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   seat?: Prisma.XOR<Prisma.SeatNullableScalarRelationFilter, Prisma.SeatWhereInput> | null
   schedule?: Prisma.XOR<Prisma.ScheduleScalarRelationFilter, Prisma.ScheduleWhereInput>
@@ -332,6 +342,7 @@ export type BookingOrderByWithAggregationInput = {
   checkedOutAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  slotWarningEmailSent?: Prisma.SortOrder
   _count?: Prisma.BookingCountOrderByAggregateInput
   _avg?: Prisma.BookingAvgOrderByAggregateInput
   _max?: Prisma.BookingMaxOrderByAggregateInput
@@ -355,6 +366,7 @@ export type BookingScalarWhereWithAggregatesInput = {
   checkedOutAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
   cancelReason?: Prisma.StringNullableWithAggregatesFilter<"Booking"> | string | null
+  slotWarningEmailSent?: Prisma.BoolWithAggregatesFilter<"Booking"> | boolean
 }
 
 export type BookingCreateInput = {
@@ -367,6 +379,7 @@ export type BookingCreateInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
   user: Prisma.UserCreateNestedOneWithoutBookingsInput
   seat?: Prisma.SeatCreateNestedOneWithoutBookingsInput
   schedule: Prisma.ScheduleCreateNestedOneWithoutBookingsInput
@@ -386,6 +399,7 @@ export type BookingUncheckedCreateInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
   bookingSeats?: Prisma.BookingSeatUncheckedCreateNestedManyWithoutBookingInput
 }
 
@@ -399,6 +413,7 @@ export type BookingUpdateInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   user?: Prisma.UserUpdateOneRequiredWithoutBookingsNestedInput
   seat?: Prisma.SeatUpdateOneWithoutBookingsNestedInput
   schedule?: Prisma.ScheduleUpdateOneRequiredWithoutBookingsNestedInput
@@ -418,6 +433,7 @@ export type BookingUncheckedUpdateInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bookingSeats?: Prisma.BookingSeatUncheckedUpdateManyWithoutBookingNestedInput
 }
 
@@ -434,6 +450,7 @@ export type BookingCreateManyInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
 }
 
 export type BookingUpdateManyMutationInput = {
@@ -446,6 +463,7 @@ export type BookingUpdateManyMutationInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type BookingUncheckedUpdateManyInput = {
@@ -461,6 +479,7 @@ export type BookingUncheckedUpdateManyInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type BookingListRelationFilter = {
@@ -491,6 +510,7 @@ export type BookingCountOrderByAggregateInput = {
   checkedOutAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
+  slotWarningEmailSent?: Prisma.SortOrder
 }
 
 export type BookingAvgOrderByAggregateInput = {
@@ -510,6 +530,7 @@ export type BookingMaxOrderByAggregateInput = {
   checkedOutAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
+  slotWarningEmailSent?: Prisma.SortOrder
 }
 
 export type BookingMinOrderByAggregateInput = {
@@ -525,6 +546,7 @@ export type BookingMinOrderByAggregateInput = {
   checkedOutAt?: Prisma.SortOrder
   cancelledAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
+  slotWarningEmailSent?: Prisma.SortOrder
 }
 
 export type BookingSumOrderByAggregateInput = {
@@ -689,6 +711,7 @@ export type BookingCreateWithoutUserInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
   seat?: Prisma.SeatCreateNestedOneWithoutBookingsInput
   schedule: Prisma.ScheduleCreateNestedOneWithoutBookingsInput
   bookingSeats?: Prisma.BookingSeatCreateNestedManyWithoutBookingInput
@@ -706,6 +729,7 @@ export type BookingUncheckedCreateWithoutUserInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
   bookingSeats?: Prisma.BookingSeatUncheckedCreateNestedManyWithoutBookingInput
 }
 
@@ -751,6 +775,7 @@ export type BookingScalarWhereInput = {
   checkedOutAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   cancelledAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   cancelReason?: Prisma.StringNullableFilter<"Booking"> | string | null
+  slotWarningEmailSent?: Prisma.BoolFilter<"Booking"> | boolean
 }
 
 export type BookingCreateWithoutSeatInput = {
@@ -763,6 +788,7 @@ export type BookingCreateWithoutSeatInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
   user: Prisma.UserCreateNestedOneWithoutBookingsInput
   schedule: Prisma.ScheduleCreateNestedOneWithoutBookingsInput
   bookingSeats?: Prisma.BookingSeatCreateNestedManyWithoutBookingInput
@@ -780,6 +806,7 @@ export type BookingUncheckedCreateWithoutSeatInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
   bookingSeats?: Prisma.BookingSeatUncheckedCreateNestedManyWithoutBookingInput
 }
 
@@ -819,6 +846,7 @@ export type BookingCreateWithoutScheduleInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
   user: Prisma.UserCreateNestedOneWithoutBookingsInput
   seat?: Prisma.SeatCreateNestedOneWithoutBookingsInput
   bookingSeats?: Prisma.BookingSeatCreateNestedManyWithoutBookingInput
@@ -836,6 +864,7 @@ export type BookingUncheckedCreateWithoutScheduleInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
   bookingSeats?: Prisma.BookingSeatUncheckedCreateNestedManyWithoutBookingInput
 }
 
@@ -875,6 +904,7 @@ export type BookingCreateWithoutBookingSeatsInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
   user: Prisma.UserCreateNestedOneWithoutBookingsInput
   seat?: Prisma.SeatCreateNestedOneWithoutBookingsInput
   schedule: Prisma.ScheduleCreateNestedOneWithoutBookingsInput
@@ -893,6 +923,7 @@ export type BookingUncheckedCreateWithoutBookingSeatsInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
 }
 
 export type BookingCreateOrConnectWithoutBookingSeatsInput = {
@@ -921,6 +952,7 @@ export type BookingUpdateWithoutBookingSeatsInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   user?: Prisma.UserUpdateOneRequiredWithoutBookingsNestedInput
   seat?: Prisma.SeatUpdateOneWithoutBookingsNestedInput
   schedule?: Prisma.ScheduleUpdateOneRequiredWithoutBookingsNestedInput
@@ -939,6 +971,7 @@ export type BookingUncheckedUpdateWithoutBookingSeatsInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type BookingCreateManyUserInput = {
@@ -953,6 +986,7 @@ export type BookingCreateManyUserInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
 }
 
 export type BookingUpdateWithoutUserInput = {
@@ -965,6 +999,7 @@ export type BookingUpdateWithoutUserInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   seat?: Prisma.SeatUpdateOneWithoutBookingsNestedInput
   schedule?: Prisma.ScheduleUpdateOneRequiredWithoutBookingsNestedInput
   bookingSeats?: Prisma.BookingSeatUpdateManyWithoutBookingNestedInput
@@ -982,6 +1017,7 @@ export type BookingUncheckedUpdateWithoutUserInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bookingSeats?: Prisma.BookingSeatUncheckedUpdateManyWithoutBookingNestedInput
 }
 
@@ -997,6 +1033,7 @@ export type BookingUncheckedUpdateManyWithoutUserInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type BookingCreateManySeatInput = {
@@ -1011,6 +1048,7 @@ export type BookingCreateManySeatInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
 }
 
 export type BookingUpdateWithoutSeatInput = {
@@ -1023,6 +1061,7 @@ export type BookingUpdateWithoutSeatInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   user?: Prisma.UserUpdateOneRequiredWithoutBookingsNestedInput
   schedule?: Prisma.ScheduleUpdateOneRequiredWithoutBookingsNestedInput
   bookingSeats?: Prisma.BookingSeatUpdateManyWithoutBookingNestedInput
@@ -1040,6 +1079,7 @@ export type BookingUncheckedUpdateWithoutSeatInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bookingSeats?: Prisma.BookingSeatUncheckedUpdateManyWithoutBookingNestedInput
 }
 
@@ -1055,6 +1095,7 @@ export type BookingUncheckedUpdateManyWithoutSeatInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type BookingCreateManyScheduleInput = {
@@ -1069,6 +1110,7 @@ export type BookingCreateManyScheduleInput = {
   checkedOutAt?: Date | string | null
   cancelledAt?: Date | string | null
   cancelReason?: string | null
+  slotWarningEmailSent?: boolean
 }
 
 export type BookingUpdateWithoutScheduleInput = {
@@ -1081,6 +1123,7 @@ export type BookingUpdateWithoutScheduleInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   user?: Prisma.UserUpdateOneRequiredWithoutBookingsNestedInput
   seat?: Prisma.SeatUpdateOneWithoutBookingsNestedInput
   bookingSeats?: Prisma.BookingSeatUpdateManyWithoutBookingNestedInput
@@ -1098,6 +1141,7 @@ export type BookingUncheckedUpdateWithoutScheduleInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
   bookingSeats?: Prisma.BookingSeatUncheckedUpdateManyWithoutBookingNestedInput
 }
 
@@ -1113,6 +1157,7 @@ export type BookingUncheckedUpdateManyWithoutScheduleInput = {
   checkedOutAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 
@@ -1159,6 +1204,7 @@ export type BookingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   checkedOutAt?: boolean
   cancelledAt?: boolean
   cancelReason?: boolean
+  slotWarningEmailSent?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   seat?: boolean | Prisma.Booking$seatArgs<ExtArgs>
   schedule?: boolean | Prisma.ScheduleDefaultArgs<ExtArgs>
@@ -1179,6 +1225,7 @@ export type BookingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   checkedOutAt?: boolean
   cancelledAt?: boolean
   cancelReason?: boolean
+  slotWarningEmailSent?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   seat?: boolean | Prisma.Booking$seatArgs<ExtArgs>
   schedule?: boolean | Prisma.ScheduleDefaultArgs<ExtArgs>
@@ -1197,6 +1244,7 @@ export type BookingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   checkedOutAt?: boolean
   cancelledAt?: boolean
   cancelReason?: boolean
+  slotWarningEmailSent?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   seat?: boolean | Prisma.Booking$seatArgs<ExtArgs>
   schedule?: boolean | Prisma.ScheduleDefaultArgs<ExtArgs>
@@ -1215,9 +1263,10 @@ export type BookingSelectScalar = {
   checkedOutAt?: boolean
   cancelledAt?: boolean
   cancelReason?: boolean
+  slotWarningEmailSent?: boolean
 }
 
-export type BookingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "seatId" | "scheduleId" | "guestCount" | "status" | "qrToken" | "bookedAt" | "checkedInAt" | "checkedOutAt" | "cancelledAt" | "cancelReason", ExtArgs["result"]["booking"]>
+export type BookingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "seatId" | "scheduleId" | "guestCount" | "status" | "qrToken" | "bookedAt" | "checkedInAt" | "checkedOutAt" | "cancelledAt" | "cancelReason" | "slotWarningEmailSent", ExtArgs["result"]["booking"]>
 export type BookingInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   seat?: boolean | Prisma.Booking$seatArgs<ExtArgs>
@@ -1257,6 +1306,7 @@ export type $BookingPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     checkedOutAt: Date | null
     cancelledAt: Date | null
     cancelReason: string | null
+    slotWarningEmailSent: boolean
   }, ExtArgs["result"]["booking"]>
   composites: {}
 }
@@ -1696,6 +1746,7 @@ export interface BookingFieldRefs {
   readonly checkedOutAt: Prisma.FieldRef<"Booking", 'DateTime'>
   readonly cancelledAt: Prisma.FieldRef<"Booking", 'DateTime'>
   readonly cancelReason: Prisma.FieldRef<"Booking", 'String'>
+  readonly slotWarningEmailSent: Prisma.FieldRef<"Booking", 'Boolean'>
 }
     
 

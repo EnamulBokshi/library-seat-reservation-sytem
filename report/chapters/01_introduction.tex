@@ -40,6 +40,7 @@ The core objectives of this project are:
     \item \textbf{Formulate Multi-Dimensional Physical Book Indexing}: Design an indexing engine that maps physical library volumes to exact spatial coordinates—including Floor, Section Block Number, Rack ID, and Shelf Position—to facilitate instant physical book retrieval.
     \item \textbf{Establish a Secured Digital Book and PDF Repository}: Construct a centralized book catalog allowing authorized students to search, view bibliographic metadata, preview e-books in-browser, and download supplementary PDF materials.
     \item \textbf{Develop an Automated Circulation and Renewal Pipeline}: Build a complete lending lifecycle (Issuance $\rightarrow$ Active Loan $\rightarrow$ Return $\rightarrow$ Overdue Fine Calculation) with student online renewal requests and full administrative approval control.
+    \item \textbf{Automate Seat Lifecycle Governance and Proactive Notification}: Implement a high-precision background cron engine that auto-cancels 15-minute no-shows, dispatches cancellation notifications (for both no-shows and administrative adjustments with recorded reasons), issues a 10-minute advance expiration warning, and automatically completes sessions and releases physical seats when time slots expire.
     \item \textbf{Implement Robust Role-Based Access Control and Analytics}: Create secured, distinct dashboard interfaces for Students, Librarians, and System Administrators with comprehensive reporting metrics.
 \end{enumerate}
 
@@ -49,6 +50,9 @@ The core objectives of this project are:
     \item Full-stack responsive web application accessible via desktop, tablet, and smartphone browsers.
     \item Slot-based seat reservation across configurable zones (e.g., Quiet Study, Group Study, Research Lab).
     \item Dynamic QR token generation, client-side camera scanning, and instant server-side verification.
+    \item Automated 15-minute check-in grace period enforcement and instant no-show cancellation emails.
+    \item Administrative seat cancellation with recorded audit reasons and automated student notifications.
+    \item Strict time slot expiration enforcement with 10-minute advance email warnings and automatic physical seat release.
     \item Bibliographic cataloging with physical shelf indexing (Floor, Block, Rack, Shelf position).
     \item Uploading, hosting, previewing, and downloading authorized digital PDF book assets.
     \item Comprehensive book borrowing, return processing, and rule-based renewal workflow.

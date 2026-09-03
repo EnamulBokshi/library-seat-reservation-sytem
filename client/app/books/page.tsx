@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { bookService } from "@/services/book-service";
 import { loanService } from "@/services/loan-service";
-import { Book, StudentLoanSummary } from "@/lib/types";
+import { Book, BookLoan, StudentLoanSummary } from "@/lib/types";
 import {
   Search,
   BookOpen,
@@ -44,9 +44,25 @@ export default function BooksCatalogPage() {
   const [selectedBlock, setSelectedBlock] = useState("All");
   const [hasPdfOnly, setHasPdfOnly] = useState(false);
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [myBorrowedOnly, setMyBorrowedOnly] = useState(false);
 
   // Student Quota
   const [studentSummary, setStudentSummary] = useState<StudentLoanSummary | null>(null);
+
+  // Map of student's active loans & requests by bookId
+  const userLoanMap = useMemo(() => {
+    const map = new Map<string, BookLoan>();
+    if (!studentSummary) return map;
+    studentSummary.activeLoans?.forEach((loan) => {
+      map.set(loan.bookId, loan);
+    });
+    studentSummary.pendingRequests?.forEach((loan) => {
+      if (!map.has(loan.bookId)) {
+        map.set(loan.bookId, loan);
+      }
+    });
+    return map;
+  }, [studentSummary]);
 
   // Borrow Modal State
   const [borrowModalBook, setBorrowModalBook] = useState<Book | null>(null);
@@ -110,6 +126,7 @@ export default function BooksCatalogPage() {
           book.author.toLowerCase().includes(query) ||
           (book.isbn && book.isbn.toLowerCase().includes(query)) ||
           (book.callNumber && book.callNumber.toLowerCase().includes(query)) ||
+          (book.barcode && book.barcode.toLowerCase().includes(query)) ||
           book.category.toLowerCase().includes(query);
         if (!matches) return false;
       }
@@ -134,9 +151,14 @@ export default function BooksCatalogPage() {
         return false;
       }
 
+      // My Borrowed Only
+      if (myBorrowedOnly && !userLoanMap.has(book.id)) {
+        return false;
+      }
+
       return true;
     });
-  }, [books, searchTerm, selectedCategory, selectedBlock, hasPdfOnly, inStockOnly]);
+  }, [books, searchTerm, selectedCategory, selectedBlock, hasPdfOnly, inStockOnly, myBorrowedOnly, userLoanMap]);
 
   const handleOpenBorrowModal = (book: Book) => {
     if (!isAuthenticated) {
@@ -304,6 +326,21 @@ export default function BooksCatalogPage() {
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                 <span>In Stock Only</span>
               </button>
+
+              {/* My Borrowed / Active Loans Toggle (Student Only) */}
+              {isAuthenticated && userLoanMap.size > 0 && (
+                <button
+                  onClick={() => setMyBorrowedOnly(!myBorrowedOnly)}
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 border transition-all ${
+                    myBorrowedOnly
+                      ? "bg-indigo-600 border-indigo-700 text-white font-extrabold shadow-2xs"
+                      : "bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
+                  }`}
+                >
+                  <Bookmark className="h-3.5 w-3.5 fill-current" />
+                  <span>My Borrowed Books ({userLoanMap.size})</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -341,6 +378,7 @@ export default function BooksCatalogPage() {
                 setSelectedBlock("All");
                 setHasPdfOnly(false);
                 setInStockOnly(false);
+                setMyBorrowedOnly(false);
               }}
               className="mt-4 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-slate-800"
             >
@@ -358,11 +396,20 @@ export default function BooksCatalogPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredBooks.map((book) => {
                 const inStock = book.availableCopies > 0;
+                const userLoan = userLoanMap.get(book.id);
+                const isBorrowedByMe = userLoan?.status === "issued" || userLoan?.status === "overdue";
+                const isRequestedByMe = userLoan?.status === "requested";
 
                 return (
                   <div
                     key={book.id}
-                    className="group relative flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-5 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200"
+                    className={`group relative flex flex-col justify-between rounded-3xl border bg-white p-5 shadow-2xs hover:shadow-md transition-all duration-200 ${
+                      isBorrowedByMe
+                        ? "border-indigo-300 ring-2 ring-indigo-500/20"
+                        : isRequestedByMe
+                        ? "border-amber-300 ring-2 ring-amber-500/20"
+                        : "border-slate-200/80 hover:border-slate-300"
+                    }`}
                   >
                     <div>
                       {/* Book Cover / Header */}
@@ -382,21 +429,40 @@ export default function BooksCatalogPage() {
                           </div>
                         )}
 
-                        {/* Top Badges */}
-                        <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
+                        {/* Top Left Category Badge */}
+                        <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10">
                           <span className="rounded-full bg-slate-900/80 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-extrabold text-white">
                             {book.category}
                           </span>
                         </div>
 
-                        {book.pdfUrl && (
-                          <div className="absolute top-2.5 right-2.5">
+                        {/* Top Right Status Badges */}
+                        <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1 z-10">
+                          {isBorrowedByMe ? (
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black shadow-md ${
+                                userLoan.status === "overdue"
+                                  ? "bg-rose-600 text-white animate-pulse"
+                                  : "bg-indigo-600 text-white"
+                              }`}
+                            >
+                              <Bookmark className="h-3 w-3 fill-current" />
+                              <span>{userLoan.status === "overdue" ? "Overdue" : "Borrowed by You"}</span>
+                            </span>
+                          ) : isRequestedByMe ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 text-white px-2.5 py-0.5 text-[10px] font-black shadow-md">
+                              <Clock className="h-3 w-3" />
+                              <span>Requested</span>
+                            </span>
+                          ) : null}
+
+                          {book.pdfUrl && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-rose-600/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-extrabold text-white shadow-xs">
                               <FileText className="h-3 w-3" />
                               <span>PDF</span>
                             </span>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
 
                       {/* Book Title & Author */}
@@ -409,8 +475,29 @@ export default function BooksCatalogPage() {
                         By {book.author}
                       </p>
 
+                      {/* Active Borrow / Request Ribbon for student */}
+                      {isBorrowedByMe ? (
+                        <div className="mt-2.5 rounded-xl bg-indigo-50 border border-indigo-200/80 p-2 text-xs font-bold text-indigo-900 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Bookmark className="h-3.5 w-3.5 text-indigo-600 fill-current" />
+                            <span>{userLoan.status === "overdue" ? "Late Return Due" : "Active Loan"}</span>
+                          </span>
+                          <span className="text-[11px] font-mono text-indigo-700">
+                            Due: {new Date(userLoan.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </span>
+                        </div>
+                      ) : isRequestedByMe ? (
+                        <div className="mt-2.5 rounded-xl bg-amber-50 border border-amber-200/80 p-2 text-xs font-bold text-amber-900 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5 text-amber-600" />
+                            <span>Pickup Pending</span>
+                          </span>
+                          <span className="text-[10px] text-amber-700">Awaiting Desk</span>
+                        </div>
+                      ) : null}
+
                       {/* 📍 Spatial Physical Location Tag (Block, Shelf, Row) */}
-                      <div className="mt-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 p-2.5">
+                      <div className="mt-2.5 rounded-2xl bg-slate-50 border border-slate-200/70 p-2.5">
                         <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-slate-700">
                           <MapPin className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
                           <span className="truncate">
@@ -439,7 +526,7 @@ export default function BooksCatalogPage() {
                             }`}
                           />
                           <span>
-                            {inStock ? `${book.availableCopies} of ${book.totalCopies} Available` : "On Loan (0/1)"}
+                            {inStock ? `${book.availableCopies} of ${book.totalCopies} Available` : "Checked Out"}
                           </span>
                         </span>
 
@@ -464,17 +551,35 @@ export default function BooksCatalogPage() {
                           View Map
                         </Link>
 
-                        <button
-                          onClick={() => handleOpenBorrowModal(book)}
-                          disabled={!inStock}
-                          className={`flex items-center justify-center rounded-xl px-3 py-2 text-xs font-bold transition-all text-center ${
-                            inStock
-                              ? "bg-slate-900 text-white hover:bg-slate-800 shadow-xs"
-                              : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                          }`}
-                        >
-                          {inStock ? "Borrow" : "Unavailable"}
-                        </button>
+                        {isBorrowedByMe ? (
+                          <Link
+                            href="/loans"
+                            className="flex items-center justify-center gap-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 text-xs font-extrabold transition-all text-center shadow-xs"
+                          >
+                            <Bookmark className="h-3.5 w-3.5 fill-current" />
+                            <span>My Loan</span>
+                          </Link>
+                        ) : isRequestedByMe ? (
+                          <Link
+                            href="/loans"
+                            className="flex items-center justify-center gap-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 text-xs font-extrabold transition-all text-center shadow-xs"
+                          >
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>Requested</span>
+                          </Link>
+                        ) : (
+                          <button
+                            onClick={() => handleOpenBorrowModal(book)}
+                            disabled={!inStock}
+                            className={`flex items-center justify-center rounded-xl px-3 py-2 text-xs font-bold transition-all text-center ${
+                              inStock
+                                ? "bg-slate-900 text-white hover:bg-slate-800 shadow-xs"
+                                : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                            }`}
+                          >
+                            {inStock ? "Borrow" : "Unavailable"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

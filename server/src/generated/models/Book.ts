@@ -43,6 +43,7 @@ export type BookMinAggregateOutputType = {
   title: string | null
   author: string | null
   isbn: string | null
+  barcode: string | null
   category: string | null
   publisher: string | null
   publicationYear: number | null
@@ -66,6 +67,7 @@ export type BookMaxAggregateOutputType = {
   title: string | null
   author: string | null
   isbn: string | null
+  barcode: string | null
   category: string | null
   publisher: string | null
   publicationYear: number | null
@@ -89,6 +91,7 @@ export type BookCountAggregateOutputType = {
   title: number
   author: number
   isbn: number
+  barcode: number
   category: number
   publisher: number
   publicationYear: number
@@ -126,6 +129,7 @@ export type BookMinAggregateInputType = {
   title?: true
   author?: true
   isbn?: true
+  barcode?: true
   category?: true
   publisher?: true
   publicationYear?: true
@@ -149,6 +153,7 @@ export type BookMaxAggregateInputType = {
   title?: true
   author?: true
   isbn?: true
+  barcode?: true
   category?: true
   publisher?: true
   publicationYear?: true
@@ -172,6 +177,7 @@ export type BookCountAggregateInputType = {
   title?: true
   author?: true
   isbn?: true
+  barcode?: true
   category?: true
   publisher?: true
   publicationYear?: true
@@ -282,6 +288,7 @@ export type BookGroupByOutputType = {
   title: string
   author: string
   isbn: string | null
+  barcode: string | null
   category: string
   publisher: string | null
   publicationYear: number | null
@@ -328,6 +335,7 @@ export type BookWhereInput = {
   title?: Prisma.StringFilter<"Book"> | string
   author?: Prisma.StringFilter<"Book"> | string
   isbn?: Prisma.StringNullableFilter<"Book"> | string | null
+  barcode?: Prisma.StringNullableFilter<"Book"> | string | null
   category?: Prisma.StringFilter<"Book"> | string
   publisher?: Prisma.StringNullableFilter<"Book"> | string | null
   publicationYear?: Prisma.IntNullableFilter<"Book"> | number | null
@@ -352,6 +360,7 @@ export type BookOrderByWithRelationInput = {
   title?: Prisma.SortOrder
   author?: Prisma.SortOrder
   isbn?: Prisma.SortOrderInput | Prisma.SortOrder
+  barcode?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   publisher?: Prisma.SortOrderInput | Prisma.SortOrder
   publicationYear?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -374,6 +383,7 @@ export type BookOrderByWithRelationInput = {
 export type BookWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   isbn?: string
+  barcode?: string
   AND?: Prisma.BookWhereInput | Prisma.BookWhereInput[]
   OR?: Prisma.BookWhereInput[]
   NOT?: Prisma.BookWhereInput | Prisma.BookWhereInput[]
@@ -396,13 +406,14 @@ export type BookWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Book"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Book"> | Date | string
   loans?: Prisma.BookLoanListRelationFilter
-}, "id" | "isbn">
+}, "id" | "isbn" | "barcode">
 
 export type BookOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   author?: Prisma.SortOrder
   isbn?: Prisma.SortOrderInput | Prisma.SortOrder
+  barcode?: Prisma.SortOrderInput | Prisma.SortOrder
   category?: Prisma.SortOrder
   publisher?: Prisma.SortOrderInput | Prisma.SortOrder
   publicationYear?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -434,6 +445,7 @@ export type BookScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"Book"> | string
   author?: Prisma.StringWithAggregatesFilter<"Book"> | string
   isbn?: Prisma.StringNullableWithAggregatesFilter<"Book"> | string | null
+  barcode?: Prisma.StringNullableWithAggregatesFilter<"Book"> | string | null
   category?: Prisma.StringWithAggregatesFilter<"Book"> | string
   publisher?: Prisma.StringNullableWithAggregatesFilter<"Book"> | string | null
   publicationYear?: Prisma.IntNullableWithAggregatesFilter<"Book"> | number | null
@@ -457,6 +469,7 @@ export type BookCreateInput = {
   title: string
   author: string
   isbn?: string | null
+  barcode?: string | null
   category?: string
   publisher?: string | null
   publicationYear?: number | null
@@ -481,6 +494,7 @@ export type BookUncheckedCreateInput = {
   title: string
   author: string
   isbn?: string | null
+  barcode?: string | null
   category?: string
   publisher?: string | null
   publicationYear?: number | null
@@ -505,6 +519,7 @@ export type BookUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   isbn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicationYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -529,6 +544,7 @@ export type BookUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   isbn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicationYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -553,6 +569,7 @@ export type BookCreateManyInput = {
   title: string
   author: string
   isbn?: string | null
+  barcode?: string | null
   category?: string
   publisher?: string | null
   publicationYear?: number | null
@@ -576,6 +593,7 @@ export type BookUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   isbn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicationYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -599,6 +617,7 @@ export type BookUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   isbn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicationYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -622,6 +641,7 @@ export type BookCountOrderByAggregateInput = {
   title?: Prisma.SortOrder
   author?: Prisma.SortOrder
   isbn?: Prisma.SortOrder
+  barcode?: Prisma.SortOrder
   category?: Prisma.SortOrder
   publisher?: Prisma.SortOrder
   publicationYear?: Prisma.SortOrder
@@ -651,6 +671,7 @@ export type BookMaxOrderByAggregateInput = {
   title?: Prisma.SortOrder
   author?: Prisma.SortOrder
   isbn?: Prisma.SortOrder
+  barcode?: Prisma.SortOrder
   category?: Prisma.SortOrder
   publisher?: Prisma.SortOrder
   publicationYear?: Prisma.SortOrder
@@ -674,6 +695,7 @@ export type BookMinOrderByAggregateInput = {
   title?: Prisma.SortOrder
   author?: Prisma.SortOrder
   isbn?: Prisma.SortOrder
+  barcode?: Prisma.SortOrder
   category?: Prisma.SortOrder
   publisher?: Prisma.SortOrder
   publicationYear?: Prisma.SortOrder
@@ -722,6 +744,7 @@ export type BookCreateWithoutLoansInput = {
   title: string
   author: string
   isbn?: string | null
+  barcode?: string | null
   category?: string
   publisher?: string | null
   publicationYear?: number | null
@@ -745,6 +768,7 @@ export type BookUncheckedCreateWithoutLoansInput = {
   title: string
   author: string
   isbn?: string | null
+  barcode?: string | null
   category?: string
   publisher?: string | null
   publicationYear?: number | null
@@ -784,6 +808,7 @@ export type BookUpdateWithoutLoansInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   isbn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicationYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -807,6 +832,7 @@ export type BookUncheckedUpdateWithoutLoansInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   isbn?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  barcode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   category?: Prisma.StringFieldUpdateOperationsInput | string
   publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicationYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -861,6 +887,7 @@ export type BookSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   title?: boolean
   author?: boolean
   isbn?: boolean
+  barcode?: boolean
   category?: boolean
   publisher?: boolean
   publicationYear?: boolean
@@ -886,6 +913,7 @@ export type BookSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   title?: boolean
   author?: boolean
   isbn?: boolean
+  barcode?: boolean
   category?: boolean
   publisher?: boolean
   publicationYear?: boolean
@@ -909,6 +937,7 @@ export type BookSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   title?: boolean
   author?: boolean
   isbn?: boolean
+  barcode?: boolean
   category?: boolean
   publisher?: boolean
   publicationYear?: boolean
@@ -932,6 +961,7 @@ export type BookSelectScalar = {
   title?: boolean
   author?: boolean
   isbn?: boolean
+  barcode?: boolean
   category?: boolean
   publisher?: boolean
   publicationYear?: boolean
@@ -950,7 +980,7 @@ export type BookSelectScalar = {
   updatedAt?: boolean
 }
 
-export type BookOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "author" | "isbn" | "category" | "publisher" | "publicationYear" | "edition" | "description" | "coverImage" | "pdfUrl" | "totalCopies" | "availableCopies" | "block" | "shelfNumber" | "rowNumber" | "callNumber" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["book"]>
+export type BookOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "author" | "isbn" | "barcode" | "category" | "publisher" | "publicationYear" | "edition" | "description" | "coverImage" | "pdfUrl" | "totalCopies" | "availableCopies" | "block" | "shelfNumber" | "rowNumber" | "callNumber" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["book"]>
 export type BookInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   loans?: boolean | Prisma.Book$loansArgs<ExtArgs>
   _count?: boolean | Prisma.BookCountOutputTypeDefaultArgs<ExtArgs>
@@ -968,6 +998,7 @@ export type $BookPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     title: string
     author: string
     isbn: string | null
+    barcode: string | null
     category: string
     publisher: string | null
     publicationYear: number | null
@@ -1412,6 +1443,7 @@ export interface BookFieldRefs {
   readonly title: Prisma.FieldRef<"Book", 'String'>
   readonly author: Prisma.FieldRef<"Book", 'String'>
   readonly isbn: Prisma.FieldRef<"Book", 'String'>
+  readonly barcode: Prisma.FieldRef<"Book", 'String'>
   readonly category: Prisma.FieldRef<"Book", 'String'>
   readonly publisher: Prisma.FieldRef<"Book", 'String'>
   readonly publicationYear: Prisma.FieldRef<"Book", 'Int'>

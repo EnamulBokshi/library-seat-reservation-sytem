@@ -61,6 +61,19 @@ enum LoanStatus {
   rejected
 }
 
+enum FineStatus {
+  none
+  unpaid
+  paid
+  waived
+}
+
+enum PaymentMethod {
+  cash
+  chalan
+  online
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model User {
@@ -164,6 +177,7 @@ model Booking {
   checkedOutAt DateTime?
   cancelledAt  DateTime?
   cancelReason String?
+  slotWarningEmailSent Boolean @default(false)
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   seat         Seat?         @relation(fields: [seatId], references: [id], onDelete: SetNull)
@@ -192,6 +206,7 @@ model Book {
   title           String
   author          String
   isbn            String?    @unique
+  barcode         String?    @unique
   category        String     @default("General")
   publisher       String?
   publicationYear Int?
@@ -216,28 +231,43 @@ model Book {
 
   @@index([category])
   @@index([block, shelfNumber])
+  @@index([barcode])
   @@map("books")
 }
 
 model BookLoan {
-  id           String     @id @default(uuid())
-  bookId       String
-  userId       String
-  borrowDate   DateTime   @default(now())
-  dueDate      DateTime
-  returnDate   DateTime?
-  renewCount   Int        @default(0)
-  status       LoanStatus @default(requested)
-  notes        String?
-  approvedById String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id               String        @id @default(uuid())
+  bookId           String
+  userId           String
+  borrowDate       DateTime      @default(now())
+  dueDate          DateTime
+  returnDate       DateTime?
+  renewCount       Int           @default(0)
+  status           LoanStatus    @default(requested)
+  notes            String?
+  approvedById     String?
 
-  book         Book       @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Fine & Payment Settlement
+  fineAmount       Float         @default(0)
+  fineStatus       FineStatus    @default(none)
+  paymentMethod    PaymentMethod?
+  chalanNumber     String?
+  finePaidAt       DateTime?
+  fineReceivedById String?
+
+  // Automated Email Notification Tracking
+  warningEmailSent Boolean       @default(false)
+  overdueEmailSent Boolean       @default(false)
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  book             Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, status])
   @@index([bookId, status])
+  @@index([fineStatus])
   @@map("book_loans")
 }
 

@@ -19,6 +19,8 @@ import {
   ExternalLink,
   Layers,
   Sparkles,
+  UploadCloud,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export default function AdminBooksPage() {
@@ -34,6 +36,7 @@ export default function AdminBooksPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [modalSuccess, setModalSuccess] = useState<string | null>(null);
 
@@ -86,6 +89,7 @@ export default function AdminBooksPage() {
       title: "",
       author: "",
       isbn: "",
+      barcode: "",
       category: "Computer Science",
       publisher: "",
       publicationYear: new Date().getFullYear(),
@@ -111,6 +115,7 @@ export default function AdminBooksPage() {
       title: book.title,
       author: book.author,
       isbn: book.isbn || "",
+      barcode: book.barcode || "",
       category: book.category,
       publisher: book.publisher || "",
       publicationYear: book.publicationYear || new Date().getFullYear(),
@@ -128,6 +133,24 @@ export default function AdminBooksPage() {
     setModalError(null);
     setModalSuccess(null);
     setIsModalOpen(true);
+  };
+
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingImage(true);
+      setModalError(null);
+      const res = await bookService.uploadImage(file);
+      if (res.success && res.data) {
+        setFormData((prev) => ({ ...prev, coverImage: res.data!.url }));
+      }
+    } catch (err: any) {
+      setModalError(err?.message || "Failed to upload image to Cloudinary.");
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -456,8 +479,8 @@ export default function AdminBooksPage() {
                 </div>
               </div>
 
-              {/* Category & ISBN */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Category, ISBN & Barcode */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-slate-700 mb-1">Category / Discipline</label>
                   <input
@@ -476,6 +499,17 @@ export default function AdminBooksPage() {
                     value={formData.isbn || ""}
                     onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
                     placeholder="e.g. 978-0262046305"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 mb-1">Barcode / Item Tag</label>
+                  <input
+                    type="text"
+                    value={formData.barcode || ""}
+                    onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                    placeholder="e.g. BC-100234"
                     className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
                   />
                 </div>
@@ -576,16 +610,74 @@ export default function AdminBooksPage() {
                 </div>
               </div>
 
-              {/* Cover Image URL */}
-              <div>
-                <label className="block text-slate-700 mb-1">Cover Image URL (Optional)</label>
-                <input
-                  type="text"
-                  value={formData.coverImage || ""}
-                  onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none"
-                />
+              {/* ── Cloudinary Book Cover Image Upload (WebP) ── */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-slate-800 text-xs font-extrabold flex items-center gap-1.5">
+                    <ImageIcon className="h-4 w-4 text-indigo-600" />
+                    <span>Book Cover Image (Cloudinary Media)</span>
+                  </label>
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                    Auto WebP Converted
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  {/* Preview Thumbnail */}
+                  <div className="h-24 w-20 rounded-xl border border-slate-300 bg-white overflow-hidden shrink-0 flex items-center justify-center relative shadow-inner">
+                    {formData.coverImage ? (
+                      <>
+                        <img
+                          src={formData.coverImage}
+                          alt="Cover preview"
+                          className="h-full w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, coverImage: "" }))}
+                          className="absolute top-1 right-1 rounded-full bg-slate-900/80 p-0.5 text-white hover:bg-rose-600 transition-colors"
+                          title="Remove cover"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </>
+                    ) : (
+                      <BookOpen className="h-6 w-6 text-slate-300" />
+                    )}
+                  </div>
+
+                  {/* Upload Drop Area */}
+                  <div className="flex-1 w-full space-y-2">
+                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-xl p-3 cursor-pointer bg-white transition-colors text-center">
+                      {isUploadingImage ? (
+                        <div className="flex items-center gap-2 py-1 text-indigo-600 font-bold text-xs">
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          <span>Uploading & Converting to WebP...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-slate-600 font-semibold text-xs py-1">
+                          <UploadCloud className="h-4 w-4 text-indigo-600" />
+                          <span>Click or drag image to upload to Cloudinary</span>
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={isUploadingImage}
+                        onChange={handleImageFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <input
+                      type="text"
+                      value={formData.coverImage || ""}
+                      onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+                      placeholder="Or paste external image URL..."
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Description */}
