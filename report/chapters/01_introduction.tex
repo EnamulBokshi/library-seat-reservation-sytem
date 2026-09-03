@@ -1,0 +1,82 @@
+\cleardoublepage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\chapter{Introduction}
+
+This chapter introduces the fundamental background of university library automation, outlines the core operational and technical problems faced by modern academic institutions, defines the formal project objectives and scope, and presents the structural organization of this thesis.
+
+\section{Background and Context}
+Academic libraries serve as the intellectual cornerstone of higher education institutions, fostering collaborative research, individual scholarly study, and centralized knowledge dissemination. Over the past decade, university campuses worldwide have witnessed exponential growth in student enrollment, intensifying the demand for physical library infrastructure, reading spaces, and bibliographic resources. In major tertiary education institutions in Bangladesh, including Daffodil International University (DIU), modern university libraries house thousands of physical volumes, electronic journals, and dedicated quiet study zones spread across multi-floor facilities.
+
+Despite substantial investments in physical collections and modern reading halls, the day-to-day administrative and student interaction workflows in many institutions remain fragmented. Students often spend critical study hours manually hunting for vacant study desks during midterm and final examination periods, navigating rows of book stacks without granular physical coordinate guidance, or queuing at circulation counters to complete routine loan issuances and renewal requests. Concurrently, library staff struggle to enforce equitable seat sharing, track overdue physical assets, and synchronize physical catalog holdings with digital e-book alternatives. 
+
+To overcome these institutional challenges, modern higher education ecosystems require a cohesive, automated, and intelligent library management platform. Integrating real-time seat reservation, fine-grained physical book location indexing, digital document distribution, and an automated circulation workflow into a single responsive web ecosystem provides a comprehensive technological remedy for contemporary university libraries.
+
+\section{Problem Statement}
+Contemporary academic libraries face several acute operational and technological bottlenecks:
+
+\begin{enumerate}
+    \item \textbf{Seat Congestion and Phantom Reservations}: During peak academic hours, students face severe seat shortages. Manual paper sign-in sheets and informal seat reserving (e.g., placing personal belongings on empty chairs) result in severe resource under-utilization, phantom occupancy, and interpersonal disputes. Without real-time slot-based scheduling and automated attendance validation, empty desks remain locked while other students are turned away.
+    \item \textbf{High Latency in Physical Book Location Discovery}: Traditional Online Public Access Catalogs (OPAC) notify users whether a book exists in the library inventory, but provide only general classification codes (e.g., Dewey Decimal numbers). First-year and undergraduate students unfamiliar with classification hierarchies spend significant time physically searching across extensive bookshelf rows to find the exact shelf level and block.
+    \item \textbf{Disjointed Digital and Physical Resource Access}: While physical volumes may be checked out or temporarily unavailable, students frequently lack immediate access to digital electronic versions (PDFs) of course textbooks and reference guides within the same portal.
+    \item \textbf{Inefficient Manual Circulation and Renewal Workflows}: Traditional circulation desks require physical staff intervention for every loan extension and renewal verification. Lack of self-service renewal pipelines creates counter queues and increases overdue incidence among busy students.
+\end{enumerate}
+
+\section{Motivation and Significance}
+The primary motivation behind this research and engineering project is to optimize institutional resource allocation, eliminate administrative overhead, and drastically enhance the academic productivity of university students. The technological and societal significance includes:
+
+\begin{itemize}
+    \item \textbf{Academic Time Optimization}: Automating seat booking and providing precise physical coordinate indexing (Block, Rack, and Shelf position) saves thousands of cumulative student study hours per semester.
+    \item \textbf{Fair Resource Allocation}: Cryptographically tokenized QR code check-in ensures that study desks are occupied solely by genuine reservation holders, with automated cancellation and redistribution of no-show seats.
+    \item \textbf{Environmental Sustainability}: Digitizing seat passes, transaction slips, and book checkout logs substantially eliminates paper usage across university library departments.
+    \item \textbf{Administrative Oversight and Accountability}: Providing centralized role-based management (Admin, Librarian, and Student) equips library administrators with granular audit logs, analytics on zone utilization, and inventory circulation statistics.
+\end{itemize}
+
+\section{Project Objectives}
+The core objectives of this project are:
+\begin{enumerate}
+    \item \textbf{Implement Real-Time Concurrency-Safe Seat Reservation}: Develop a slot-scheduled seat booking engine that visualizes zone occupancy in real time, prevents race conditions/double-bookings, and enforces time-window check-in via secure QR code scanning.
+    \item \textbf{Formulate Multi-Dimensional Physical Book Indexing}: Design an indexing engine that maps physical library volumes to exact spatial coordinates—including Floor, Section Block Number, Rack ID, and Shelf Position—to facilitate instant physical book retrieval.
+    \item \textbf{Establish a Secured Digital Book and PDF Repository}: Construct a centralized book catalog allowing authorized students to search, view bibliographic metadata, preview e-books in-browser, and download supplementary PDF materials.
+    \item \textbf{Develop an Automated Circulation and Renewal Pipeline}: Build a complete lending lifecycle (Issuance $\rightarrow$ Active Loan $\rightarrow$ Return $\rightarrow$ Overdue Fine Calculation) with student online renewal requests and full administrative approval control.
+    \item \textbf{Implement Robust Role-Based Access Control and Analytics}: Create secured, distinct dashboard interfaces for Students, Librarians, and System Administrators with comprehensive reporting metrics.
+\end{enumerate}
+
+\section{Scope and Delimitations}
+\subsection{In Scope}
+\begin{itemize}
+    \item Full-stack responsive web application accessible via desktop, tablet, and smartphone browsers.
+    \item Slot-based seat reservation across configurable zones (e.g., Quiet Study, Group Study, Research Lab).
+    \item Dynamic QR token generation, client-side camera scanning, and instant server-side verification.
+    \item Bibliographic cataloging with physical shelf indexing (Floor, Block, Rack, Shelf position).
+    \item Uploading, hosting, previewing, and downloading authorized digital PDF book assets.
+    \item Comprehensive book borrowing, return processing, and rule-based renewal workflow.
+    \item JWT-based session security with HttpOnly cookies and role-based permissions.
+\end{itemize}
+
+\subsection{Delimitations and Exclusions}
+\begin{itemize}
+    \item Hardware IoT embedded seat pressure/infrared sensors are outside the current software phase and represented via architectural design for future expansion.
+    \item Physical RFID security gate hardware integration is reserved for future campus-wide deployments.
+\end{itemize}
+
+\section{Research Methodology Overview}
+This project adheres to an Agile Engineering Design Methodology consisting of four iterative stages:
+\begin{enumerate}
+    \item \textbf{Requirements Engineering}: Conducting stakeholder interviews with DIU librarians, faculty, and students to define functional user stories and non-functional constraints.
+    \item \textbf{Architectural Modeling}: Establishing relational data schemas (ERD), Data Flow Diagrams (DFD Levels 0 and 1), and REST API specifications.
+    \item \textbf{Iterative Full-Stack Implementation}: Developing the backend microservices using Node.js/Express, TypeScript, and Prisma ORM alongside a modern Next.js 15 (React 19) frontend.
+    \item \textbf{Empirical Verification and Benchmarking}: Performing concurrency load tests, query latency benchmarks, and user acceptance evaluations.
+\end{enumerate}
+
+\section{Organization of the Report}
+The remainder of this thesis is organized as follows:
+\begin{itemize}
+    \item \textbf{Chapter 2 (Background and Literature Review)}: Reviews contemporary literature, theoretical foundations of concurrency and indexing, and provides a comparative feature gap matrix.
+    \item \textbf{Chapter 3 (Research Methodology and System Design)}: Presents stakeholder analysis, Functional Requirements Specifications (FRS), system architecture, DFDs, and relational ERD schemas.
+    \item \textbf{Chapter 4 (Implementation, Testing, and Results)}: Details the development environment, core algorithmic pipelines, code implementations, and empirical benchmark performance results.
+    \item \textbf{Chapter 5 (Engineering Standards and Design Challenges)}: Maps compliance with international engineering standards, societal/environmental sustainability, and detailed BAETE EP1--EP7, K1--K8, and EA1--EA5 accreditation matrices.
+    \item \textbf{Chapter 6 (Conclusion and Future Work)}: Summarizes research contributions, outlines current operational limitations, and proposes avenues for future enhancements.
+    \item \textbf{References}: Contains the complete bibliography in IEEE citation format.
+\end{itemize}

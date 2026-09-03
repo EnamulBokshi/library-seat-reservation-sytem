@@ -47,3 +47,13 @@ export type Booking = Prisma.BookingModel
  * 
  */
 export type Setting = Prisma.SettingModel
+/**
+ * Model Book
+ * 
+ */
+export type Book = Prisma.BookModel
+/**
+ * Model BookLoan
+ * 
+ */
+export type BookLoan = Prisma.BookLoanModel

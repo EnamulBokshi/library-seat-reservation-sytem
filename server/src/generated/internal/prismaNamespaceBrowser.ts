@@ -56,7 +56,9 @@ export const ModelName = {
   Seat: 'Seat',
   Schedule: 'Schedule',
   Booking: 'Booking',
-  Setting: 'Setting'
+  Setting: 'Setting',
+  Book: 'Book',
+  BookLoan: 'BookLoan'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -155,6 +157,50 @@ export const SettingScalarFieldEnum = {
 } as const
 
 export type SettingScalarFieldEnum = (typeof SettingScalarFieldEnum)[keyof typeof SettingScalarFieldEnum]
+
+
+export const BookScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  author: 'author',
+  isbn: 'isbn',
+  category: 'category',
+  publisher: 'publisher',
+  publicationYear: 'publicationYear',
+  edition: 'edition',
+  description: 'description',
+  coverImage: 'coverImage',
+  pdfUrl: 'pdfUrl',
+  totalCopies: 'totalCopies',
+  availableCopies: 'availableCopies',
+  block: 'block',
+  shelfNumber: 'shelfNumber',
+  rowNumber: 'rowNumber',
+  callNumber: 'callNumber',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BookScalarFieldEnum = (typeof BookScalarFieldEnum)[keyof typeof BookScalarFieldEnum]
+
+
+export const BookLoanScalarFieldEnum = {
+  id: 'id',
+  bookId: 'bookId',
+  userId: 'userId',
+  borrowDate: 'borrowDate',
+  dueDate: 'dueDate',
+  returnDate: 'returnDate',
+  renewCount: 'renewCount',
+  status: 'status',
+  notes: 'notes',
+  approvedById: 'approvedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BookLoanScalarFieldEnum = (typeof BookLoanScalarFieldEnum)[keyof typeof BookLoanScalarFieldEnum]
 
 
 export const SortOrder = {

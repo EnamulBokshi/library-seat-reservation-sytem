@@ -36,6 +36,15 @@ enum BookingStatus {
   no_show
 }
 
+enum LoanStatus {
+  requested
+  issued
+  returned
+  overdue
+  cancelled
+  rejected
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model User {
@@ -50,6 +59,7 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   bookings Booking[]
+  loans    BookLoan[]
 
   @@map("users")
 }
@@ -136,3 +146,58 @@ model Setting {
 
   @@map("settings")
 }
+
+model Book {
+  id              String     @id @default(uuid())
+  title           String
+  author          String
+  isbn            String?    @unique
+  category        String     @default("General")
+  publisher       String?
+  publicationYear Int?
+  edition         String?
+  description     String?
+  coverImage      String?
+  pdfUrl          String?
+  totalCopies     Int        @default(1)
+  availableCopies Int        @default(1)
+  
+  // Spatial Location Indexing (No floor needed)
+  block           String     // e.g. "Block A", "Block B", "Main Hall"
+  shelfNumber     String     // e.g. "Shelf 04", "Rack 12"
+  rowNumber       String?    // e.g. "Row 2", "Slot 5"
+  callNumber      String?    // e.g. "QA76.73.P98 2024"
+  
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  loans           BookLoan[]
+
+  @@index([category])
+  @@index([block, shelfNumber])
+  @@map("books")
+}
+
+model BookLoan {
+  id           String     @id @default(uuid())
+  bookId       String
+  userId       String
+  borrowDate   DateTime   @default(now())
+  dueDate      DateTime
+  returnDate   DateTime?
+  renewCount   Int        @default(0)
+  status       LoanStatus @default(requested)
+  notes        String?
+  approvedById String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  book         Book       @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([bookId, status])
+  @@map("book_loans")
+}
+

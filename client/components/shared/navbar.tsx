@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import {
   BookOpen, LogOut, User as UserIcon, LogIn, UserPlus,
-  MapPin, ClipboardList, ScanLine, Home, Shield, Settings, Activity, Search, Calendar, Armchair
+  MapPin, ClipboardList, ScanLine, Home, Shield, Settings, Activity, Search, Calendar, Armchair, Bookmark
 } from "lucide-react";
 
 interface NavLinkProps {
@@ -69,6 +69,7 @@ export function Navbar() {
             <nav className="hidden md:flex items-center gap-1 rounded-full bg-[#efeff1] p-1 border border-slate-200/60">
               <NavLink href="/" icon={Home} label="Overview" active={pathname === "/"} />
               <NavLink href="/book" icon={Armchair} label="Book Seat" active={pathname.startsWith("/book") || pathname.startsWith("/zones")} />
+              <NavLink href="/books" icon={BookOpen} label="Books Catalog" active={pathname.startsWith("/books")} />
 
               {isStudent && (
                 <>
@@ -76,8 +77,14 @@ export function Navbar() {
                   <NavLink
                     href="/bookings"
                     icon={ClipboardList}
-                    label="My Bookings"
+                    label="My Seats"
                     active={pathname.startsWith("/bookings")}
+                  />
+                  <NavLink
+                    href="/loans"
+                    icon={Bookmark}
+                    label="My Loans"
+                    active={pathname.startsWith("/loans")}
                   />
                 </>
               )}
@@ -86,9 +93,21 @@ export function Navbar() {
                 <>
                   <NavSeparator />
                   <NavLink
+                    href="/admin/books"
+                    icon={BookOpen}
+                    label="Books"
+                    active={pathname.startsWith("/admin/books")}
+                  />
+                  <NavLink
+                    href="/admin/loans"
+                    icon={Shield}
+                    label="Circulation"
+                    active={pathname.startsWith("/admin/loans")}
+                  />
+                  <NavLink
                     href="/admin/bookings"
                     icon={ClipboardList}
-                    label="All Bookings"
+                    label="Bookings"
                     active={pathname.startsWith("/admin/bookings")}
                   />
                   <NavLink
@@ -96,12 +115,6 @@ export function Navbar() {
                     icon={ScanLine}
                     label="Check-In"
                     active={pathname.startsWith("/admin/checkin")}
-                  />
-                  <NavLink
-                    href="/admin/schedules"
-                    icon={Calendar}
-                    label="Schedules"
-                    active={pathname.startsWith("/admin/schedules")}
                   />
                   <NavLink
                     href="/admin/settings"
@@ -175,15 +188,34 @@ export function Navbar() {
             <span className="text-[10px]">Book</span>
           </Link>
 
+          <Link
+            href="/books"
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${pathname.startsWith("/books") ? "text-slate-900 font-extrabold" : "text-slate-400 font-medium"
+              }`}
+          >
+            <BookOpen className={`h-5 w-5 ${pathname.startsWith("/books") ? "text-slate-900" : "text-slate-400"}`} />
+            <span className="text-[10px]">Books</span>
+          </Link>
+
           {isStudent && (
-            <Link
-              href="/bookings"
-              className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${pathname.startsWith("/bookings") ? "text-slate-900 font-extrabold" : "text-slate-400 font-medium"
-                }`}
-            >
-              <ClipboardList className={`h-5 w-5 ${pathname.startsWith("/bookings") ? "text-slate-900" : "text-slate-400"}`} />
-              <span className="text-[10px]">Bookings</span>
-            </Link>
+            <>
+              <Link
+                href="/bookings"
+                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${pathname.startsWith("/bookings") ? "text-slate-900 font-extrabold" : "text-slate-400 font-medium"
+                  }`}
+              >
+                <ClipboardList className={`h-5 w-5 ${pathname.startsWith("/bookings") ? "text-slate-900" : "text-slate-400"}`} />
+                <span className="text-[10px]">Seats</span>
+              </Link>
+              <Link
+                href="/loans"
+                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${pathname.startsWith("/loans") ? "text-slate-900 font-extrabold" : "text-slate-400 font-medium"
+                  }`}
+              >
+                <Bookmark className={`h-5 w-5 ${pathname.startsWith("/loans") ? "text-slate-900" : "text-slate-400"}`} />
+                <span className="text-[10px]">Loans</span>
+              </Link>
+            </>
           )}
 
           {canManage && (

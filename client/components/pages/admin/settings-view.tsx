@@ -22,6 +22,7 @@ import {
   Moon,
   Sunset,
   Sunrise,
+  BookOpen,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -43,9 +44,15 @@ export function SettingsView() {
   const [advanceDays, setAdvanceDays] = useState("7");
   const [slotConfig, setSlotConfig] = useState<SlotConfig>(DEFAULT_SLOT_CONFIG);
 
+  // Borrowing Policy states
+  const [maxBorrowLimit, setMaxBorrowLimit] = useState("3");
+  const [borrowPeriodDays, setBorrowPeriodDays] = useState("10");
+  const [maxRenewalLimit, setMaxRenewalLimit] = useState("3");
+
   const [isSavingGrace, setIsSavingGrace] = useState(false);
   const [isSavingAdvance, setIsSavingAdvance] = useState(false);
   const [isSavingSlots, setIsSavingSlots] = useState(false);
+  const [isSavingBorrowPolicy, setIsSavingBorrowPolicy] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
@@ -63,6 +70,21 @@ export function SettingsView() {
       const advanceItem = list.find((s) => s.key === "ADVANCE_BOOKING_DAYS");
       if (advanceItem) {
         setAdvanceDays(advanceItem.value);
+      }
+
+      const maxBorrowItem = list.find((s) => s.key === "MAX_BORROW_LIMIT");
+      if (maxBorrowItem) {
+        setMaxBorrowLimit(maxBorrowItem.value);
+      }
+
+      const borrowPeriodItem = list.find((s) => s.key === "BORROW_PERIOD_DAYS");
+      if (borrowPeriodItem) {
+        setBorrowPeriodDays(borrowPeriodItem.value);
+      }
+
+      const maxRenewalItem = list.find((s) => s.key === "MAX_RENEWAL_LIMIT");
+      if (maxRenewalItem) {
+        setMaxRenewalLimit(maxRenewalItem.value);
       }
 
       const slotItem = list.find((s) => s.key === "SLOT_CONFIG");
@@ -144,6 +166,58 @@ export function SettingsView() {
       setError(apiErr?.message ?? "Failed to update advance booking window.");
     } finally {
       setIsSavingAdvance(false);
+    }
+  };
+
+  // ── Save Borrow Policy ───────────────────────────────────────────────────
+  const handleSaveBorrowPolicy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
+    const maxBorrow = parseInt(maxBorrowLimit, 10);
+    const borrowDays = parseInt(borrowPeriodDays, 10);
+    const maxRenewal = parseInt(maxRenewalLimit, 10);
+
+    if (isNaN(maxBorrow) || maxBorrow < 1 || maxBorrow > 20) {
+      setError("Max borrow limit must be between 1 and 20 books.");
+      return;
+    }
+    if (isNaN(borrowDays) || borrowDays < 1 || borrowDays > 90) {
+      setError("Borrow period must be between 1 and 90 days.");
+      return;
+    }
+    if (isNaN(maxRenewal) || maxRenewal < 0 || maxRenewal > 10) {
+      setError("Max renewals must be between 0 and 10 times.");
+      return;
+    }
+
+    setIsSavingBorrowPolicy(true);
+    try {
+      await Promise.all([
+        settingService.update(
+          "MAX_BORROW_LIMIT",
+          maxBorrowLimit.trim(),
+          "Maximum active books a student can borrow concurrently"
+        ),
+        settingService.update(
+          "BORROW_PERIOD_DAYS",
+          borrowPeriodDays.trim(),
+          "Default borrow period duration in days"
+        ),
+        settingService.update(
+          "MAX_RENEWAL_LIMIT",
+          maxRenewalLimit.trim(),
+          "Maximum number of renewals allowed per book"
+        ),
+      ]);
+      setSuccessMessage("Book borrowing and circulation policies updated successfully!");
+      fetchSettings();
+    } catch (err: unknown) {
+      const apiErr = err as ApiError;
+      setError(apiErr?.message ?? "Failed to update borrowing policies.");
+    } finally {
+      setIsSavingBorrowPolicy(false);
     }
   };
 
@@ -485,6 +559,93 @@ export function SettingsView() {
                 </div>
               </form>
             </div>
+
+            {/* ── CARD 4: Book Borrowing & Circulation Policies ── */}
+            <div className="pulse-card p-6 shadow-sm space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 border border-indigo-100 shrink-0">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-extrabold text-slate-900">
+                    Book Borrowing & Circulation Policies
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed font-medium">
+                    Configure the maximum books a student can borrow concurrently, the standard loan duration, and how many times a loan can be extended online.
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveBorrowPolicy} className="space-y-4 pt-2 border-t border-slate-100">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Max Books Per Student
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={maxBorrowLimit}
+                      onChange={(e) => setMaxBorrowLimit(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      Default: 3 books
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Loan Duration (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={borrowPeriodDays}
+                      onChange={(e) => setBorrowPeriodDays(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      Default: 10 days
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Max Renewals Per Book
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={maxRenewalLimit}
+                      onChange={(e) => setMaxRenewalLimit(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      Default: 3 times
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isSavingBorrowPolicy}
+                    className="pulse-button-primary py-2.5 px-5 text-xs inline-flex items-center gap-2"
+                  >
+                    {isSavingBorrowPolicy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span>Save Circulation Policy</span>
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
     </div>
@@ -492,3 +653,4 @@ export function SettingsView() {
 }
 
 export default SettingsView;
+
