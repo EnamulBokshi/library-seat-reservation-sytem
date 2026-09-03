@@ -1,22 +1,21 @@
-import { Roboto, Roboto_Mono } from "next/font/google"
+import { Inter, JetBrains_Mono } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/context/auth-context"
 import { Navbar } from "@/components/shared/navbar"
 import { cn } from "@/lib/utils"
-import Script from "next/script"
 
-const fontSans = Roboto({
+const fontSans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["300", "400", "500", "700", "900"],
+  display: "swap",
 })
 
-const fontMono = Roboto_Mono({
+const fontMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
-  weight: ["400", "500", "700"],
+  display: "swap",
 })
 
 export default function RootLayout({
@@ -29,13 +28,12 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       className={cn(
-        "antialiased",
-        fontMono.variable,
-        "font-sans",
-        fontSans.variable
+        "antialiased font-sans",
+        fontSans.variable,
+        fontMono.variable
       )}
     >
-      <body>
+      <body className={cn("min-h-screen bg-[#f4f5f7] text-slate-900 font-sans antialiased", fontSans.className)}>
         <ThemeProvider>
           <AuthProvider>
             <Navbar />

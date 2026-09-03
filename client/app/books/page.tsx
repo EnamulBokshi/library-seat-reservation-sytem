@@ -205,7 +205,7 @@ export default function BooksCatalogPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 border border-indigo-200/60 px-3 py-1 text-xs font-bold text-indigo-700 mb-3">
-                <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                {/* <Sparkles className="h-3.5 w-3.5 text-indigo-600" /> */}
                 <span>Smart Library Spatial Catalog</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
@@ -271,11 +271,10 @@ export default function BooksCatalogPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
-                    selectedCategory === cat
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${selectedCategory === cat
                       ? "bg-slate-900 text-white shadow-xs"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900"
-                  }`}
+                    }`}
                 >
                   {cat}
                 </button>
@@ -304,11 +303,10 @@ export default function BooksCatalogPage() {
               {/* Digital PDF Toggle */}
               <button
                 onClick={() => setHasPdfOnly(!hasPdfOnly)}
-                className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 border transition-all ${
-                  hasPdfOnly
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 border transition-all ${hasPdfOnly
                     ? "bg-rose-50 border-rose-200 text-rose-700 font-extrabold shadow-2xs"
                     : "bg-white border-slate-200/80 text-slate-600 hover:bg-slate-50"
-                }`}
+                  }`}
               >
                 <FileText className="h-3.5 w-3.5 text-rose-500" />
                 <span>PDF Available</span>
@@ -317,11 +315,10 @@ export default function BooksCatalogPage() {
               {/* In Stock Toggle */}
               <button
                 onClick={() => setInStockOnly(!inStockOnly)}
-                className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 border transition-all ${
-                  inStockOnly
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 border transition-all ${inStockOnly
                     ? "bg-emerald-50 border-emerald-200 text-emerald-700 font-extrabold shadow-2xs"
                     : "bg-white border-slate-200/80 text-slate-600 hover:bg-slate-50"
-                }`}
+                  }`}
               >
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                 <span>In Stock Only</span>
@@ -331,11 +328,10 @@ export default function BooksCatalogPage() {
               {isAuthenticated && userLoanMap.size > 0 && (
                 <button
                   onClick={() => setMyBorrowedOnly(!myBorrowedOnly)}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 border transition-all ${
-                    myBorrowedOnly
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 border transition-all ${myBorrowedOnly
                       ? "bg-indigo-600 border-indigo-700 text-white font-extrabold shadow-2xs"
                       : "bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
-                  }`}
+                    }`}
                 >
                   <Bookmark className="h-3.5 w-3.5 fill-current" />
                   <span>My Borrowed Books ({userLoanMap.size})</span>
@@ -403,13 +399,12 @@ export default function BooksCatalogPage() {
                 return (
                   <div
                     key={book.id}
-                    className={`group relative flex flex-col justify-between rounded-3xl border bg-white p-5 shadow-2xs hover:shadow-md transition-all duration-200 ${
-                      isBorrowedByMe
+                    className={`group relative flex flex-col justify-between rounded-3xl border bg-white p-5 shadow-2xs hover:shadow-md transition-all duration-200 ${isBorrowedByMe
                         ? "border-indigo-300 ring-2 ring-indigo-500/20"
                         : isRequestedByMe
-                        ? "border-amber-300 ring-2 ring-amber-500/20"
-                        : "border-slate-200/80 hover:border-slate-300"
-                    }`}
+                          ? "border-amber-300 ring-2 ring-amber-500/20"
+                          : "border-slate-200/80 hover:border-slate-300"
+                      }`}
                   >
                     <div>
                       {/* Book Cover / Header */}
@@ -440,11 +435,10 @@ export default function BooksCatalogPage() {
                         <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1 z-10">
                           {isBorrowedByMe ? (
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black shadow-md ${
-                                userLoan.status === "overdue"
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black shadow-md ${userLoan.status === "overdue"
                                   ? "bg-rose-600 text-white animate-pulse"
                                   : "bg-indigo-600 text-white"
-                              }`}
+                                }`}
                             >
                               <Bookmark className="h-3 w-3 fill-current" />
                               <span>{userLoan.status === "overdue" ? "Overdue" : "Borrowed by You"}</span>
@@ -516,14 +510,12 @@ export default function BooksCatalogPage() {
                     <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2.5">
                       <div className="flex items-center justify-between">
                         <span
-                          className={`inline-flex items-center gap-1 text-xs font-bold ${
-                            inStock ? "text-emerald-600" : "text-amber-600"
-                          }`}
+                          className={`inline-flex items-center gap-1 text-xs font-bold ${inStock ? "text-emerald-600" : "text-amber-600"
+                            }`}
                         >
                           <span
-                            className={`h-2 w-2 rounded-full ${
-                              inStock ? "bg-emerald-500" : "bg-amber-500"
-                            }`}
+                            className={`h-2 w-2 rounded-full ${inStock ? "bg-emerald-500" : "bg-amber-500"
+                              }`}
                           />
                           <span>
                             {inStock ? `${book.availableCopies} of ${book.totalCopies} Available` : "Checked Out"}
@@ -571,11 +563,10 @@ export default function BooksCatalogPage() {
                           <button
                             onClick={() => handleOpenBorrowModal(book)}
                             disabled={!inStock}
-                            className={`flex items-center justify-center rounded-xl px-3 py-2 text-xs font-bold transition-all text-center ${
-                              inStock
+                            className={`flex items-center justify-center rounded-xl px-3 py-2 text-xs font-bold transition-all text-center ${inStock
                                 ? "bg-slate-900 text-white hover:bg-slate-800 shadow-xs"
                                 : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                            }`}
+                              }`}
                           >
                             {inStock ? "Borrow" : "Unavailable"}
                           </button>
