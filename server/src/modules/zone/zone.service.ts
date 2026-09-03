@@ -1,6 +1,7 @@
 import status from "http-status";
 import prisma from "../../lib/prisma";
 import AppError from "../../helpers/AppError";
+import { ZoneType, TableType } from "../../generated/enums";
 import { ICreateZonePayload, IUpdateZonePayload } from "./zone.interface";
 
 /**
@@ -15,11 +16,17 @@ const createZone = async (payload: ICreateZonePayload) => {
         throw new AppError(status.CONFLICT, "A zone with this name already exists");
     }
 
+    const isGroupZone = payload.zoneType === ZoneType.group_study || payload.zoneType === ZoneType.conference_room;
+
     const zone = await prisma.zone.create({
         data: {
             name: payload.name,
             description: payload.description,
             color: payload.color || "#4F46E5",
+            zoneType: payload.zoneType || ZoneType.silent_desk,
+            allowMultiSeat: payload.allowMultiSeat !== undefined ? payload.allowMultiSeat : isGroupZone,
+            maxSeatsPerBooking: payload.maxSeatsPerBooking || (isGroupZone ? 8 : 1),
+            defaultTableType: payload.defaultTableType || (isGroupZone ? TableType.circle_table : TableType.individual_cubicle),
             rules: payload.rules ?? [],
             isActive: payload.isActive !== undefined ? payload.isActive : true,
         },
@@ -39,16 +46,19 @@ const getAllZones = async (showInactive = false) => {
         include: {
             seats: {
                 where: { isActive: true },
-                select: { id: true },
+                select: { id: true, tableNumber: true },
             },
         },
+        orderBy: { name: "asc" },
     });
 
     return zones.map((zone) => {
         const { seats, ...zoneData } = zone;
+        const distinctTables = new Set(seats.map(s => s.tableNumber).filter(Boolean));
         return {
             ...zoneData,
             seatCount: seats.length,
+            tableCount: distinctTables.size,
         };
     });
 };

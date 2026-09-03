@@ -20,8 +20,18 @@ export type ZoneModel = runtime.Types.Result.DefaultSelection<Prisma.$ZonePayloa
 
 export type AggregateZone = {
   _count: ZoneCountAggregateOutputType | null
+  _avg: ZoneAvgAggregateOutputType | null
+  _sum: ZoneSumAggregateOutputType | null
   _min: ZoneMinAggregateOutputType | null
   _max: ZoneMaxAggregateOutputType | null
+}
+
+export type ZoneAvgAggregateOutputType = {
+  maxSeatsPerBooking: number | null
+}
+
+export type ZoneSumAggregateOutputType = {
+  maxSeatsPerBooking: number | null
 }
 
 export type ZoneMinAggregateOutputType = {
@@ -29,6 +39,10 @@ export type ZoneMinAggregateOutputType = {
   name: string | null
   description: string | null
   color: string | null
+  zoneType: $Enums.ZoneType | null
+  allowMultiSeat: boolean | null
+  maxSeatsPerBooking: number | null
+  defaultTableType: $Enums.TableType | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -39,6 +53,10 @@ export type ZoneMaxAggregateOutputType = {
   name: string | null
   description: string | null
   color: string | null
+  zoneType: $Enums.ZoneType | null
+  allowMultiSeat: boolean | null
+  maxSeatsPerBooking: number | null
+  defaultTableType: $Enums.TableType | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -49,6 +67,10 @@ export type ZoneCountAggregateOutputType = {
   name: number
   description: number
   color: number
+  zoneType: number
+  allowMultiSeat: number
+  maxSeatsPerBooking: number
+  defaultTableType: number
   rules: number
   isActive: number
   createdAt: number
@@ -57,11 +79,23 @@ export type ZoneCountAggregateOutputType = {
 }
 
 
+export type ZoneAvgAggregateInputType = {
+  maxSeatsPerBooking?: true
+}
+
+export type ZoneSumAggregateInputType = {
+  maxSeatsPerBooking?: true
+}
+
 export type ZoneMinAggregateInputType = {
   id?: true
   name?: true
   description?: true
   color?: true
+  zoneType?: true
+  allowMultiSeat?: true
+  maxSeatsPerBooking?: true
+  defaultTableType?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -72,6 +106,10 @@ export type ZoneMaxAggregateInputType = {
   name?: true
   description?: true
   color?: true
+  zoneType?: true
+  allowMultiSeat?: true
+  maxSeatsPerBooking?: true
+  defaultTableType?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -82,6 +120,10 @@ export type ZoneCountAggregateInputType = {
   name?: true
   description?: true
   color?: true
+  zoneType?: true
+  allowMultiSeat?: true
+  maxSeatsPerBooking?: true
+  defaultTableType?: true
   rules?: true
   isActive?: true
   createdAt?: true
@@ -127,6 +169,18 @@ export type ZoneAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: ZoneAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: ZoneSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: ZoneMinAggregateInputType
@@ -157,6 +211,8 @@ export type ZoneGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   _count?: ZoneCountAggregateInputType | true
+  _avg?: ZoneAvgAggregateInputType
+  _sum?: ZoneSumAggregateInputType
   _min?: ZoneMinAggregateInputType
   _max?: ZoneMaxAggregateInputType
 }
@@ -166,11 +222,17 @@ export type ZoneGroupByOutputType = {
   name: string
   description: string | null
   color: string
+  zoneType: $Enums.ZoneType
+  allowMultiSeat: boolean
+  maxSeatsPerBooking: number
+  defaultTableType: $Enums.TableType
   rules: string[]
   isActive: boolean
   createdAt: Date
   updatedAt: Date
   _count: ZoneCountAggregateOutputType | null
+  _avg: ZoneAvgAggregateOutputType | null
+  _sum: ZoneSumAggregateOutputType | null
   _min: ZoneMinAggregateOutputType | null
   _max: ZoneMaxAggregateOutputType | null
 }
@@ -198,6 +260,10 @@ export type ZoneWhereInput = {
   name?: Prisma.StringFilter<"Zone"> | string
   description?: Prisma.StringNullableFilter<"Zone"> | string | null
   color?: Prisma.StringFilter<"Zone"> | string
+  zoneType?: Prisma.EnumZoneTypeFilter<"Zone"> | $Enums.ZoneType
+  allowMultiSeat?: Prisma.BoolFilter<"Zone"> | boolean
+  maxSeatsPerBooking?: Prisma.IntFilter<"Zone"> | number
+  defaultTableType?: Prisma.EnumTableTypeFilter<"Zone"> | $Enums.TableType
   rules?: Prisma.StringNullableListFilter<"Zone">
   isActive?: Prisma.BoolFilter<"Zone"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Zone"> | Date | string
@@ -210,6 +276,10 @@ export type ZoneOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   color?: Prisma.SortOrder
+  zoneType?: Prisma.SortOrder
+  allowMultiSeat?: Prisma.SortOrder
+  maxSeatsPerBooking?: Prisma.SortOrder
+  defaultTableType?: Prisma.SortOrder
   rules?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -225,6 +295,10 @@ export type ZoneWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ZoneWhereInput | Prisma.ZoneWhereInput[]
   description?: Prisma.StringNullableFilter<"Zone"> | string | null
   color?: Prisma.StringFilter<"Zone"> | string
+  zoneType?: Prisma.EnumZoneTypeFilter<"Zone"> | $Enums.ZoneType
+  allowMultiSeat?: Prisma.BoolFilter<"Zone"> | boolean
+  maxSeatsPerBooking?: Prisma.IntFilter<"Zone"> | number
+  defaultTableType?: Prisma.EnumTableTypeFilter<"Zone"> | $Enums.TableType
   rules?: Prisma.StringNullableListFilter<"Zone">
   isActive?: Prisma.BoolFilter<"Zone"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Zone"> | Date | string
@@ -237,13 +311,19 @@ export type ZoneOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   color?: Prisma.SortOrder
+  zoneType?: Prisma.SortOrder
+  allowMultiSeat?: Prisma.SortOrder
+  maxSeatsPerBooking?: Prisma.SortOrder
+  defaultTableType?: Prisma.SortOrder
   rules?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ZoneCountOrderByAggregateInput
+  _avg?: Prisma.ZoneAvgOrderByAggregateInput
   _max?: Prisma.ZoneMaxOrderByAggregateInput
   _min?: Prisma.ZoneMinOrderByAggregateInput
+  _sum?: Prisma.ZoneSumOrderByAggregateInput
 }
 
 export type ZoneScalarWhereWithAggregatesInput = {
@@ -254,6 +334,10 @@ export type ZoneScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Zone"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Zone"> | string | null
   color?: Prisma.StringWithAggregatesFilter<"Zone"> | string
+  zoneType?: Prisma.EnumZoneTypeWithAggregatesFilter<"Zone"> | $Enums.ZoneType
+  allowMultiSeat?: Prisma.BoolWithAggregatesFilter<"Zone"> | boolean
+  maxSeatsPerBooking?: Prisma.IntWithAggregatesFilter<"Zone"> | number
+  defaultTableType?: Prisma.EnumTableTypeWithAggregatesFilter<"Zone"> | $Enums.TableType
   rules?: Prisma.StringNullableListFilter<"Zone">
   isActive?: Prisma.BoolWithAggregatesFilter<"Zone"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Zone"> | Date | string
@@ -265,6 +349,10 @@ export type ZoneCreateInput = {
   name: string
   description?: string | null
   color?: string
+  zoneType?: $Enums.ZoneType
+  allowMultiSeat?: boolean
+  maxSeatsPerBooking?: number
+  defaultTableType?: $Enums.TableType
   rules?: Prisma.ZoneCreaterulesInput | string[]
   isActive?: boolean
   createdAt?: Date | string
@@ -277,6 +365,10 @@ export type ZoneUncheckedCreateInput = {
   name: string
   description?: string | null
   color?: string
+  zoneType?: $Enums.ZoneType
+  allowMultiSeat?: boolean
+  maxSeatsPerBooking?: number
+  defaultTableType?: $Enums.TableType
   rules?: Prisma.ZoneCreaterulesInput | string[]
   isActive?: boolean
   createdAt?: Date | string
@@ -289,6 +381,10 @@ export type ZoneUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  zoneType?: Prisma.EnumZoneTypeFieldUpdateOperationsInput | $Enums.ZoneType
+  allowMultiSeat?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxSeatsPerBooking?: Prisma.IntFieldUpdateOperationsInput | number
+  defaultTableType?: Prisma.EnumTableTypeFieldUpdateOperationsInput | $Enums.TableType
   rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -301,6 +397,10 @@ export type ZoneUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  zoneType?: Prisma.EnumZoneTypeFieldUpdateOperationsInput | $Enums.ZoneType
+  allowMultiSeat?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxSeatsPerBooking?: Prisma.IntFieldUpdateOperationsInput | number
+  defaultTableType?: Prisma.EnumTableTypeFieldUpdateOperationsInput | $Enums.TableType
   rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -313,6 +413,10 @@ export type ZoneCreateManyInput = {
   name: string
   description?: string | null
   color?: string
+  zoneType?: $Enums.ZoneType
+  allowMultiSeat?: boolean
+  maxSeatsPerBooking?: number
+  defaultTableType?: $Enums.TableType
   rules?: Prisma.ZoneCreaterulesInput | string[]
   isActive?: boolean
   createdAt?: Date | string
@@ -324,6 +428,10 @@ export type ZoneUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  zoneType?: Prisma.EnumZoneTypeFieldUpdateOperationsInput | $Enums.ZoneType
+  allowMultiSeat?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxSeatsPerBooking?: Prisma.IntFieldUpdateOperationsInput | number
+  defaultTableType?: Prisma.EnumTableTypeFieldUpdateOperationsInput | $Enums.TableType
   rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -335,6 +443,10 @@ export type ZoneUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  zoneType?: Prisma.EnumZoneTypeFieldUpdateOperationsInput | $Enums.ZoneType
+  allowMultiSeat?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxSeatsPerBooking?: Prisma.IntFieldUpdateOperationsInput | number
+  defaultTableType?: Prisma.EnumTableTypeFieldUpdateOperationsInput | $Enums.TableType
   rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -354,10 +466,18 @@ export type ZoneCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   color?: Prisma.SortOrder
+  zoneType?: Prisma.SortOrder
+  allowMultiSeat?: Prisma.SortOrder
+  maxSeatsPerBooking?: Prisma.SortOrder
+  defaultTableType?: Prisma.SortOrder
   rules?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type ZoneAvgOrderByAggregateInput = {
+  maxSeatsPerBooking?: Prisma.SortOrder
 }
 
 export type ZoneMaxOrderByAggregateInput = {
@@ -365,6 +485,10 @@ export type ZoneMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   color?: Prisma.SortOrder
+  zoneType?: Prisma.SortOrder
+  allowMultiSeat?: Prisma.SortOrder
+  maxSeatsPerBooking?: Prisma.SortOrder
+  defaultTableType?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -375,9 +499,17 @@ export type ZoneMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   color?: Prisma.SortOrder
+  zoneType?: Prisma.SortOrder
+  allowMultiSeat?: Prisma.SortOrder
+  maxSeatsPerBooking?: Prisma.SortOrder
+  defaultTableType?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type ZoneSumOrderByAggregateInput = {
+  maxSeatsPerBooking?: Prisma.SortOrder
 }
 
 export type ZoneScalarRelationFilter = {
@@ -387,6 +519,22 @@ export type ZoneScalarRelationFilter = {
 
 export type ZoneCreaterulesInput = {
   set: string[]
+}
+
+export type EnumZoneTypeFieldUpdateOperationsInput = {
+  set?: $Enums.ZoneType
+}
+
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type EnumTableTypeFieldUpdateOperationsInput = {
+  set?: $Enums.TableType
 }
 
 export type ZoneUpdaterulesInput = {
@@ -413,6 +561,10 @@ export type ZoneCreateWithoutSeatsInput = {
   name: string
   description?: string | null
   color?: string
+  zoneType?: $Enums.ZoneType
+  allowMultiSeat?: boolean
+  maxSeatsPerBooking?: number
+  defaultTableType?: $Enums.TableType
   rules?: Prisma.ZoneCreaterulesInput | string[]
   isActive?: boolean
   createdAt?: Date | string
@@ -424,6 +576,10 @@ export type ZoneUncheckedCreateWithoutSeatsInput = {
   name: string
   description?: string | null
   color?: string
+  zoneType?: $Enums.ZoneType
+  allowMultiSeat?: boolean
+  maxSeatsPerBooking?: number
+  defaultTableType?: $Enums.TableType
   rules?: Prisma.ZoneCreaterulesInput | string[]
   isActive?: boolean
   createdAt?: Date | string
@@ -451,6 +607,10 @@ export type ZoneUpdateWithoutSeatsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  zoneType?: Prisma.EnumZoneTypeFieldUpdateOperationsInput | $Enums.ZoneType
+  allowMultiSeat?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxSeatsPerBooking?: Prisma.IntFieldUpdateOperationsInput | number
+  defaultTableType?: Prisma.EnumTableTypeFieldUpdateOperationsInput | $Enums.TableType
   rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -462,6 +622,10 @@ export type ZoneUncheckedUpdateWithoutSeatsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
+  zoneType?: Prisma.EnumZoneTypeFieldUpdateOperationsInput | $Enums.ZoneType
+  allowMultiSeat?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maxSeatsPerBooking?: Prisma.IntFieldUpdateOperationsInput | number
+  defaultTableType?: Prisma.EnumTableTypeFieldUpdateOperationsInput | $Enums.TableType
   rules?: Prisma.ZoneUpdaterulesInput | string[]
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -504,6 +668,10 @@ export type ZoneSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   name?: boolean
   description?: boolean
   color?: boolean
+  zoneType?: boolean
+  allowMultiSeat?: boolean
+  maxSeatsPerBooking?: boolean
+  defaultTableType?: boolean
   rules?: boolean
   isActive?: boolean
   createdAt?: boolean
@@ -517,6 +685,10 @@ export type ZoneSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   description?: boolean
   color?: boolean
+  zoneType?: boolean
+  allowMultiSeat?: boolean
+  maxSeatsPerBooking?: boolean
+  defaultTableType?: boolean
   rules?: boolean
   isActive?: boolean
   createdAt?: boolean
@@ -528,6 +700,10 @@ export type ZoneSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   description?: boolean
   color?: boolean
+  zoneType?: boolean
+  allowMultiSeat?: boolean
+  maxSeatsPerBooking?: boolean
+  defaultTableType?: boolean
   rules?: boolean
   isActive?: boolean
   createdAt?: boolean
@@ -539,13 +715,17 @@ export type ZoneSelectScalar = {
   name?: boolean
   description?: boolean
   color?: boolean
+  zoneType?: boolean
+  allowMultiSeat?: boolean
+  maxSeatsPerBooking?: boolean
+  defaultTableType?: boolean
   rules?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ZoneOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "color" | "rules" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["zone"]>
+export type ZoneOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "color" | "zoneType" | "allowMultiSeat" | "maxSeatsPerBooking" | "defaultTableType" | "rules" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["zone"]>
 export type ZoneInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   seats?: boolean | Prisma.Zone$seatsArgs<ExtArgs>
   _count?: boolean | Prisma.ZoneCountOutputTypeDefaultArgs<ExtArgs>
@@ -563,6 +743,10 @@ export type $ZonePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     name: string
     description: string | null
     color: string
+    zoneType: $Enums.ZoneType
+    allowMultiSeat: boolean
+    maxSeatsPerBooking: number
+    defaultTableType: $Enums.TableType
     rules: string[]
     isActive: boolean
     createdAt: Date
@@ -995,6 +1179,10 @@ export interface ZoneFieldRefs {
   readonly name: Prisma.FieldRef<"Zone", 'String'>
   readonly description: Prisma.FieldRef<"Zone", 'String'>
   readonly color: Prisma.FieldRef<"Zone", 'String'>
+  readonly zoneType: Prisma.FieldRef<"Zone", 'ZoneType'>
+  readonly allowMultiSeat: Prisma.FieldRef<"Zone", 'Boolean'>
+  readonly maxSeatsPerBooking: Prisma.FieldRef<"Zone", 'Int'>
+  readonly defaultTableType: Prisma.FieldRef<"Zone", 'TableType'>
   readonly rules: Prisma.FieldRef<"Zone", 'String[]'>
   readonly isActive: Prisma.FieldRef<"Zone", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Zone", 'DateTime'>

@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defineExtension = exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SettingScalarFieldEnum = exports.BookingScalarFieldEnum = exports.ScheduleScalarFieldEnum = exports.SeatScalarFieldEnum = exports.ZoneScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
+exports.defineExtension = exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.BookLoanScalarFieldEnum = exports.BookScalarFieldEnum = exports.SettingScalarFieldEnum = exports.BookingScalarFieldEnum = exports.BookingSeatScalarFieldEnum = exports.ScheduleScalarFieldEnum = exports.SeatScalarFieldEnum = exports.ZoneScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/client"));
 /**
  * Prisma Errors
@@ -107,8 +107,11 @@ exports.ModelName = {
     Zone: 'Zone',
     Seat: 'Seat',
     Schedule: 'Schedule',
+    BookingSeat: 'BookingSeat',
     Booking: 'Booking',
-    Setting: 'Setting'
+    Setting: 'Setting',
+    Book: 'Book',
+    BookLoan: 'BookLoan'
 };
 /**
  * Enums
@@ -135,6 +138,10 @@ exports.ZoneScalarFieldEnum = {
     name: 'name',
     description: 'description',
     color: 'color',
+    zoneType: 'zoneType',
+    allowMultiSeat: 'allowMultiSeat',
+    maxSeatsPerBooking: 'maxSeatsPerBooking',
+    defaultTableType: 'defaultTableType',
     rules: 'rules',
     isActive: 'isActive',
     createdAt: 'createdAt',
@@ -144,6 +151,10 @@ exports.SeatScalarFieldEnum = {
     id: 'id',
     seatNumber: 'seatNumber',
     zoneId: 'zoneId',
+    tableNumber: 'tableNumber',
+    tableType: 'tableType',
+    tableCapacity: 'tableCapacity',
+    seatPosition: 'seatPosition',
     isActive: 'isActive',
     isOccupied: 'isOccupied',
     createdAt: 'createdAt',
@@ -157,11 +168,18 @@ exports.ScheduleScalarFieldEnum = {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };
+exports.BookingSeatScalarFieldEnum = {
+    id: 'id',
+    bookingId: 'bookingId',
+    seatId: 'seatId',
+    createdAt: 'createdAt'
+};
 exports.BookingScalarFieldEnum = {
     id: 'id',
     userId: 'userId',
     seatId: 'seatId',
     scheduleId: 'scheduleId',
+    guestCount: 'guestCount',
     status: 'status',
     qrToken: 'qrToken',
     bookedAt: 'bookedAt',
@@ -175,6 +193,42 @@ exports.SettingScalarFieldEnum = {
     key: 'key',
     value: 'value',
     description: 'description',
+    updatedAt: 'updatedAt'
+};
+exports.BookScalarFieldEnum = {
+    id: 'id',
+    title: 'title',
+    author: 'author',
+    isbn: 'isbn',
+    category: 'category',
+    publisher: 'publisher',
+    publicationYear: 'publicationYear',
+    edition: 'edition',
+    description: 'description',
+    coverImage: 'coverImage',
+    pdfUrl: 'pdfUrl',
+    totalCopies: 'totalCopies',
+    availableCopies: 'availableCopies',
+    block: 'block',
+    shelfNumber: 'shelfNumber',
+    rowNumber: 'rowNumber',
+    callNumber: 'callNumber',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.BookLoanScalarFieldEnum = {
+    id: 'id',
+    bookId: 'bookId',
+    userId: 'userId',
+    borrowDate: 'borrowDate',
+    dueDate: 'dueDate',
+    returnDate: 'returnDate',
+    renewCount: 'renewCount',
+    status: 'status',
+    notes: 'notes',
+    approvedById: 'approvedById',
+    createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };
 exports.SortOrder = {

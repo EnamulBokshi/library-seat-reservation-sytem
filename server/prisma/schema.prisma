@@ -14,6 +14,22 @@ datasource db {
 
 // ─── Enums ───────────────────────────────────────────────
 
+enum ZoneType {
+  silent_desk
+  group_study
+  computer_lab
+  open_reading
+  conference_room
+}
+
+enum TableType {
+  individual_cubicle
+  circle_table
+  meeting_table
+  booth_pod
+  workstation_bench
+}
+
 enum Role {
   admin
   librarian
@@ -65,14 +81,18 @@ model User {
 }
 
 model Zone {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  description String?
-  color       String   @default("#4F46E5")
-  rules       String[] @default([])
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String    @id @default(uuid())
+  name               String    @unique
+  description        String?
+  color              String    @default("#4F46E5")
+  zoneType           ZoneType  @default(silent_desk)
+  allowMultiSeat     Boolean   @default(false)
+  maxSeatsPerBooking Int       @default(1)
+  defaultTableType   TableType @default(individual_cubicle)
+  rules              String[]  @default([])
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   seats Seat[]
 
@@ -80,27 +100,33 @@ model Zone {
 }
 
 model Seat {
-  id         String  @id @default(uuid())
-  seatNumber String
-  zoneId     String
-  isActive   Boolean @default(true)
-  isOccupied Boolean @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String    @id @default(uuid())
+  seatNumber    String
+  zoneId        String
+  tableNumber   String?   // e.g. "Table G-1", "Desk Row 1", "Round Pod A"
+  tableType     TableType @default(individual_cubicle)
+  tableCapacity Int?      // Total seats at this table/cluster
+  seatPosition  Int?      // Position / chair index at the table
+  isActive      Boolean   @default(true)
+  isOccupied    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  zone     Zone      @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  zone         Zone          @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  bookings     Booking[]
+  bookingSeats BookingSeat[]
 
   // Each seat number must be unique within its zone
   @@unique([zoneId, seatNumber])
+  @@index([zoneId, tableNumber])
   @@map("seats")
 }
 
 model Schedule {
-  id     String   @id @default(uuid())
-  date   DateTime @db.Date
-  slot   SlotType
-  isOpen Boolean  @default(true)
+  id        String   @id @default(uuid())
+  date      DateTime @db.Date
+  slot      SlotType
+  isOpen    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -111,11 +137,26 @@ model Schedule {
   @@map("schedules")
 }
 
+model BookingSeat {
+  id        String   @id @default(uuid())
+  bookingId String
+  seatId    String
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  seat    Seat    @relation(fields: [seatId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, seatId])
+  @@index([seatId])
+  @@map("booking_seats")
+}
+
 model Booking {
   id           String        @id @default(uuid())
   userId       String
-  seatId       String
+  seatId       String?
   scheduleId   String
+  guestCount   Int           @default(1)
   status       BookingStatus @default(confirmed)
   qrToken      String        @unique @default(uuid())
   bookedAt     DateTime      @default(now())
@@ -124,12 +165,11 @@ model Booking {
   cancelledAt  DateTime?
   cancelReason String?
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  seat     Seat     @relation(fields: [seatId], references: [id], onDelete: Cascade)
-  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seat         Seat?         @relation(fields: [seatId], references: [id], onDelete: SetNull)
+  schedule     Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  bookingSeats BookingSeat[]
 
-  // Prevents double-booking: one booking per seat per schedule slot
-  @@unique([seatId, scheduleId])
   // Fast lookup for active bookings by user
   @@index([userId, status])
   // Fast QR verification

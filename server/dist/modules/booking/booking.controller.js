@@ -94,8 +94,23 @@ const getDashboardStats = (0, CatchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const getFCFSQuickAssign = (0, CatchAsync_1.default)(async (req, res) => {
+    const userId = req.user.userId;
+    const result = await booking_service_1.BookingService.getFCFSQuickAssign(userId, {
+        zoneId: req.query.zoneId,
+        scheduleId: req.query.scheduleId,
+        partySize: req.query.partySize ? parseInt(req.query.partySize, 10) : 1,
+    });
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "FCFS recommendation found",
+        data: result,
+    });
+});
 exports.BookingController = {
     createBooking,
+    getFCFSQuickAssign,
     getMyBookings,
     getAllBookings,
     getBookingById,

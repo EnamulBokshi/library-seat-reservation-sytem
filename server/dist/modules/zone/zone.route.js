@@ -19,5 +19,8 @@ zoneRoute.patch("/:id", (0, authCheck_1.default)("admin"), (0, requestValidator_
 zoneRoute.delete("/:id", (0, authCheck_1.default)("admin"), zone_controller_1.ZoneController.deleteZone);
 // Nested Seat Endpoints under Zone
 zoneRoute.post("/:id/seats", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(seat_validation_1.SeatValidation.createSeatSchema), seat_controller_1.SeatController.createSeat);
+zoneRoute.post("/:id/tables", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(seat_validation_1.SeatValidation.createTableClusterSchema), seat_controller_1.SeatController.createTableCluster);
+zoneRoute.post("/:id/tables/bulk", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(seat_validation_1.SeatValidation.bulkCreateTablesSchema), seat_controller_1.SeatController.bulkCreateTables);
+zoneRoute.delete("/:id/tables/:tableNumber", (0, authCheck_1.default)("admin", "librarian"), seat_controller_1.SeatController.deleteTable);
 zoneRoute.get("/:id/seats", (0, authCheck_1.default)(), seat_controller_1.SeatController.getSeatsByZone);
 exports.default = zoneRoute;

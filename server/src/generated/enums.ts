@@ -9,6 +9,28 @@
 * 🟢 You can import this file directly.
 */
 
+export const ZoneType = {
+  silent_desk: 'silent_desk',
+  group_study: 'group_study',
+  computer_lab: 'computer_lab',
+  open_reading: 'open_reading',
+  conference_room: 'conference_room'
+} as const
+
+export type ZoneType = (typeof ZoneType)[keyof typeof ZoneType]
+
+
+export const TableType = {
+  individual_cubicle: 'individual_cubicle',
+  circle_table: 'circle_table',
+  meeting_table: 'meeting_table',
+  booth_pod: 'booth_pod',
+  workstation_bench: 'workstation_bench'
+} as const
+
+export type TableType = (typeof TableType)[keyof typeof TableType]
+
+
 export const Role = {
   admin: 'admin',
   librarian: 'librarian',

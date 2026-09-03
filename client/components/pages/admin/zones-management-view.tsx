@@ -60,6 +60,10 @@ export function ZonesManagementView() {
     name: "",
     description: "",
     color: "#4f46e5",
+    zoneType: "silent_desk",
+    allowMultiSeat: false,
+    maxSeatsPerBooking: 1,
+    defaultTableType: "individual_cubicle",
     rules: [],
   });
   const [rulesInput, setRulesInput] = useState("");
@@ -72,6 +76,10 @@ export function ZonesManagementView() {
     name: "",
     description: "",
     color: "#4f46e5",
+    zoneType: "silent_desk",
+    allowMultiSeat: false,
+    maxSeatsPerBooking: 1,
+    defaultTableType: "individual_cubicle",
     rules: [],
     isActive: true,
   });
@@ -116,6 +124,10 @@ export function ZonesManagementView() {
       name: "",
       description: "",
       color: "#4f46e5",
+      zoneType: "silent_desk",
+      allowMultiSeat: false,
+      maxSeatsPerBooking: 1,
+      defaultTableType: "individual_cubicle",
       rules: [],
     });
     setRulesInput("");
@@ -163,6 +175,10 @@ export function ZonesManagementView() {
       name: zone.name,
       description: zone.description || "",
       color: zone.color || "#4f46e5",
+      zoneType: zone.zoneType || "silent_desk",
+      allowMultiSeat: zone.allowMultiSeat || false,
+      maxSeatsPerBooking: zone.maxSeatsPerBooking || 1,
+      defaultTableType: zone.defaultTableType || "individual_cubicle",
       rules: zone.rules || [],
       isActive: zone.isActive,
     });
@@ -239,7 +255,7 @@ export function ZonesManagementView() {
         <div>
           <p className="kicker-label">ADMINISTRATION &rsaquo; STUDY HALLS & CAPACITY</p>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 mt-1">
-            Zones & Seating Inventory
+            Zones &amp; Seating Inventory
           </h1>
           <p className="mt-0.5 text-xs sm:text-sm text-slate-500 font-medium">
             Manage library study spaces, seat allocations, occupancy limits, and environment rules
@@ -276,7 +292,6 @@ export function ZonesManagementView() {
 
       {/* ── Metric Summary Bar ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Total Study Zones */}
         <div className="pulse-card p-5 space-y-2">
           <div className="flex items-center justify-between">
             <span className="kicker-label">TOTAL ZONES</span>
@@ -292,7 +307,6 @@ export function ZonesManagementView() {
           </div>
         </div>
 
-        {/* Metric 2: Total Seats Configured */}
         <div className="pulse-card p-5 space-y-2">
           <div className="flex items-center justify-between">
             <span className="kicker-label">TOTAL SEATING CAPACITY</span>
@@ -303,12 +317,11 @@ export function ZonesManagementView() {
           <div>
             <span className="text-3xl font-black text-slate-900">{totalSeatsCount}</span>
             <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-              Configured armchairs & desks
+              Configured armchairs &amp; desks
             </p>
           </div>
         </div>
 
-        {/* Metric 3: Available Right Now */}
         <div className="pulse-card p-5 space-y-2">
           <div className="flex items-center justify-between">
             <span className="kicker-label">AVAILABLE NOW</span>
@@ -324,7 +337,6 @@ export function ZonesManagementView() {
           </div>
         </div>
 
-        {/* Metric 4: Overall Occupancy */}
         <div className="pulse-card p-5 space-y-2">
           <div className="flex items-center justify-between">
             <span className="kicker-label">OVERALL OCCUPANCY</span>
@@ -385,6 +397,8 @@ export function ZonesManagementView() {
             const occupancy = total > 0 ? Math.round((occupied / total) * 100) : 0;
             const Icon = getZoneIcon(idx);
 
+            const isGroupZone = zone.zoneType === "group_study" || zone.allowMultiSeat;
+
             return (
               <div
                 key={zone.id}
@@ -413,6 +427,26 @@ export function ZonesManagementView() {
                       >
                         {zone.isActive ? "Operating" : "Closed"}
                       </span>
+
+                      {/* Zone Type Badge */}
+                      <span className="rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                        {zone.zoneType === "silent_desk"
+                          ? "🤫 Silent Desks"
+                          : zone.zoneType === "group_study"
+                          ? "👥 Group Study"
+                          : zone.zoneType === "computer_lab"
+                          ? "💻 Computer Lab"
+                          : zone.zoneType === "conference_room"
+                          ? "🎤 Conference"
+                          : "📖 Open Reading"}
+                      </span>
+
+                      {/* Multi-Seat Badge */}
+                      {isGroupZone && (
+                        <span className="rounded-full px-2.5 py-0.5 text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          ⚡ Up to {zone.maxSeatsPerBooking || 8} Seats / Group
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-xs text-slate-500 font-medium line-clamp-2 leading-relaxed">
@@ -461,16 +495,14 @@ export function ZonesManagementView() {
 
                 {/* Right: Actions */}
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* Dedicated Admin Zone Details Page Trigger */}
                   <Link
                     href={`/admin/zones/${zone.id}`}
                     className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white shadow-xs hover:bg-slate-800 transition-all active:scale-95"
                   >
-                    <span>Manage Seats &amp; Bookings</span>
+                    <span>Manage Tables &amp; Seats</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
 
-                  {/* Edit Zone Metadata */}
                   <button
                     onClick={() => handleOpenEditModal(zone)}
                     className="pulse-button-secondary py-2 px-3 text-xs"
@@ -480,7 +512,6 @@ export function ZonesManagementView() {
                     <span className="hidden sm:inline">Edit</span>
                   </button>
 
-                  {/* Delete Zone */}
                   <button
                     onClick={() => handleDeleteZone(zone.id, zone.name)}
                     className="pulse-button-secondary py-2 px-2.5 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
@@ -495,7 +526,7 @@ export function ZonesManagementView() {
         </div>
       )}
 
-      {/* ── CREATE ZONE MODAL ── */}
+      {/* ── CREATE NEW ZONE MODAL ── */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs p-4 flex items-center justify-center">
           <div className="pulse-card relative w-full max-w-lg p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
@@ -508,7 +539,7 @@ export function ZonesManagementView() {
 
             <h2 className="text-lg font-black text-slate-900">Create New Study Zone</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Define a new library hall or study room
+              Define a new library hall, quiet floor, or collaborative study room
             </p>
 
             {createError && (
@@ -526,11 +557,133 @@ export function ZonesManagementView() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Silent Zone, Group Pod B"
+                  placeholder="e.g. Group Study Pod Alpha, Silent Carrel Hall"
                   value={createForm.name}
                   onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-bold text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none"
                 />
+              </div>
+
+              {/* Zone Type Selection */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Zone Environment &amp; Seating Layout Style
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    {
+                      type: "silent_desk" as const,
+                      label: "Silent Study Zone",
+                      desc: "Individual carrel desks with focus privacy",
+                      icon: "🤫",
+                      isMulti: false,
+                      defaultTable: "individual_cubicle" as const,
+                      maxSeats: 1,
+                    },
+                    {
+                      type: "group_study" as const,
+                      label: "Group Study Zone",
+                      desc: "Round & square tables for 4–8 students",
+                      icon: "👥",
+                      isMulti: true,
+                      defaultTable: "circle_table" as const,
+                      maxSeats: 8,
+                    },
+                    {
+                      type: "computer_lab" as const,
+                      label: "Computer Lab",
+                      desc: "Workstations with monitors and power",
+                      icon: "💻",
+                      isMulti: false,
+                      defaultTable: "workstation_bench" as const,
+                      maxSeats: 1,
+                    },
+                    {
+                      type: "open_reading" as const,
+                      label: "Open Reading Lounge",
+                      desc: "Open tables and lounge chairs",
+                      icon: "📖",
+                      isMulti: true,
+                      defaultTable: "meeting_table" as const,
+                      maxSeats: 4,
+                    },
+                  ].map((item) => (
+                    <button
+                      key={item.type}
+                      type="button"
+                      onClick={() =>
+                        setCreateForm({
+                          ...createForm,
+                          zoneType: item.type,
+                          allowMultiSeat: item.isMulti,
+                          defaultTableType: item.defaultTable,
+                          maxSeatsPerBooking: item.maxSeats,
+                        })
+                      }
+                      className={`p-2.5 rounded-2xl border text-left transition-all flex flex-col justify-between ${
+                        createForm.zoneType === item.type
+                          ? "bg-slate-900 border-slate-900 text-white shadow-sm"
+                          : "bg-slate-50 hover:bg-white border-slate-200 text-slate-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-base">{item.icon}</span>
+                        <span className="text-xs font-black">{item.label}</span>
+                      </div>
+                      <p
+                        className={`text-[10px] line-clamp-2 ${
+                          createForm.zoneType === item.type ? "text-slate-300" : "text-slate-400"
+                        }`}
+                      >
+                        {item.desc}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Multi-Seat & Group Booking Configuration */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900">Allow Group Multi-Seat Booking</h3>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Allow a student to book multiple seats / table for their group
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={createForm.allowMultiSeat}
+                      onChange={(e) =>
+                        setCreateForm({ ...createForm, allowMultiSeat: e.target.checked })
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-900" />
+                  </label>
+                </div>
+
+                {createForm.allowMultiSeat && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Max Seats Per Group Booking
+                    </label>
+                    <input
+                      type="number"
+                      min={2}
+                      max={20}
+                      value={createForm.maxSeatsPerBooking || 6}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          maxSeatsPerBooking: parseInt(e.target.value, 10) || 2,
+                        })
+                      }
+                      className="w-32 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -580,7 +733,7 @@ export function ZonesManagementView() {
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="No phone calls&#10;Silent mode required&#10;Laptops permitted"
+                  placeholder="No loud phone calls&#10;Group discussions permitted&#10;Laptops permitted"
                   value={rulesInput}
                   onChange={(e) => setRulesInput(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none"
@@ -648,6 +801,50 @@ export function ZonesManagementView() {
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-bold text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none"
                 />
+              </div>
+
+              {/* Multi-Seat & Group Booking Configuration */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900">Allow Group Multi-Seat Booking</h3>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Enable group table reservations (up to {editForm.maxSeatsPerBooking || 8} seats)
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editForm.allowMultiSeat}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, allowMultiSeat: e.target.checked })
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-900" />
+                  </label>
+                </div>
+
+                {editForm.allowMultiSeat && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Max Seats Per Group Booking
+                    </label>
+                    <input
+                      type="number"
+                      min={2}
+                      max={20}
+                      value={editForm.maxSeatsPerBooking || 6}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          maxSeatsPerBooking: parseInt(e.target.value, 10) || 2,
+                        })
+                      }
+                      className="w-32 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>

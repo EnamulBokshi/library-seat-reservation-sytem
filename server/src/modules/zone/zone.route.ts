@@ -36,6 +36,26 @@ zoneRoute.post(
     SeatController.createSeat
 );
 
+zoneRoute.post(
+    "/:id/tables",
+    authCheck("admin", "librarian"),
+    requestValidator(SeatValidation.createTableClusterSchema),
+    SeatController.createTableCluster
+);
+
+zoneRoute.post(
+    "/:id/tables/bulk",
+    authCheck("admin", "librarian"),
+    requestValidator(SeatValidation.bulkCreateTablesSchema),
+    SeatController.bulkCreateTables
+);
+
+zoneRoute.delete(
+    "/:id/tables/:tableNumber",
+    authCheck("admin", "librarian"),
+    SeatController.deleteTable
+);
+
 zoneRoute.get("/:id/seats", authCheck(), SeatController.getSeatsByZone);
 
 export default zoneRoute;

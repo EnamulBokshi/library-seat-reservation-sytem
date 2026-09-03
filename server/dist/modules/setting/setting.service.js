@@ -40,8 +40,50 @@ const getSettingByKey = async (key) => {
                 updatedAt: new Date(),
             };
         }
+        if (key === "MAX_BORROW_LIMIT") {
+            return {
+                id: "default-max-borrow",
+                key: "MAX_BORROW_LIMIT",
+                value: "3",
+                description: "Maximum active books a student can borrow concurrently",
+                updatedAt: new Date(),
+            };
+        }
+        if (key === "BORROW_PERIOD_DAYS") {
+            return {
+                id: "default-borrow-period",
+                key: "BORROW_PERIOD_DAYS",
+                value: "10",
+                description: "Default borrow period duration in days",
+                updatedAt: new Date(),
+            };
+        }
+        if (key === "MAX_RENEWAL_LIMIT") {
+            return {
+                id: "default-max-renewal",
+                key: "MAX_RENEWAL_LIMIT",
+                value: "3",
+                description: "Maximum number of renewals allowed per book",
+                updatedAt: new Date(),
+            };
+        }
     }
     return setting;
+};
+/**
+ * Helper to get borrow policy configuration
+ */
+const getBorrowConfig = async () => {
+    const [maxBorrowSetting, periodSetting, renewalSetting] = await Promise.all([
+        getSettingByKey("MAX_BORROW_LIMIT"),
+        getSettingByKey("BORROW_PERIOD_DAYS"),
+        getSettingByKey("MAX_RENEWAL_LIMIT"),
+    ]);
+    return {
+        maxBorrowLimit: parseInt(maxBorrowSetting?.value || "3", 10) || 3,
+        borrowPeriodDays: parseInt(periodSetting?.value || "10", 10) || 10,
+        maxRenewalLimit: parseInt(renewalSetting?.value || "3", 10) || 3,
+    };
 };
 /**
  * Get public system configuration (slot timings and advance days).
@@ -75,5 +117,6 @@ exports.SettingService = {
     getAllSettings,
     getSettingByKey,
     getPublicConfig,
+    getBorrowConfig,
     updateSetting,
 };

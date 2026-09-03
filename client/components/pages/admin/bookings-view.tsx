@@ -116,9 +116,20 @@ function BookingRow({ booking, onCancel, onSelectBooking }: BookingRowProps) {
       <td className="px-4 py-3.5">
         <div>
           <p className="font-extrabold text-slate-900 text-sm">
-            {booking.seat?.seatNumber ?? "—"}
+            {booking.bookingSeats && booking.bookingSeats.length > 0
+              ? booking.bookingSeats.map((bs) => bs.seat.seatNumber).join(", ")
+              : booking.seat?.seatNumber ?? "—"}
           </p>
-          <p className="text-xs text-slate-500 font-medium">{booking.seat?.zone?.name ?? "—"}</p>
+          <p className="text-xs text-slate-500 font-medium">
+            {booking.bookingSeats && booking.bookingSeats.length > 0
+              ? booking.bookingSeats[0].seat?.zone?.name ?? booking.seat?.zone?.name ?? "—"
+              : booking.seat?.zone?.name ?? "—"}
+            {booking.bookingSeats && booking.bookingSeats.length > 1 && (
+              <span className="ml-1.5 rounded-full bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 text-[9px] font-black text-indigo-700">
+                {booking.bookingSeats.length} Seats
+              </span>
+            )}
+          </p>
         </div>
       </td>
 

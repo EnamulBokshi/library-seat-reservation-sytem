@@ -3,35 +3,73 @@ import { v4 as uuidv4 } from "uuid";
 import QRCode from "qrcode";
 import prisma from "../../lib/prisma";
 import AppError from "../../helpers/AppError";
-import { ICreateBookingPayload } from "./booking.interface";
-import { BookingStatus, Role, SlotType } from "../../generated/enums";
+import { ICreateBookingPayload, IFCFSQuickAssignPayload } from "./booking.interface";
+import { BookingStatus, Role, SlotType, ZoneType } from "../../generated/enums";
 import { isSlotExpired, getAdvanceBookingDays, getActiveSlotConfig } from "../../utils/time";
-
 import { emailService } from "../../services/email.service";
 
 /**
- * Create a new booking for a student.
+ * Create a new single or multi-seat (group) booking for a student.
  */
 const createBooking = async (userId: string, payload: ICreateBookingPayload) => {
-    // 1. Verify seat exists, belongs to active zone, and is active
-    const seat = await prisma.seat.findUnique({
-        where: { id: payload.seatId },
+    // 1. Gather all requested seat IDs
+    const targetSeatIds: string[] = payload.seatIds && payload.seatIds.length > 0
+        ? Array.from(new Set(payload.seatIds))
+        : payload.seatId ? [payload.seatId] : [];
+
+    if (targetSeatIds.length === 0) {
+        throw new AppError(status.BAD_REQUEST, "At least one seat must be selected for reservation");
+    }
+
+    // 2. Fetch all requested seats with zone info
+    const seats = await prisma.seat.findMany({
+        where: { id: { in: targetSeatIds } },
         include: { zone: true },
     });
 
-    if (!seat) {
-        throw new AppError(status.NOT_FOUND, "Seat not found");
+    if (seats.length !== targetSeatIds.length) {
+        throw new AppError(status.NOT_FOUND, "One or more selected seats could not be found");
     }
 
-    if (!seat.isActive) {
-        throw new AppError(status.BAD_REQUEST, "This seat is currently inactive");
+    // 3. Verify all seats belong to the same active zone & are active
+    const firstZone = seats[0].zone;
+    if (!firstZone.isActive) {
+        throw new AppError(status.BAD_REQUEST, `The study zone "${firstZone.name}" is currently inactive`);
     }
 
-    if (!seat.zone.isActive) {
-        throw new AppError(status.BAD_REQUEST, "The study zone of this seat is currently inactive");
+    for (const s of seats) {
+        if (!s.isActive) {
+            throw new AppError(status.BAD_REQUEST, `Seat ${s.seatNumber} is currently disabled for maintenance`);
+        }
+        if (s.zoneId !== firstZone.id) {
+            throw new AppError(status.BAD_REQUEST, "All reserved seats in a group booking must belong to the same study zone");
+        }
     }
 
-    // 2. Verify schedule exists and is open
+    // 4. Enforce zone-type rules
+    if (firstZone.zoneType === ZoneType.silent_desk && targetSeatIds.length > 1) {
+        throw new AppError(
+            status.BAD_REQUEST,
+            "Silent Study Zones only permit individual single-desk bookings to maintain strict focus."
+        );
+    }
+
+    if (targetSeatIds.length > 1) {
+        if (!firstZone.allowMultiSeat) {
+            throw new AppError(
+                status.BAD_REQUEST,
+                `Multi-seat group reservations are not enabled for "${firstZone.name}".`
+            );
+        }
+        if (targetSeatIds.length > firstZone.maxSeatsPerBooking) {
+            throw new AppError(
+                status.BAD_REQUEST,
+                `You cannot reserve more than ${firstZone.maxSeatsPerBooking} seats in one booking for this zone.`
+            );
+        }
+    }
+
+    // 5. Verify schedule exists and is open
     const schedule = await prisma.schedule.findUnique({
         where: { id: payload.scheduleId },
     });
@@ -44,7 +82,7 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
         throw new AppError(status.BAD_REQUEST, "This schedule slot is closed");
     }
 
-    // 3. Validate booking date (today up to dynamic advance days) & slot timing
+    // 6. Validate booking date & slot timing
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
 
@@ -68,7 +106,7 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
         throw new AppError(status.BAD_REQUEST, "This time slot has already ended for today");
     }
 
-    // 4. Enforce 1-active-booking rule: (pending, confirmed, or checked_in)
+    // 7. Enforce 1-active-booking rule per student
     const activeBooking = await prisma.booking.findFirst({
         where: {
             userId,
@@ -81,72 +119,227 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
     if (activeBooking) {
         throw new AppError(
             status.BAD_REQUEST,
-            "You already have an active reservation. Students are allowed only one active reservation at a time."
+            "You already have an active reservation pass. Please complete or cancel your existing pass before booking another session."
         );
     }
 
-    // 5. Enforce double-booking check: (seat is already booked for this schedule)
-    const seatBooked = await prisma.booking.findFirst({
+    // 8. Atomic FCFS Conflict Check: ensure none of the requested seats are booked for this schedule
+    const existingConflict = await prisma.bookingSeat.findFirst({
         where: {
-            seatId: payload.seatId,
+            seatId: { in: targetSeatIds },
+            booking: {
+                scheduleId: payload.scheduleId,
+                status: {
+                    in: [BookingStatus.pending, BookingStatus.confirmed, BookingStatus.checked_in],
+                },
+            },
+        },
+        include: { seat: true },
+    });
+
+    if (existingConflict) {
+        throw new AppError(
+            status.CONFLICT,
+            `Seat "${existingConflict.seat.seatNumber}" was just reserved by another student. (First-Come-First-Serve)`
+        );
+    }
+
+    // Also check direct seatId on Booking for legacy records
+    const legacyConflict = await prisma.booking.findFirst({
+        where: {
+            seatId: { in: targetSeatIds },
             scheduleId: payload.scheduleId,
             status: {
                 in: [BookingStatus.pending, BookingStatus.confirmed, BookingStatus.checked_in],
             },
         },
+        include: { seat: true },
     });
 
-    if (seatBooked) {
-        throw new AppError(status.CONFLICT, "This seat is already reserved by another student for this slot");
+    if (legacyConflict && legacyConflict.seat) {
+        throw new AppError(
+            status.CONFLICT,
+            `Seat "${legacyConflict.seat.seatNumber}" is already reserved for this slot.`
+        );
     }
 
-    // 6. Determine initial status: pending (future date) or confirmed (today)
+    // 9. Initial Status & Unique QR token
     const initialStatus =
         scheduleDateStr === todayStr ? BookingStatus.confirmed : BookingStatus.pending;
-
     const qrToken = uuidv4();
+    const guestCount = targetSeatIds.length;
+    const primarySeatId = targetSeatIds[0];
 
-    // 7. Create booking
-    const booking = await prisma.booking.create({
-        data: {
-            userId,
-            seatId: payload.seatId,
-            scheduleId: payload.scheduleId,
-            status: initialStatus,
-            qrToken,
-        },
-        include: {
-            user: true,
-            seat: {
-                include: {
-                    zone: true,
+    // 10. Execute Transaction: Create Booking & BookingSeats
+    const booking = await prisma.$transaction(async (tx) => {
+        const createdBooking = await tx.booking.create({
+            data: {
+                userId,
+                seatId: primarySeatId,
+                scheduleId: payload.scheduleId,
+                guestCount,
+                status: initialStatus,
+                qrToken,
+            },
+        });
+
+        await tx.bookingSeat.createMany({
+            data: targetSeatIds.map((sId) => ({
+                bookingId: createdBooking.id,
+                seatId: sId,
+            })),
+        });
+
+        return tx.booking.findUnique({
+            where: { id: createdBooking.id },
+            include: {
+                user: true,
+                schedule: true,
+                seat: {
+                    include: { zone: true },
+                },
+                bookingSeats: {
+                    include: {
+                        seat: {
+                            include: { zone: true },
+                        },
+                    },
                 },
             },
-            schedule: true,
-        },
+        });
     });
 
-    // 8. Generate QR code image as base64 string
+    if (!booking) {
+        throw new AppError(status.INTERNAL_SERVER_ERROR, "Failed to create reservation record");
+    }
+
+    // 11. Generate QR code image as base64 string
     const qrCodeImage = await QRCode.toDataURL(qrToken);
 
-    // 9. Asynchronously dispatch confirmation email with Resend
+    // 12. Asynchronously dispatch confirmation email
     if (booking.user?.email) {
-      const formattedDate = new Date(booking.schedule.date).toLocaleDateString();
-      emailService.sendBookingConfirmationEmail({
-        toEmail: booking.user.email,
-        studentName: booking.user.name,
-        seatNumber: booking.seat.seatNumber,
-        zoneName: booking.seat.zone.name,
-        dateStr: formattedDate,
-        slotName: booking.schedule.slot,
-        qrToken,
-        qrCodeBase64: qrCodeImage,
-      }).catch((err) => console.error("Error sending confirmation email:", err));
+        const seatNumbers = booking.bookingSeats?.length > 0
+            ? booking.bookingSeats.map((bs) => bs.seat.seatNumber).join(", ")
+            : booking.seat?.seatNumber ?? "Seat";
+        const formattedDate = new Date(booking.schedule.date).toLocaleDateString();
+
+        emailService.sendBookingConfirmationEmail({
+            toEmail: booking.user.email,
+            studentName: booking.user.name,
+            seatNumber: seatNumbers,
+            zoneName: firstZone.name,
+            dateStr: formattedDate,
+            slotName: booking.schedule.slot,
+            qrToken,
+            qrCodeBase64: qrCodeImage,
+        }).catch((err) => console.error("Error sending confirmation email:", err));
     }
 
     return {
         booking,
         qrCodeImage,
+    };
+};
+
+/**
+ * FCFS Quick-Assign: Automatically pick the next optimal seat or table for the given party size.
+ */
+const getFCFSQuickAssign = async (userId: string, payload: IFCFSQuickAssignPayload) => {
+    const partySize = Math.max(1, payload.partySize || 1);
+
+    const zone = await prisma.zone.findUnique({
+        where: { id: payload.zoneId },
+        include: {
+            seats: {
+                where: { isActive: true },
+                orderBy: [
+                    { tableNumber: "asc" },
+                    { seatPosition: "asc" },
+                    { seatNumber: "asc" },
+                ],
+            },
+        },
+    });
+
+    if (!zone) {
+        throw new AppError(status.NOT_FOUND, "Zone not found");
+    }
+
+    // Find all booked seat IDs for this schedule
+    const bookedSeats = await prisma.bookingSeat.findMany({
+        where: {
+            seat: { zoneId: payload.zoneId },
+            booking: {
+                scheduleId: payload.scheduleId,
+                status: {
+                    in: [BookingStatus.pending, BookingStatus.confirmed, BookingStatus.checked_in],
+                },
+            },
+        },
+        select: { seatId: true },
+    });
+
+    const bookedSeatIds = new Set(bookedSeats.map((b) => b.seatId));
+
+    // Also include direct bookings
+    const directBooked = await prisma.booking.findMany({
+        where: {
+            scheduleId: payload.scheduleId,
+            seat: { zoneId: payload.zoneId },
+            status: {
+                in: [BookingStatus.pending, BookingStatus.confirmed, BookingStatus.checked_in],
+            },
+        },
+        select: { seatId: true },
+    });
+
+    directBooked.forEach((b) => {
+        if (b.seatId) bookedSeatIds.add(b.seatId);
+    });
+
+    const availableSeats = zone.seats.filter((s) => !bookedSeatIds.has(s.id) && !s.isOccupied);
+
+    if (availableSeats.length < partySize) {
+        throw new AppError(
+            status.CONFLICT,
+            `Not enough available seats in this zone. Required: ${partySize}, Available: ${availableSeats.length}`
+        );
+    }
+
+    // If looking for a group table (partySize > 1), try to find a single table with enough free seats
+    if (partySize > 1) {
+        const tableMap = new Map<string, typeof availableSeats>();
+        for (const s of availableSeats) {
+            const tableKey = s.tableNumber || "INDIVIDUAL";
+            if (!tableMap.has(tableKey)) {
+                tableMap.set(tableKey, []);
+            }
+            tableMap.get(tableKey)!.push(s);
+        }
+
+        // Find table with exact or sufficient available seats
+        for (const [tableNumber, tSeats] of tableMap.entries()) {
+            if (tableNumber !== "INDIVIDUAL" && tSeats.length >= partySize) {
+                const selectedSeats = tSeats.slice(0, partySize);
+                return {
+                    suggestedSeats: selectedSeats,
+                    tableNumber,
+                    tableType: selectedSeats[0].tableType,
+                    partySize,
+                    totalAvailableInZone: availableSeats.length,
+                };
+            }
+        }
+    }
+
+    // Fallback: pick the first available seats in FCFS order
+    const selected = availableSeats.slice(0, partySize);
+    return {
+        suggestedSeats: selected,
+        tableNumber: selected[0].tableNumber || null,
+        tableType: selected[0].tableType,
+        partySize,
+        totalAvailableInZone: availableSeats.length,
     };
 };
 
@@ -162,6 +355,15 @@ const getMyBookings = async (userId: string) => {
                     zone: true,
                 },
             },
+            bookingSeats: {
+                include: {
+                    seat: {
+                        include: {
+                            zone: true,
+                        },
+                    },
+                },
+            },
             schedule: true,
         },
         orderBy: {
@@ -169,7 +371,6 @@ const getMyBookings = async (userId: string) => {
         },
     });
 
-    // Map bookings and dynamically attach QR code base64 image for active ones
     const mappedBookings = await Promise.all(
         bookings.map(async (booking) => {
             let qrCodeImage = null;
@@ -227,10 +428,10 @@ const getAllBookings = async (filters: {
         }
     }
     if (filters.zoneId) {
-        whereCondition.seat = {
-            ...(whereCondition.seat || {}),
-            zoneId: filters.zoneId,
-        };
+        whereCondition.OR = [
+            { seat: { zoneId: filters.zoneId } },
+            { bookingSeats: { some: { seat: { zoneId: filters.zoneId } } } },
+        ];
     }
     if (filters.search && filters.search.trim() !== "") {
         const query = filters.search.trim();
@@ -239,7 +440,9 @@ const getAllBookings = async (filters: {
             { user: { email: { contains: query, mode: "insensitive" } } },
             { user: { studentId: { contains: query, mode: "insensitive" } } },
             { seat: { seatNumber: { contains: query, mode: "insensitive" } } },
+            { seat: { tableNumber: { contains: query, mode: "insensitive" } } },
             { seat: { zone: { name: { contains: query, mode: "insensitive" } } } },
+            { bookingSeats: { some: { seat: { seatNumber: { contains: query, mode: "insensitive" } } } } },
         ];
     }
 
@@ -253,8 +456,6 @@ const getAllBookings = async (filters: {
 
     if (sortBy === "date") {
         orderBy.schedule = { date: sortOrder };
-    } else if (sortBy === "seatNumber") {
-        orderBy.seat = { seatNumber: sortOrder };
     } else if (sortBy === "studentName") {
         orderBy.user = { name: sortOrder };
     } else {
@@ -277,6 +478,15 @@ const getAllBookings = async (filters: {
                 seat: {
                     include: {
                         zone: true,
+                    },
+                },
+                bookingSeats: {
+                    include: {
+                        seat: {
+                            include: {
+                                zone: true,
+                            },
+                        },
                     },
                 },
                 schedule: true,
@@ -335,6 +545,15 @@ const getBookingById = async (id: string, userId: string, role: Role) => {
                     zone: true,
                 },
             },
+            bookingSeats: {
+                include: {
+                    seat: {
+                        include: {
+                            zone: true,
+                        },
+                    },
+                },
+            },
             schedule: true,
         },
     });
@@ -366,7 +585,10 @@ const getBookingById = async (id: string, userId: string, role: Role) => {
 const cancelBooking = async (id: string, userId: string, role: Role) => {
     const booking = await prisma.booking.findUnique({
         where: { id },
-        include: { seat: true },
+        include: {
+            seat: true,
+            bookingSeats: true,
+        },
     });
 
     if (!booking) {
@@ -389,7 +611,6 @@ const cancelBooking = async (id: string, userId: string, role: Role) => {
             );
         }
     } else {
-        // Librarian / Admin check
         if (
             booking.status === BookingStatus.completed ||
             booking.status === BookingStatus.cancelled ||
@@ -399,7 +620,7 @@ const cancelBooking = async (id: string, userId: string, role: Role) => {
         }
     }
 
-    // Perform status update and seat occupant reset atomically
+    // Perform status update and free occupancy for ALL booked seats atomically
     const cancelledBooking = await prisma.$transaction(async (tx) => {
         const updated = await tx.booking.update({
             where: { id },
@@ -409,10 +630,15 @@ const cancelBooking = async (id: string, userId: string, role: Role) => {
             },
         });
 
-        // If booking was checked in, free the seat occupancy status
-        if (booking.status === BookingStatus.checked_in) {
-            await tx.seat.update({
-                where: { id: booking.seatId },
+        const seatIdsToFree: string[] = [];
+        if (booking.seatId) seatIdsToFree.push(booking.seatId);
+        if (booking.bookingSeats) {
+            booking.bookingSeats.forEach((bs) => seatIdsToFree.push(bs.seatId));
+        }
+
+        if (booking.status === BookingStatus.checked_in && seatIdsToFree.length > 0) {
+            await tx.seat.updateMany({
+                where: { id: { in: seatIdsToFree } },
                 data: { isOccupied: false },
             });
         }
@@ -425,7 +651,6 @@ const cancelBooking = async (id: string, userId: string, role: Role) => {
 
 /**
  * Ensure schedule slots exist for today and the upcoming days (default 7 days).
- * Auto-creates open slots if they do not already exist.
  */
 const ensureUpcomingSchedules = async (daysAhead: number = 7) => {
     const slots: SlotType[] = [
@@ -464,7 +689,6 @@ const ensureUpcomingSchedules = async (daysAhead: number = 7) => {
 
 const getSchedules = async () => {
     const advanceDays = await getAdvanceBookingDays();
-    // Auto-generate upcoming schedules if missing
     await ensureUpcomingSchedules(advanceDays);
 
     const now = new Date();
@@ -490,7 +714,6 @@ const getSchedules = async () => {
         ],
     });
 
-    // Filter to ensure no past date is returned
     return schedules.filter((s) => {
         const sDateStr = new Date(s.date).toISOString().split("T")[0];
         return sDateStr >= todayStr;
@@ -498,14 +721,13 @@ const getSchedules = async () => {
 };
 
 /**
- * Calculate dynamic real-time stats for home dashboard (for admins, librarians, and students).
+ * Calculate dynamic real-time stats for home dashboard.
  */
 const getDashboardStats = async (userId: string, role: string) => {
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
     const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
 
-    // 1. Expected Today count
     const expectedToday = await prisma.booking.count({
         where: {
             schedule: {
@@ -517,14 +739,12 @@ const getDashboardStats = async (userId: string, role: string) => {
         },
     });
 
-    // 2. Currently Checked In count
     const checkedIn = await prisma.booking.count({
         where: {
             status: BookingStatus.checked_in,
         },
     });
 
-    // 3. No Shows for today
     const noShows = await prisma.booking.count({
         where: {
             schedule: {
@@ -534,7 +754,6 @@ const getDashboardStats = async (userId: string, role: string) => {
         },
     });
 
-    // 4. Seats & Availability
     const totalActiveSeats = await prisma.seat.count({
         where: {
             isActive: true,
@@ -556,7 +775,6 @@ const getDashboardStats = async (userId: string, role: string) => {
 
     const availableSeats = Math.max(0, totalActiveSeats - occupiedSeatsCount);
 
-    // 5. Zone Status List
     const zones = await prisma.zone.findMany({
         orderBy: { name: "asc" },
         include: {
@@ -590,6 +808,10 @@ const getDashboardStats = async (userId: string, role: string) => {
             id: z.id,
             name: z.name,
             description: z.description,
+            zoneType: z.zoneType,
+            allowMultiSeat: z.allowMultiSeat,
+            maxSeatsPerBooking: z.maxSeatsPerBooking,
+            defaultTableType: z.defaultTableType,
             isActive: z.isActive,
             totalSeats: total,
             occupiedSeats: occupied,
@@ -600,7 +822,6 @@ const getDashboardStats = async (userId: string, role: string) => {
         };
     });
 
-    // 6. Student specific stats (if student)
     let studentStats = null;
     if (role === "student") {
         const myActivePasses = await prisma.booking.count({
@@ -643,6 +864,7 @@ const getDashboardStats = async (userId: string, role: string) => {
 
 export const BookingService = {
     createBooking,
+    getFCFSQuickAssign,
     getMyBookings,
     getAllBookings,
     getBookingById,

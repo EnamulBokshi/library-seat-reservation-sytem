@@ -62,8 +62,54 @@ const deleteSeat = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const createTableCluster = catchAsync(async (req: Request, res: Response) => {
+    const zoneId = req.params.id as string;
+    const result = await SeatService.createTableCluster({
+        ...req.body,
+        zoneId,
+    });
+
+    sendResponse(res, {
+        httpStatusCode: status.CREATED,
+        success: true,
+        message: `Table cluster ${result.tableNumber} created with ${result.seatsCreated} seats`,
+        data: result,
+    });
+});
+
+const bulkCreateTables = catchAsync(async (req: Request, res: Response) => {
+    const zoneId = req.params.id as string;
+    const result = await SeatService.bulkCreateTables({
+        ...req.body,
+        zoneId,
+    });
+
+    sendResponse(res, {
+        httpStatusCode: status.CREATED,
+        success: true,
+        message: `Bulk created ${result.tablesCreated} tables with ${result.seatsCreated} seats`,
+        data: result,
+    });
+});
+
+const deleteTable = catchAsync(async (req: Request, res: Response) => {
+    const zoneId = req.params.id as string;
+    const tableNumber = req.params.tableNumber as string;
+    const result = await SeatService.deleteTable(zoneId, tableNumber);
+
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: `Table ${tableNumber} deleted (${result.deletedCount} seats removed)`,
+        data: result,
+    });
+});
+
 export const SeatController = {
     createSeat,
+    createTableCluster,
+    bulkCreateTables,
+    deleteTable,
     getSeatsByZone,
     updateSeat,
     deleteSeat,

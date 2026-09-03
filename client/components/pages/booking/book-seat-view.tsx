@@ -15,8 +15,14 @@ import {
   Booking,
   SlotType,
   SlotConfig,
+  TableType,
+  TableCluster,
   DEFAULT_SLOT_CONFIG,
 } from "@/lib/types";
+import { CircleTable } from "@/components/shared/seating/circle-table";
+import { MeetingTable } from "@/components/shared/seating/meeting-table";
+import { CubicleDesk } from "@/components/shared/seating/cubicle-desk";
+import { TableClusterCard } from "@/components/shared/seating/table-cluster-card";
 import {
   MapPin,
   Plus,
@@ -36,6 +42,11 @@ import {
   ChevronDown,
   Info,
   Users,
+  Zap,
+  Check,
+  LayoutGrid,
+  Map as MapIcon,
+  Sparkles,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -67,7 +78,6 @@ export const isSlotPast = (
   if (dateStr < todayStr) return true;
   if (dateStr > todayStr) return false;
 
-  // It's today
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const config = customConfig ?? DEFAULT_SLOT_CONFIG;
   const slotDetail = config[slot] ?? DEFAULT_SLOT_CONFIG[slot];
@@ -126,7 +136,7 @@ function BookingSuccessModal({
   const router = useRouter();
 
   const handleDownload = () => {
-    const filename = `library-pass-${booking.seat?.seatNumber ?? "seat"}.png`;
+    const filename = `library-pass-${booking.seat?.seatNumber ?? "seats"}.png`;
     downloadQrImage(qrCodeImage, filename);
   };
 
@@ -137,6 +147,12 @@ function BookingSuccessModal({
         day: "numeric",
       })
     : "—";
+
+  const allSeatNumbers = booking.bookingSeats && booking.bookingSeats.length > 0
+    ? booking.bookingSeats.map((bs) => bs.seat.seatNumber).join(", ")
+    : booking.seat?.seatNumber ?? "Seat";
+
+  const seatCount = booking.bookingSeats?.length || (booking.seatId ? 1 : 1);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs p-4 sm:p-6 flex items-center justify-center">
@@ -152,9 +168,11 @@ function BookingSuccessModal({
           <CheckCircle2 className="h-7 w-7" />
         </div>
 
-        <h3 className="text-xl font-extrabold text-slate-900">Seat Reserved!</h3>
+        <h3 className="text-xl font-black text-slate-900">
+          {seatCount > 1 ? "Group Reservation Confirmed!" : "Seat Reserved!"}
+        </h3>
         <p className="mt-1 text-xs text-slate-500">
-          Your seat pass QR code has been generated and emailed to you.
+          Your entry QR pass for {seatCount > 1 ? `${seatCount} seats` : "your seat"} is ready.
         </p>
 
         {/* QR Code Display */}
@@ -175,8 +193,8 @@ function BookingSuccessModal({
         {/* Pass Details */}
         <div className="rounded-xl border border-slate-200 bg-white p-3 text-left space-y-1.5 text-xs mb-5 font-medium">
           <div className="flex justify-between">
-            <span className="text-slate-400">Seat</span>
-            <span className="font-extrabold text-slate-900">{booking.seat?.seatNumber ?? "—"}</span>
+            <span className="text-slate-400">{seatCount > 1 ? "Seats" : "Seat"}</span>
+            <span className="font-extrabold text-slate-900">{allSeatNumbers}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400">Zone</span>
@@ -205,270 +223,6 @@ function BookingSuccessModal({
   );
 }
 
-// ─── Individual Coach Seat Component ──────────────────────────────────────────
-interface CoachSeatProps {
-  seat: Seat;
-  isSelected: boolean;
-  canManage: boolean;
-  isStudent: boolean;
-  isSlotPast?: boolean;
-  onSelect: (seat: Seat) => void;
-  onDelete: (id: string) => void;
-  zoneColor: string;
-}
-
-function CoachSeat({
-  seat,
-  isSelected,
-  canManage,
-  isStudent,
-  isSlotPast = false,
-  onSelect,
-  onDelete,
-  zoneColor,
-}: CoachSeatProps) {
-  const isInactive = !seat.isActive;
-  const isBooked = !isInactive && (seat.isBooked || seat.isOccupied);
-  const isMyBooking = seat.isMyBooking;
-  const isAvailable = !isInactive && !isBooked && !isSlotPast;
-
-  const handleClick = () => {
-    if (!isAvailable || !isStudent) return;
-    onSelect(seat);
-  };
-
-  return (
-    <div className="relative group flex flex-col items-center">
-      {/* Admin Quick Delete Action */}
-      {canManage && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(seat.id);
-          }}
-          className="absolute -top-2 -right-2 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-white opacity-0 shadow-sm transition-all group-hover:opacity-100 hover:bg-rose-600 active:scale-95"
-          title={`Delete ${seat.seatNumber}`}
-        >
-          <Trash2 className="h-3 w-3" />
-        </button>
-      )}
-
-      {/* Armchair visual container */}
-      <button
-        type="button"
-        disabled={!isAvailable || !isStudent}
-        onClick={handleClick}
-        className={`relative w-20 sm:w-24 h-24 sm:h-28 rounded-2xl flex flex-col items-center justify-between p-2.5 transition-all duration-200 border-2 select-none ${
-          isInactive
-            ? "bg-slate-100/70 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed"
-            : isMyBooking
-            ? "bg-violet-50/90 border-violet-500 text-violet-900 shadow-md ring-2 ring-violet-500/20 cursor-default"
-            : isBooked
-            ? "bg-rose-50/80 border-rose-200/90 text-rose-900 shadow-2xs cursor-not-allowed"
-            : isSlotPast
-            ? "bg-slate-100/70 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed"
-            : isSelected
-            ? "bg-slate-900 border-slate-900 text-white shadow-xl scale-105 ring-4 ring-slate-900/15"
-            : "bg-white border-slate-200/90 text-slate-700 hover:border-slate-400 hover:shadow-md hover:scale-102 cursor-pointer"
-        }`}
-      >
-        {/* Headrest Pill */}
-        <div
-          className={`w-12 sm:w-14 h-3.5 rounded-full flex items-center justify-center text-[9px] font-black uppercase tracking-wider transition-colors ${
-            isSelected
-              ? "bg-white text-slate-900"
-              : isBooked
-              ? "bg-rose-200 text-rose-800"
-              : isMyBooking
-              ? "bg-violet-200 text-violet-800"
-              : "bg-slate-100 text-slate-600"
-          }`}
-        >
-          {seat.seatNumber}
-        </div>
-
-        {/* Armchair Center / Cushion Status */}
-        <div className="flex flex-col items-center justify-center my-auto">
-          <Armchair
-            className={`h-6 w-6 transition-transform duration-200 ${
-              isSelected
-                ? "text-white scale-110"
-                : isMyBooking
-                ? "text-violet-600"
-                : isBooked
-                ? "text-rose-400"
-                : "text-slate-400"
-            }`}
-          />
-          <div className="mt-1 flex items-center justify-center">
-            {isInactive ? (
-              <span className="text-[9px] font-bold text-slate-400">Disabled</span>
-            ) : isMyBooking ? (
-              <span className="text-[9px] font-black text-violet-700">My Pass</span>
-            ) : isBooked ? (
-              <span className="text-[9px] font-extrabold text-rose-700">Reserved</span>
-            ) : isSlotPast ? (
-              <span className="text-[9px] font-bold text-slate-400">Ended</span>
-            ) : isSelected ? (
-              <span className="text-[9px] font-black text-white">Selected</span>
-            ) : (
-              <span className="text-[9px] font-bold text-emerald-600">Available</span>
-            )}
-          </div>
-        </div>
-
-        {/* Bottom Armrest Tabs */}
-        <div className="w-full flex justify-between items-center px-0.5">
-          <div
-            className={`h-3.5 w-1.5 rounded-full ${
-              isSelected ? "bg-slate-700" : isBooked ? "bg-rose-200" : "bg-slate-200"
-            }`}
-          />
-          <div
-            className={`h-1.5 w-6 rounded-full ${
-              isSelected ? "bg-slate-700" : isBooked ? "bg-rose-200" : "bg-slate-200"
-            }`}
-          />
-          <div
-            className={`h-3.5 w-1.5 rounded-full ${
-              isSelected ? "bg-slate-700" : isBooked ? "bg-rose-200" : "bg-slate-200"
-            }`}
-          />
-        </div>
-      </button>
-    </div>
-  );
-}
-
-// ─── Train Coach Layout Component ─────────────────────────────────────────────
-interface CoachLayoutProps {
-  seats: Seat[];
-  selectedSeatId: string | null;
-  canManage: boolean;
-  isStudent: boolean;
-  isSlotPast?: boolean;
-  onSelectSeat: (seat: Seat) => void;
-  onDeleteSeat: (id: string) => void;
-  zoneColor: string;
-}
-
-function CoachLayout({
-  seats,
-  selectedSeatId,
-  canManage,
-  isStudent,
-  isSlotPast = false,
-  onSelectSeat,
-  onDeleteSeat,
-  zoneColor,
-}: CoachLayoutProps) {
-  const rows = useMemo(() => {
-    const list = [...seats];
-    const grouped: { left: Seat[]; right: Seat[]; rowNumber: number }[] = [];
-    let rowIdx = 1;
-
-    for (let i = 0; i < list.length; i += 4) {
-      const chunk = list.slice(i, i + 4);
-      grouped.push({
-        rowNumber: rowIdx++,
-        left: chunk.slice(0, 2),
-        right: chunk.slice(2, 4),
-      });
-    }
-    return grouped;
-  }, [seats]);
-
-  return (
-    <div className="w-full max-w-2xl mx-auto rounded-3xl border-2 border-slate-300 bg-[#f8f9fa] shadow-inner p-4 sm:p-7 relative overflow-hidden">
-      {/* Coach Top Header (Front / Whiteboard & Entrance) */}
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-3.5 flex items-center justify-between shadow-2xs">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
-          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-            🚪
-          </span>
-          <span>Front Entrance</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-400">
-          <span>🧑‍🏫 Front Whiteboard / Screen</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
-          <span>Power Outlets</span>
-          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-            🔌
-          </span>
-        </div>
-      </div>
-
-      {/* Rows */}
-      <div className="space-y-4">
-        {rows.map((row) => (
-          <div key={row.rowNumber} className="flex items-center justify-between gap-2 sm:gap-4">
-            {/* Left Pair */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              {row.left.map((seat) => (
-                <CoachSeat
-                  key={seat.id}
-                  seat={seat}
-                  isSelected={selectedSeatId === seat.id}
-                  canManage={canManage}
-                  isStudent={isStudent}
-                  isSlotPast={isSlotPast}
-                  onSelect={onSelectSeat}
-                  onDelete={onDeleteSeat}
-                  zoneColor={zoneColor}
-                />
-              ))}
-              {row.left.length < 2 &&
-                Array.from({ length: 2 - row.left.length }).map((_, i) => (
-                  <div key={i} className="w-20 sm:w-24 h-24 sm:h-28" />
-                ))}
-            </div>
-
-            {/* Central Walking Aisle */}
-            <div className="flex-1 flex flex-col items-center justify-center py-2 min-w-[50px] sm:min-w-[70px] select-none">
-              <div className="h-full w-px border-r-2 border-dashed border-slate-300 my-1" />
-              <span className="rounded-full bg-slate-200/90 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-slate-500 uppercase">
-                Row {row.rowNumber}
-              </span>
-              <div className="h-full w-px border-r-2 border-dashed border-slate-300 my-1" />
-            </div>
-
-            {/* Right Pair */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              {row.right.map((seat) => (
-                <CoachSeat
-                  key={seat.id}
-                  seat={seat}
-                  isSelected={selectedSeatId === seat.id}
-                  canManage={canManage}
-                  isStudent={isStudent}
-                  isSlotPast={isSlotPast}
-                  onSelect={onSelectSeat}
-                  onDelete={onDeleteSeat}
-                  zoneColor={zoneColor}
-                />
-              ))}
-              {row.right.length < 2 &&
-                Array.from({ length: 2 - row.right.length }).map((_, i) => (
-                  <div key={i} className="w-20 sm:w-24 h-24 sm:h-28" />
-                ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Coach Bottom Header (Rear Area) */}
-      <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-3 flex items-center justify-between text-xs font-bold text-slate-500 shadow-2xs">
-        <span>🚪 Rear Emergency Exit</span>
-        <span className="text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">
-          Study Hall Cabin End
-        </span>
-        <span>☕ Quiet Break Zone</span>
-      </div>
-    </div>
-  );
-}
-
 // ─── Main Unified Booking View Component ───────────────────────────────────────
 interface BookSeatViewProps {
   initialZoneId?: string;
@@ -489,12 +243,18 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
   // Selection states
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedSlot, setSelectedSlot] = useState<SlotType>("morning");
-  const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
+  const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
+  const [partySize, setPartySize] = useState<number>(1);
+
+  // Status Filter Tabs: 'available' | 'occupied' | 'maintenance' | 'visual'
+  const [bookingTab, setBookingTab] = useState<"available" | "occupied" | "maintenance" | "visual">("available");
 
   // Loading & Action states
   const [isLoadingZones, setIsLoadingZones] = useState(true);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
   const [isLoadingSeats, setIsLoadingSeats] = useState(false);
+  const [isSuggestingFCFS, setIsSuggestingFCFS] = useState(false);
+  const [fcfsMessage, setFcfsMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [isReserving, setIsReserving] = useState(false);
@@ -529,7 +289,6 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
         loadedZones = zonesRes.value.data ?? [];
         setZones(loadedZones);
 
-        // Select initial zone
         if (loadedZones.length > 0) {
           const matched = urlZoneId ? loadedZones.find((z) => z.id === urlZoneId) : null;
           setSelectedZoneId(matched ? matched.id : loadedZones[0].id);
@@ -563,7 +322,6 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
       });
       setSchedules(validSchedules);
 
-      // Default date & slot selection
       if (validSchedules.length > 0) {
         const firstDateStr = new Date(validSchedules[0].date).toISOString().split("T")[0];
         setSelectedDate(firstDateStr);
@@ -605,6 +363,10 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
     return zones.find((z) => z.id === selectedZoneId) || zones[0] || null;
   }, [zones, selectedZoneId]);
 
+  const maxAllowedSeats = selectedZone?.allowMultiSeat
+    ? selectedZone.maxSeatsPerBooking || 8
+    : 1;
+
   // ── 3. Fetch Seats for Selected Zone & Schedule ────────────────────────────
   const fetchSeats = useCallback(async () => {
     if (!selectedZoneId) return;
@@ -636,22 +398,152 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
     }
   }, [fetchSeats, selectedZoneId, activeSchedule?.id, showInactive]);
 
-  // Clear selected seat when date, slot, or zone changes
+  // Clear selected seats when date, slot, or zone changes
   useEffect(() => {
-    setSelectedSeat(null);
+    setSelectedSeatIds([]);
     setReservationError(null);
+    setFcfsMessage(null);
   }, [selectedDate, selectedSlot, selectedZoneId]);
 
-  // ── Reserve Seat Action ───────────────────────────────────────────────────
-  const handleReserveSeat = async () => {
-    if (!selectedSeat || !activeSchedule) return;
+  // Group seats by Table Cluster
+  const tableClusters = useMemo(() => {
+    const clusterMap: Record<string, TableCluster> = {};
+
+    seats.forEach((seat) => {
+      const tableName =
+        seat.tableNumber ||
+        (seat.tableType === "individual_cubicle" ? "Single Desks" : "Main Hall Seats");
+      const type =
+        seat.tableType ||
+        (selectedZone?.zoneType === "group_study" ? "circle_table" : "individual_cubicle");
+
+      if (!clusterMap[tableName]) {
+        clusterMap[tableName] = {
+          tableNumber: tableName,
+          tableType: type,
+          seats: [],
+          totalSeats: 0,
+          availableSeats: 0,
+        };
+      }
+
+      clusterMap[tableName].seats.push(seat);
+      clusterMap[tableName].totalSeats += 1;
+      if (seat.isActive && !seat.isOccupied && !seat.isBooked && !seat.booking) {
+        clusterMap[tableName].availableSeats += 1;
+      }
+    });
+
+    return Object.values(clusterMap);
+  }, [seats, selectedZone?.zoneType]);
+
+  // Categorized Seats for 500+ Seat Scalability
+  const availableSeats = useMemo(
+    () => seats.filter((s) => s.isActive && !s.isBooked && !s.isOccupied),
+    [seats]
+  );
+  const occupiedSeats = useMemo(
+    () => seats.filter((s) => s.isActive && (s.isBooked || s.isOccupied)),
+    [seats]
+  );
+  const maintenanceSeats = useMemo(() => seats.filter((s) => !s.isActive), [seats]);
+
+  // Available Table Clusters
+  const availableClusters = useMemo(
+    () => tableClusters.filter((c) => c.availableSeats > 0),
+    [tableClusters]
+  );
+
+  // ── Seat Selection Toggle ─────────────────────────────────────────────────
+  const handleToggleSeat = (seat: Seat) => {
+    const isCurrentlySelected = selectedSeatIds.includes(seat.id);
+
+    if (isCurrentlySelected) {
+      setSelectedSeatIds((prev) => prev.filter((id) => id !== seat.id));
+      return;
+    }
+
+    // If single seat zone (e.g. silent zone), replace selection
+    if (maxAllowedSeats === 1) {
+      setSelectedSeatIds([seat.id]);
+      return;
+    }
+
+    // Check multi-seat limit
+    if (selectedSeatIds.length >= maxAllowedSeats) {
+      setReservationError(
+        `You can select a maximum of ${maxAllowedSeats} seats for this group reservation.`
+      );
+      return;
+    }
+
+    setReservationError(null);
+    setSelectedSeatIds((prev) => [...prev, seat.id]);
+  };
+
+  const handleSelectTable = (seatsToSelect: Seat[]) => {
+    const seatIds = seatsToSelect.map((s) => s.id);
+    const areAllIn = seatIds.every((id) => selectedSeatIds.includes(id));
+
+    if (areAllIn) {
+      // Deselect all
+      setSelectedSeatIds((prev) => prev.filter((id) => !seatIds.includes(id)));
+    } else {
+      // Select up to limit
+      const combined = Array.from(new Set([...selectedSeatIds, ...seatIds])).slice(
+        0,
+        maxAllowedSeats
+      );
+      setSelectedSeatIds(combined);
+    }
+  };
+
+  // ── Instant FCFS Quick Assign ─────────────────────────────────────────────
+  const handleInstantFCFS = async () => {
+    if (!selectedZoneId || !activeSchedule) return;
+    setIsSuggestingFCFS(true);
+    setReservationError(null);
+    setFcfsMessage(null);
+
+    try {
+      const res = await bookingService.getFCFSSuggestion(
+        selectedZoneId,
+        activeSchedule.id,
+        partySize
+      );
+
+      if (res.data?.suggestedSeats && res.data.suggestedSeats.length > 0) {
+        const suggestedIds = res.data.suggestedSeats.map((s) => s.id);
+        setSelectedSeatIds(suggestedIds);
+        const seatNames = res.data.suggestedSeats.map((s) => s.seatNumber).join(", ");
+        setFcfsMessage(
+          `⚡ First-Come-First-Serve algorithm assigned ${suggestedIds.length} optimal seat(s) at ${
+            res.data.tableNumber || "Main Area"
+          }: ${seatNames}`
+        );
+      } else {
+        setReservationError("No available seats found matching your party size.");
+      }
+    } catch (err: unknown) {
+      const apiErr = err as ApiError;
+      setReservationError(apiErr?.message ?? "Unable to auto-assign seats.");
+    } finally {
+      setIsSuggestingFCFS(false);
+    }
+  };
+
+  // ── Reserve Seats Action ──────────────────────────────────────────────────
+  const handleReserveSeats = async () => {
+    if (selectedSeatIds.length === 0 || !activeSchedule) return;
     setIsReserving(true);
     setReservationError(null);
 
     try {
       const res = await bookingService.create({
-        seatId: selectedSeat.id,
+        seatIds: selectedSeatIds,
+        seatId: selectedSeatIds[0],
         scheduleId: activeSchedule.id,
+        guestCount: selectedSeatIds.length,
       });
 
       if (res.data?.booking && res.data?.qrCodeImage) {
@@ -660,11 +552,11 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
           qrCodeImage: res.data.qrCodeImage,
         });
       }
-      setSelectedSeat(null);
+      setSelectedSeatIds([]);
       fetchSeats();
     } catch (err: unknown) {
       const apiErr = err as ApiError;
-      setReservationError(apiErr?.message ?? "Failed to reserve seat.");
+      setReservationError(apiErr?.message ?? "Failed to reserve seats.");
     } finally {
       setIsReserving(false);
     }
@@ -677,7 +569,10 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
     setAddSeatError(null);
     setIsAddingSeat(true);
     try {
-      const payload: CreateSeatPayload = { seatNumber: newSeatNumber.trim() };
+      const payload: CreateSeatPayload = {
+        seatNumber: newSeatNumber.trim().toUpperCase(),
+        tableType: selectedZone?.defaultTableType || "individual_cubicle",
+      };
       const res = await zoneService.createSeat(selectedZoneId, payload);
       if (res.data) {
         setSeats((prev) => [...prev, res.data!]);
@@ -696,25 +591,25 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
     try {
       await seatService.delete(id);
       setSeats((prev) => prev.filter((s) => s.id !== id));
-      if (selectedSeat?.id === id) setSelectedSeat(null);
+      setSelectedSeatIds((prev) => prev.filter((sid) => sid !== id));
     } catch (err: unknown) {
       const apiErr = err as ApiError;
       alert(apiErr?.message ?? "Failed to remove seat.");
     }
   };
 
-  // Metrics
-  const availableSeatsCount = seats.filter(
-    (s) => s.isActive && !s.isBooked && !s.isOccupied
-  ).length;
-  const bookedSeatsCount = seats.filter(
-    (s) => s.isActive && (s.isBooked || s.isOccupied)
-  ).length;
   const totalSeatsCount = seats.length;
+  const isSlotEnded = isSlotPast(selectedDate, selectedSlot, slotConfig);
   const zoneColor = selectedZone?.color ?? "#0f172a";
   const zoneImage = selectedZone
     ? ZONE_IMAGES[selectedZone.name] || DEFAULT_ZONE_IMAGE
     : DEFAULT_ZONE_IMAGE;
+
+  // Selected seat objects
+  const selectedSeatObjects = useMemo(
+    () => seats.filter((s) => selectedSeatIds.includes(s.id)),
+    [seats, selectedSeatIds]
+  );
 
   if (isLoadingZones) {
     return (
@@ -742,19 +637,18 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
   return (
     <div className="min-h-screen bg-[#f4f5f7] text-slate-900 pb-28 md:pb-16">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-6 space-y-6">
-
         {/* ── Top Header & Zone Select Menu ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <p className="kicker-label">SEAT RESERVATION</p>
+            <p className="kicker-label">SEAT &amp; TABLE RESERVATION</p>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 mt-1">
-              Book a Study Seat
+              Book a Study Seat / Table
             </h1>
           </div>
 
           {/* Zone Select Menu */}
           <div className="flex items-center gap-3">
-            <div className="relative min-w-[220px]">
+            <div className="relative min-w-[240px]">
               <label htmlFor="zone-select" className="sr-only">
                 Select Study Zone
               </label>
@@ -766,7 +660,8 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
               >
                 {zones.map((z) => (
                   <option key={z.id} value={z.id}>
-                    {z.name} {z.isActive ? "" : "(Closed)"}
+                    {z.name} {z.zoneType === "group_study" ? "(Group)" : "(Silent)"}{" "}
+                    {z.isActive ? "" : "(Closed)"}
                   </option>
                 ))}
               </select>
@@ -787,10 +682,9 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
           </div>
         </div>
 
-        {/* ── Zone Brief (STRICT CONSTRAINT: No box, no rounded border, no borders) ── */}
+        {/* ── Zone Brief ── */}
         <div className="pt-2 pb-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-            {/* Zone Image */}
             <div className="md:col-span-4 aspect-16/10 overflow-hidden shadow-xs">
               <img
                 src={zoneImage}
@@ -799,9 +693,8 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
               />
             </div>
 
-            {/* Zone Brief Details */}
             <div className="md:col-span-8 space-y-2.5">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span
                   className="h-2.5 w-2.5 rounded-full"
                   style={{ backgroundColor: selectedZone.color || "#0f172a" }}
@@ -809,6 +702,22 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
                 <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
                   Study Hall &bull; {selectedZone.isActive ? "Open & Operating" : "Temporarily Closed"}
                 </span>
+
+                <span className="rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-slate-200 text-slate-700">
+                  {selectedZone.zoneType === "silent_desk"
+                    ? "🤫 Isolated Desks"
+                    : selectedZone.zoneType === "group_study"
+                    ? "👥 Group Study Tables"
+                    : selectedZone.zoneType === "computer_lab"
+                    ? "💻 Tech Workstations"
+                    : "📖 Open Reading"}
+                </span>
+
+                {selectedZone.allowMultiSeat && (
+                  <span className="rounded-full px-2.5 py-0.5 text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    ⚡ Multi-Seat Allowed (Up to {maxAllowedSeats} Seats)
+                  </span>
+                )}
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -820,7 +729,6 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
                   "A dedicated study area configured for optimal student focus and productivity."}
               </p>
 
-              {/* Rules & Guidelines (Clean inline typography, no box/border) */}
               {selectedZone.rules && selectedZone.rules.length > 0 && (
                 <div className="pt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 font-semibold">
                   {selectedZone.rules.map((rule, idx) => (
@@ -841,7 +749,7 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
             <div>
               <span className="kicker-label">STEP 1</span>
               <h2 className="text-sm sm:text-base font-extrabold text-slate-900">
-                Choose Date & Time Slot
+                Choose Date &amp; Time Slot
               </h2>
             </div>
             <span className="text-xs text-slate-500 font-semibold">
@@ -912,7 +820,6 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
                 const detail = slotConfig[slotKey] ?? DEFAULT_SLOT_CONFIG[slotKey];
                 const isPast = isSlotPast(selectedDate, slotKey, slotConfig);
 
-                // Check if this slot is open in the schedule for the selected date
                 const scheduleForSlot = schedules.find(
                   (s) =>
                     s.slot === slotKey &&
@@ -984,77 +891,343 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
           </div>
         </div>
 
-        {/* ── STEP 2: Interactive Train Coach Seating Plan ── */}
+        {/* ── ⚡ FCFS (FIRST-COME-FIRST-SERVE) FAST BOOKING PANEL ── */}
+        <div className="pulse-card p-5 bg-gradient-to-br from-indigo-50/90 via-white to-slate-50 border-indigo-100 space-y-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-indigo-600 text-white text-xs">
+                  ⚡
+                </span>
+                <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                  First-Come-First-Serve Fast Allocation
+                </h3>
+              </div>
+              <p className="text-xs text-slate-600 font-medium">
+                Skip searching 500+ seats: get optimal adjacent seating for your party size instantly.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {selectedZone.allowMultiSeat && (
+                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs">
+                  <Users className="h-3.5 w-3.5 text-indigo-600" />
+                  <span>Party Size:</span>
+                  <select
+                    value={partySize}
+                    onChange={(e) => setPartySize(parseInt(e.target.value, 10) || 1)}
+                    className="bg-transparent font-black text-slate-900 focus:outline-none cursor-pointer"
+                  >
+                    {Array.from({ length: maxAllowedSeats }, (_, i) => i + 1).map((num) => (
+                      <option key={num} value={num}>
+                        {num} {num === 1 ? "Student" : "Students"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleInstantFCFS}
+                disabled={isSuggestingFCFS || availableSeats.length === 0 || isSlotEnded}
+                className="pulse-button-primary py-2 px-4 text-xs inline-flex items-center gap-1.5 shadow-sm"
+              >
+                {isSuggestingFCFS ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Zap className="h-3.5 w-3.5" />
+                )}
+                <span>1-Click FCFS Auto-Assign</span>
+              </button>
+            </div>
+          </div>
+
+          {fcfsMessage && (
+            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-2.5 text-xs font-bold text-emerald-800">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span>{fcfsMessage}</span>
+            </div>
+          )}
+        </div>
+
+        {/* ── STEP 2: Status-Based Grouping Tabs for 500+ Seats Scale ── */}
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-2">
             <div>
               <span className="kicker-label">STEP 2</span>
-              <h2 className="text-lg font-extrabold text-slate-900">
-                Interactive Seating Plan
+              <h2 className="text-base font-extrabold text-slate-900">
+                Seating Layout &amp; Available Tables
               </h2>
             </div>
 
-            {/* Visual Legend */}
-            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
-              <div className="flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded-md bg-white border border-slate-300 shadow-2xs" />
-                <span className="text-slate-600">Available</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded-md bg-rose-100 border border-rose-300 shadow-2xs" />
-                <span className="text-slate-600">Reserved</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded-md bg-violet-100 border border-violet-400 shadow-2xs" />
-                <span className="text-slate-600">My Booking</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded-md bg-slate-900 border border-slate-900 shadow-2xs" />
-                <span className="text-slate-600">Selected</span>
-              </div>
+            {/* Status-Based Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+              <button
+                type="button"
+                onClick={() => setBookingTab("available")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black border transition-all ${
+                  bookingTab === "available"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <span>🟢 Available FCFS</span>
+                <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black px-1.5">
+                  {availableSeats.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBookingTab("visual")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black border transition-all ${
+                  bookingTab === "visual"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <MapIcon className="h-3 w-3" />
+                <span>Visual Floor Map</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBookingTab("occupied")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black border transition-all ${
+                  bookingTab === "occupied"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <span>🔴 Reserved</span>
+                <span className="rounded-full bg-rose-100 text-rose-800 text-[10px] font-black px-1.5">
+                  {occupiedSeats.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBookingTab("maintenance")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black border transition-all ${
+                  bookingTab === "maintenance"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <span>🟡 Disabled</span>
+                <span className="rounded-full bg-amber-100 text-amber-800 text-[10px] font-black px-1.5">
+                  {maintenanceSeats.length}
+                </span>
+              </button>
             </div>
           </div>
 
-          {/* Seating Layout Canvas */}
-          <div className="pulse-card p-4 sm:p-6 overflow-x-auto">
-            {isLoadingSeats ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-slate-900" />
-                <p className="text-xs text-slate-500 font-bold">
-                  Loading seat map for {selectedZone.name}...
-                </p>
+          {/* Tab Content Presentation */}
+          {isLoadingSeats ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 pulse-card">
+              <Loader2 className="h-8 w-8 animate-spin text-slate-900" />
+              <p className="text-xs text-slate-500 font-bold">
+                Loading seating matrix for {selectedZone.name}...
+              </p>
+            </div>
+          ) : seats.length === 0 ? (
+            <div className="pulse-card p-16 text-center space-y-2">
+              <Armchair className="h-10 w-10 text-slate-300 mx-auto" />
+              <p className="text-xs font-bold text-slate-500">
+                No seats configured in this zone yet.
+              </p>
+            </div>
+          ) : bookingTab === "available" ? (
+            /* 1. AVAILABLE SEATS (GROUPED BY TABLE CLUSTER) */
+            <div className="space-y-4">
+              {availableClusters.length === 0 ? (
+                <div className="pulse-card p-12 text-center space-y-2">
+                  <Armchair className="h-10 w-10 text-slate-300 mx-auto" />
+                  <h3 className="text-sm font-black text-slate-900">All Seats Currently Reserved</h3>
+                  <p className="text-xs text-slate-500">
+                    Try selecting a different time slot or another study hall.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {availableClusters.map((cluster) => (
+                    <TableClusterCard
+                      key={cluster.tableNumber}
+                      cluster={cluster}
+                      selectedSeatIds={selectedSeatIds}
+                      isStudent={isStudent}
+                      onToggleSeat={handleToggleSeat}
+                      onSelectEntireTable={
+                        selectedZone.allowMultiSeat ? handleSelectTable : undefined
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : bookingTab === "visual" ? (
+            /* 2. INTERACTIVE VISUAL FLOOR MAP */
+            <div className="pulse-card p-6 space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <span className="kicker-label">ARCHITECTURAL SEATING PLAN</span>
+                <span className="text-xs font-bold text-slate-500">
+                  {tableClusters.length} Table Layouts &bull; Click seats or tables to select
+                </span>
               </div>
-            ) : seats.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center space-y-2">
-                <Armchair className="h-10 w-10 text-slate-300" />
-                <p className="text-xs font-bold text-slate-500">
-                  No seats have been configured in this zone yet.
-                </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {tableClusters.map((cluster) => {
+                  if (cluster.tableType === "circle_table") {
+                    return (
+                      <CircleTable
+                        key={cluster.tableNumber}
+                        tableNumber={cluster.tableNumber}
+                        tableType={cluster.tableType}
+                        seats={cluster.seats}
+                        selectedSeatIds={selectedSeatIds}
+                        isStudent={isStudent}
+                        isSlotPast={isSlotEnded}
+                        onToggleSeat={handleToggleSeat}
+                        onSelectTable={
+                          selectedZone.allowMultiSeat ? handleSelectTable : undefined
+                        }
+                        zoneColor={zoneColor}
+                      />
+                    );
+                  }
+
+                  if (cluster.tableType === "meeting_table") {
+                    return (
+                      <MeetingTable
+                        key={cluster.tableNumber}
+                        tableNumber={cluster.tableNumber}
+                        tableType={cluster.tableType}
+                        seats={cluster.seats}
+                        selectedSeatIds={selectedSeatIds}
+                        isStudent={isStudent}
+                        isSlotPast={isSlotEnded}
+                        onToggleSeat={handleToggleSeat}
+                        onSelectTable={
+                          selectedZone.allowMultiSeat ? handleSelectTable : undefined
+                        }
+                        zoneColor={zoneColor}
+                      />
+                    );
+                  }
+
+                  // Default Cubicle list
+                  return (
+                    <div
+                      key={cluster.tableNumber}
+                      className="p-4 rounded-3xl bg-slate-50/70 border border-slate-200/80 space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm">🪑</span>
+                          <h4 className="text-xs font-black text-slate-900">{cluster.tableNumber}</h4>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-500">
+                          {cluster.availableSeats}/{cluster.totalSeats} Open
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {cluster.seats.map((seat) => (
+                          <CubicleDesk
+                            key={seat.id}
+                            seat={seat}
+                            isSelected={selectedSeatIds.includes(seat.id)}
+                            isStudent={isStudent}
+                            isSlotPast={isSlotEnded}
+                            onSelect={handleToggleSeat}
+                            zoneColor={zoneColor}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ) : (
-              <CoachLayout
-                seats={seats}
-                selectedSeatId={selectedSeat?.id ?? null}
-                canManage={canManage}
-                isStudent={isStudent}
-                isSlotPast={isSlotPast(selectedDate, selectedSlot, slotConfig)}
-                onSelectSeat={(seat) => setSelectedSeat(seat)}
-                onDeleteSeat={handleDeleteSeat}
-                zoneColor={zoneColor}
-              />
-            )}
-          </div>
+            </div>
+          ) : bookingTab === "occupied" ? (
+            /* 3. OCCUPIED SEATS */
+            <div className="pulse-card p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <span className="kicker-label">RESERVED SEATS</span>
+                <span className="text-xs font-bold text-slate-500">
+                  {occupiedSeats.length} seats reserved for this session
+                </span>
+              </div>
+
+              {occupiedSeats.length === 0 ? (
+                <p className="text-xs text-slate-400 py-6 text-center">
+                  No seats reserved in this session yet.
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                  {occupiedSeats.map((seat) => (
+                    <div
+                      key={seat.id}
+                      className="p-3 rounded-2xl bg-rose-50/80 border border-rose-200 text-center space-y-1"
+                    >
+                      <span className="text-xs font-black text-rose-950 block">
+                        {seat.seatNumber}
+                      </span>
+                      <span className="text-[9px] font-bold text-rose-700 block uppercase tracking-wider">
+                        {seat.tableNumber || "Reserved"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* 4. MAINTENANCE SEATS */
+            <div className="pulse-card p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <span className="kicker-label">MAINTENANCE &amp; OFFLINE SEATS</span>
+                <span className="text-xs font-bold text-slate-500">
+                  {maintenanceSeats.length} disabled seats
+                </span>
+              </div>
+
+              {maintenanceSeats.length === 0 ? (
+                <p className="text-xs text-slate-400 py-6 text-center">
+                  All seats are in full working order.
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                  {maintenanceSeats.map((seat) => (
+                    <div
+                      key={seat.id}
+                      className="p-3 rounded-2xl bg-amber-50/80 border border-amber-200 text-center space-y-1"
+                    >
+                      <span className="text-xs font-black text-amber-950 block">
+                        {seat.seatNumber}
+                      </span>
+                      <span className="text-[9px] font-bold text-amber-700 block uppercase tracking-wider">
+                        Offline
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* ── Reservation Footer Bar ── */}
-        {selectedSeat && (
+        {/* ── MULTI-SEAT RESERVATION FOOTER BAR ── */}
+        {selectedSeatIds.length > 0 && (
           <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200 p-4 shadow-2xl animate-in slide-in-from-bottom-4">
             <div className="mx-auto max-w-5xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <span className="kicker-label text-slate-400">READY TO RESERVE</span>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="text-base font-extrabold text-slate-900">
-                    Seat {selectedSeat.seatNumber}
+                    {selectedSeatIds.length === 1
+                      ? `Seat ${selectedSeatObjects[0]?.seatNumber || ""}`
+                      : `${selectedSeatIds.length} Group Seats (${selectedSeatObjects.map((s) => s.seatNumber).join(", ")})`}
                   </p>
                   <span className="text-slate-400">&bull;</span>
                   <span className="text-xs font-bold text-slate-600">{selectedZone.name}</span>
@@ -1068,15 +1241,15 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedSeat(null)}
+                  onClick={() => setSelectedSeatIds([])}
                   className="pulse-button-secondary py-2.5 px-4 text-xs"
                 >
-                  Cancel
+                  Clear Selection
                 </button>
                 <button
                   type="button"
                   disabled={isReserving}
-                  onClick={handleReserveSeat}
+                  onClick={handleReserveSeats}
                   className="pulse-button-primary py-2.5 px-6 text-xs shadow-md"
                 >
                   {isReserving ? (
@@ -1084,7 +1257,10 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
                   ) : (
                     <CheckCircle2 className="h-4 w-4" />
                   )}
-                  <span>Confirm Reservation</span>
+                  <span>
+                    Confirm Reservation ({selectedSeatIds.length}{" "}
+                    {selectedSeatIds.length === 1 ? "Seat" : "Seats"})
+                  </span>
                 </button>
               </div>
             </div>

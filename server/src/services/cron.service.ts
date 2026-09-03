@@ -148,11 +148,21 @@ const processSlotCleanup = async (slot: SlotType) => {
       select: {
         id: true,
         seatId: true,
+        bookingSeats: {
+          select: { seatId: true },
+        },
       },
     });
 
     if (checkedInBookings.length > 0) {
-      const seatIds = checkedInBookings.map((b) => b.seatId);
+      const seatIdsSet = new Set<string>();
+      checkedInBookings.forEach((b) => {
+        if (b.seatId) seatIdsSet.add(b.seatId);
+        if (b.bookingSeats) {
+          b.bookingSeats.forEach((bs) => seatIdsSet.add(bs.seatId));
+        }
+      });
+      const seatIds = Array.from(seatIdsSet);
 
       await prisma.$transaction([
         prisma.booking.updateMany({
@@ -175,7 +185,7 @@ const processSlotCleanup = async (slot: SlotType) => {
         }),
       ]);
 
-      console.log(`[Cron Scheduler] Force-completed ${checkedInBookings.length} active sessions and released their seats.`);
+      console.log(`[Cron Scheduler] Force-completed ${checkedInBookings.length} active sessions and released ${seatIds.length} seats.`);
     }
 
     console.log(`[Cron Scheduler] Finished boundary cleanup for slot: ${slot}.`);

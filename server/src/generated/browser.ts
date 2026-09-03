@@ -38,6 +38,11 @@ export type Seat = Prisma.SeatModel
  */
 export type Schedule = Prisma.ScheduleModel
 /**
+ * Model BookingSeat
+ * 
+ */
+export type BookingSeat = Prisma.BookingSeatModel
+/**
  * Model Booking
  * 
  */

@@ -65,11 +65,29 @@ export interface ApiResponse<T = unknown> {
 
 // ─── Zone ─────────────────────────────────────────────────────────────────────
 
+export type ZoneType =
+  | "silent_desk"
+  | "group_study"
+  | "computer_lab"
+  | "open_reading"
+  | "conference_room";
+
+export type TableType =
+  | "individual_cubicle"
+  | "circle_table"
+  | "meeting_table"
+  | "booth_pod"
+  | "workstation_bench";
+
 export interface Zone {
   id: string;
   name: string;
   description?: string | null;
   color?: string | null;
+  zoneType?: ZoneType;
+  allowMultiSeat?: boolean;
+  maxSeatsPerBooking?: number;
+  defaultTableType?: TableType;
   rules: string[];
   isActive: boolean;
   createdAt: string;
@@ -81,6 +99,10 @@ export interface CreateZonePayload {
   name: string;
   description?: string;
   color?: string;
+  zoneType?: ZoneType;
+  allowMultiSeat?: boolean;
+  maxSeatsPerBooking?: number;
+  defaultTableType?: TableType;
   rules?: string[];
   isActive?: boolean;
 }
@@ -89,16 +111,24 @@ export interface UpdateZonePayload {
   name?: string;
   description?: string;
   color?: string;
+  zoneType?: ZoneType;
+  allowMultiSeat?: boolean;
+  maxSeatsPerBooking?: number;
+  defaultTableType?: TableType;
   rules?: string[];
   isActive?: boolean;
 }
 
-// ─── Seat ─────────────────────────────────────────────────────────────────────
+// ─── Seat & Table Cluster ─────────────────────────────────────────────────────
 
 export interface Seat {
   id: string;
   seatNumber: string;
   zoneId: string;
+  tableNumber?: string | null;
+  tableType?: TableType;
+  tableCapacity?: number | null;
+  seatPosition?: number | null;
   isActive: boolean;
   isOccupied: boolean;
   isBooked?: boolean;
@@ -118,12 +148,48 @@ export interface Seat {
   updatedAt: string;
 }
 
+export interface TableCluster {
+  tableNumber: string;
+  tableType: TableType;
+  tableCapacity?: number;
+  totalSeats: number;
+  availableSeats: number;
+  occupiedSeats?: number;
+  maintenanceSeats?: number;
+  seats: Seat[];
+}
+
 export interface CreateSeatPayload {
   seatNumber: string;
+  tableNumber?: string;
+  tableType?: TableType;
+  tableCapacity?: number;
+  seatPosition?: number;
+}
+
+export interface CreateTableClusterPayload {
+  zoneId: string;
+  tableNumber: string;
+  tableType: TableType;
+  chairCount: number;
+  prefix?: string;
+}
+
+export interface BulkCreateTablesPayload {
+  zoneId: string;
+  tableType: TableType;
+  tableCount: number;
+  chairsPerTable: number;
+  tablePrefix?: string;
+  startTableNumber?: number;
 }
 
 export interface UpdateSeatPayload {
   seatNumber?: string;
+  tableNumber?: string | null;
+  tableType?: TableType;
+  tableCapacity?: number | null;
+  seatPosition?: number | null;
   isActive?: boolean;
   isOccupied?: boolean;
 }
@@ -219,16 +285,25 @@ export type BookingStatus =
 export interface BookingSeat {
   id: string;
   seatNumber: string;
+  tableNumber?: string | null;
+  tableType?: TableType;
   zone: {
     id: string;
     name: string;
   };
 }
 
+export interface BookingSeatRelation {
+  id: string;
+  seatId: string;
+  bookingId: string;
+  seat: Seat;
+}
+
 export interface Booking {
   id: string;
   userId: string;
-  seatId: string;
+  seatId?: string | null;
   scheduleId: string;
   status: BookingStatus;
   qrToken: string;
@@ -238,14 +313,17 @@ export interface Booking {
   cancelledAt: string | null;
   cancelReason: string | null;
   seat?: BookingSeat;
+  bookingSeats?: BookingSeatRelation[];
   schedule?: Schedule;
   user?: Pick<User, "id" | "name" | "email" | "studentId">;
   qrCodeImage?: string;
 }
 
 export interface CreateBookingPayload {
-  seatId: string;
+  seatId?: string;
+  seatIds?: string[];
   scheduleId: string;
+  guestCount?: number;
 }
 
 export interface CreateBookingResponseData {

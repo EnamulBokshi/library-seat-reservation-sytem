@@ -15,6 +15,8 @@ bookingRoute.post("/", (0, authCheck_1.default)("student"), (0, requestValidator
 bookingRoute.get("/my", (0, authCheck_1.default)("student"), booking_controller_1.BookingController.getMyBookings);
 // Get all bookings (Librarians & Admins)
 bookingRoute.get("/", (0, authCheck_1.default)("admin", "librarian"), booking_controller_1.BookingController.getAllBookings);
+// FCFS Quick Assign suggestion (Student)
+bookingRoute.get("/fcfs-suggest", (0, authCheck_1.default)("student"), booking_controller_1.BookingController.getFCFSQuickAssign);
 // Get available schedules (all authenticated roles)
 bookingRoute.get("/schedules", (0, authCheck_1.default)(), booking_controller_1.BookingController.getSchedules);
 // Get real-time dashboard analytics (all authenticated roles)

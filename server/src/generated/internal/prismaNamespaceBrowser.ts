@@ -55,6 +55,7 @@ export const ModelName = {
   Zone: 'Zone',
   Seat: 'Seat',
   Schedule: 'Schedule',
+  BookingSeat: 'BookingSeat',
   Booking: 'Booking',
   Setting: 'Setting',
   Book: 'Book',
@@ -97,6 +98,10 @@ export const ZoneScalarFieldEnum = {
   name: 'name',
   description: 'description',
   color: 'color',
+  zoneType: 'zoneType',
+  allowMultiSeat: 'allowMultiSeat',
+  maxSeatsPerBooking: 'maxSeatsPerBooking',
+  defaultTableType: 'defaultTableType',
   rules: 'rules',
   isActive: 'isActive',
   createdAt: 'createdAt',
@@ -110,6 +115,10 @@ export const SeatScalarFieldEnum = {
   id: 'id',
   seatNumber: 'seatNumber',
   zoneId: 'zoneId',
+  tableNumber: 'tableNumber',
+  tableType: 'tableType',
+  tableCapacity: 'tableCapacity',
+  seatPosition: 'seatPosition',
   isActive: 'isActive',
   isOccupied: 'isOccupied',
   createdAt: 'createdAt',
@@ -131,11 +140,22 @@ export const ScheduleScalarFieldEnum = {
 export type ScheduleScalarFieldEnum = (typeof ScheduleScalarFieldEnum)[keyof typeof ScheduleScalarFieldEnum]
 
 
+export const BookingSeatScalarFieldEnum = {
+  id: 'id',
+  bookingId: 'bookingId',
+  seatId: 'seatId',
+  createdAt: 'createdAt'
+} as const
+
+export type BookingSeatScalarFieldEnum = (typeof BookingSeatScalarFieldEnum)[keyof typeof BookingSeatScalarFieldEnum]
+
+
 export const BookingScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   seatId: 'seatId',
   scheduleId: 'scheduleId',
+  guestCount: 'guestCount',
   status: 'status',
   qrToken: 'qrToken',
   bookedAt: 'bookedAt',

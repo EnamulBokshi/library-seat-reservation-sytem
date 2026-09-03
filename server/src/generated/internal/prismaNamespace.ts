@@ -388,6 +388,7 @@ export const ModelName = {
   Zone: 'Zone',
   Seat: 'Seat',
   Schedule: 'Schedule',
+  BookingSeat: 'BookingSeat',
   Booking: 'Booking',
   Setting: 'Setting',
   Book: 'Book',
@@ -407,7 +408,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "zone" | "seat" | "schedule" | "booking" | "setting" | "book" | "bookLoan"
+    modelProps: "user" | "zone" | "seat" | "schedule" | "bookingSeat" | "booking" | "setting" | "book" | "bookLoan"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -704,6 +705,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ScheduleCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ScheduleCountAggregateOutputType> | number
+        }
+      }
+    }
+    BookingSeat: {
+      payload: Prisma.$BookingSeatPayload<ExtArgs>
+      fields: Prisma.BookingSeatFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BookingSeatFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BookingSeatFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload>
+        }
+        findFirst: {
+          args: Prisma.BookingSeatFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BookingSeatFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload>
+        }
+        findMany: {
+          args: Prisma.BookingSeatFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload>[]
+        }
+        create: {
+          args: Prisma.BookingSeatCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload>
+        }
+        createMany: {
+          args: Prisma.BookingSeatCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BookingSeatCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload>[]
+        }
+        delete: {
+          args: Prisma.BookingSeatDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload>
+        }
+        update: {
+          args: Prisma.BookingSeatUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload>
+        }
+        deleteMany: {
+          args: Prisma.BookingSeatDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BookingSeatUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BookingSeatUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload>[]
+        }
+        upsert: {
+          args: Prisma.BookingSeatUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingSeatPayload>
+        }
+        aggregate: {
+          args: Prisma.BookingSeatAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBookingSeat>
+        }
+        groupBy: {
+          args: Prisma.BookingSeatGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BookingSeatGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BookingSeatCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BookingSeatCountAggregateOutputType> | number
         }
       }
     }
@@ -1062,6 +1137,10 @@ export const ZoneScalarFieldEnum = {
   name: 'name',
   description: 'description',
   color: 'color',
+  zoneType: 'zoneType',
+  allowMultiSeat: 'allowMultiSeat',
+  maxSeatsPerBooking: 'maxSeatsPerBooking',
+  defaultTableType: 'defaultTableType',
   rules: 'rules',
   isActive: 'isActive',
   createdAt: 'createdAt',
@@ -1075,6 +1154,10 @@ export const SeatScalarFieldEnum = {
   id: 'id',
   seatNumber: 'seatNumber',
   zoneId: 'zoneId',
+  tableNumber: 'tableNumber',
+  tableType: 'tableType',
+  tableCapacity: 'tableCapacity',
+  seatPosition: 'seatPosition',
   isActive: 'isActive',
   isOccupied: 'isOccupied',
   createdAt: 'createdAt',
@@ -1096,11 +1179,22 @@ export const ScheduleScalarFieldEnum = {
 export type ScheduleScalarFieldEnum = (typeof ScheduleScalarFieldEnum)[keyof typeof ScheduleScalarFieldEnum]
 
 
+export const BookingSeatScalarFieldEnum = {
+  id: 'id',
+  bookingId: 'bookingId',
+  seatId: 'seatId',
+  createdAt: 'createdAt'
+} as const
+
+export type BookingSeatScalarFieldEnum = (typeof BookingSeatScalarFieldEnum)[keyof typeof BookingSeatScalarFieldEnum]
+
+
 export const BookingScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   seatId: 'seatId',
   scheduleId: 'scheduleId',
+  guestCount: 'guestCount',
   status: 'status',
   qrToken: 'qrToken',
   bookedAt: 'bookedAt',
@@ -1248,6 +1342,48 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'ZoneType'
+ */
+export type EnumZoneTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ZoneType'>
+    
+
+
+/**
+ * Reference to a field of type 'ZoneType[]'
+ */
+export type ListEnumZoneTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ZoneType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'TableType'
+ */
+export type EnumTableTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TableType'>
+    
+
+
+/**
+ * Reference to a field of type 'TableType[]'
+ */
+export type ListEnumTableTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TableType[]'>
+    
+
+
+/**
  * Reference to a field of type 'SlotType'
  */
 export type EnumSlotTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SlotType'>
@@ -1272,20 +1408,6 @@ export type EnumBookingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'BookingStatus[]'
  */
 export type ListEnumBookingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BookingStatus[]'>
-    
-
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -1430,6 +1552,7 @@ export type GlobalOmitConfig = {
   zone?: Prisma.ZoneOmit
   seat?: Prisma.SeatOmit
   schedule?: Prisma.ScheduleOmit
+  bookingSeat?: Prisma.BookingSeatOmit
   booking?: Prisma.BookingOmit
   setting?: Prisma.SettingOmit
   book?: Prisma.BookOmit

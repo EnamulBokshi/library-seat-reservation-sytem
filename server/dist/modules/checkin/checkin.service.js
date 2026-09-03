@@ -13,11 +13,20 @@ const enums_1 = require("../../generated/enums");
  * Handle entry/exit check-in via QR scan.
  */
 const scanQR = async (qrToken) => {
-    // 1. Fetch booking with seat and schedule info
+    // 1. Fetch booking with seat, bookingSeats, and schedule info
     const booking = await prisma_1.default.booking.findUnique({
         where: { qrToken },
         include: {
-            seat: true,
+            seat: {
+                include: { zone: true },
+            },
+            bookingSeats: {
+                include: {
+                    seat: {
+                        include: { zone: true },
+                    },
+                },
+            },
             schedule: true,
         },
     });
@@ -37,6 +46,19 @@ const scanQR = async (qrToken) => {
     if (booking.status === enums_1.BookingStatus.no_show) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "This reservation has been marked as a no-show.");
     }
+    const allSeatIds = [];
+    if (booking.seatId)
+        allSeatIds.push(booking.seatId);
+    if (booking.bookingSeats) {
+        booking.bookingSeats.forEach((bs) => allSeatIds.push(bs.seatId));
+    }
+    const uniqueSeatIds = Array.from(new Set(allSeatIds));
+    const seatDisplayList = booking.bookingSeats && booking.bookingSeats.length > 0
+        ? booking.bookingSeats.map((bs) => bs.seat.seatNumber).join(", ")
+        : booking.seat?.seatNumber ?? "Seat";
+    const zoneName = booking.bookingSeats && booking.bookingSeats.length > 0
+        ? booking.bookingSeats[0].seat.zone.name
+        : booking.seat?.zone.name ?? "Library Hall";
     // 3. Entry Scan (Status is confirmed)
     if (booking.status === enums_1.BookingStatus.confirmed) {
         // Validate scan timing
@@ -44,7 +66,7 @@ const scanQR = async (qrToken) => {
         if (!active) {
             throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Cannot check in: the reserved schedule slot is not currently active.");
         }
-        // Atomically check-in student and set seat occupancy
+        // Atomically check-in student and set occupancy for all seats in pass
         const updated = await prisma_1.default.$transaction(async (tx) => {
             const b = await tx.booking.update({
                 where: { id: booking.id },
@@ -58,19 +80,30 @@ const scanQR = async (qrToken) => {
                             zone: true,
                         },
                     },
+                    bookingSeats: {
+                        include: {
+                            seat: {
+                                include: {
+                                    zone: true,
+                                },
+                            },
+                        },
+                    },
                     schedule: true,
                 },
             });
-            await tx.seat.update({
-                where: { id: booking.seatId },
-                data: { isOccupied: true },
-            });
+            if (uniqueSeatIds.length > 0) {
+                await tx.seat.updateMany({
+                    where: { id: { in: uniqueSeatIds } },
+                    data: { isOccupied: true },
+                });
+            }
             return b;
         });
         return {
             booking: updated,
             action: "check_in",
-            message: `Check-in successful! Student is assigned to seat ${updated.seat.seatNumber} in ${updated.seat.zone.name}.`,
+            message: `Check-in successful! Pass validated for ${seatDisplayList} in ${zoneName}.`,
         };
     }
     // 4. Exit Scan (Status is checked_in)
@@ -89,19 +122,30 @@ const scanQR = async (qrToken) => {
                             zone: true,
                         },
                     },
+                    bookingSeats: {
+                        include: {
+                            seat: {
+                                include: {
+                                    zone: true,
+                                },
+                            },
+                        },
+                    },
                     schedule: true,
                 },
             });
-            await tx.seat.update({
-                where: { id: booking.seatId },
-                data: { isOccupied: false },
-            });
+            if (uniqueSeatIds.length > 0) {
+                await tx.seat.updateMany({
+                    where: { id: { in: uniqueSeatIds } },
+                    data: { isOccupied: false },
+                });
+            }
             return b;
         });
         return {
             booking: updated,
             action: "check_out",
-            message: `Check-out successful! Seat ${updated.seat.seatNumber} in ${updated.seat.zone.name} is now available.`,
+            message: `Check-out successful! ${seatDisplayList} in ${zoneName} is now freed and available.`,
         };
     }
     throw new AppError_1.default(http_status_1.default.INTERNAL_SERVER_ERROR, "Invalid booking state encountered");

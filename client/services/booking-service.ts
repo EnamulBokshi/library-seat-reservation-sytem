@@ -53,6 +53,27 @@ export const bookingService = {
   },
 
   /**
+   * Get First-Come-First-Serve quick suggestion (for 1 to N students)
+   */
+  async getFCFSSuggestion(
+    zoneId: string,
+    scheduleId: string,
+    partySize: number = 1
+  ): Promise<
+    ApiResponse<{
+      suggestedSeats: import("@/lib/types").Seat[];
+      tableNumber?: string | null;
+      tableType?: string;
+      partySize: number;
+      totalAvailableInZone: number;
+    }>
+  > {
+    return apiClient.get("/booking/fcfs-suggest", {
+      params: { zoneId, scheduleId, partySize },
+    });
+  },
+
+  /**
    * Get available schedule slots
    */
   async getSchedules(): Promise<ApiResponse<Schedule[]>> {

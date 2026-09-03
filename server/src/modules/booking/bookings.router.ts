@@ -20,6 +20,9 @@ bookingRoute.get("/my", authCheck("student"), BookingController.getMyBookings);
 // Get all bookings (Librarians & Admins)
 bookingRoute.get("/", authCheck("admin", "librarian"), BookingController.getAllBookings);
 
+// FCFS Quick Assign suggestion (Student)
+bookingRoute.get("/fcfs-suggest", authCheck("student"), BookingController.getFCFSQuickAssign);
+
 // Get available schedules (all authenticated roles)
 bookingRoute.get("/schedules", authCheck(), BookingController.getSchedules);
 

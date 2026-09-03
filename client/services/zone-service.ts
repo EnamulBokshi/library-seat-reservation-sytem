@@ -52,6 +52,42 @@ export const zoneService = {
   },
 
   /**
+   * Create a table cluster with N chairs (admin or librarian)
+   */
+  async createTableCluster(
+    zoneId: string,
+    payload: { tableNumber: string; tableType: string; chairCount: number; prefix?: string }
+  ): Promise<ApiResponse<{ tableNumber: string; seatsCreated: number; seats: Seat[] }>> {
+    return apiClient.post(`/zone/${zoneId}/tables`, payload);
+  },
+
+  /**
+   * Bulk generate multiple tables with chairs (admin or librarian)
+   */
+  async bulkCreateTables(
+    zoneId: string,
+    payload: {
+      tableType: string;
+      tableCount: number;
+      chairsPerTable: number;
+      tablePrefix?: string;
+      startTableNumber?: number;
+    }
+  ): Promise<ApiResponse<{ tablesCreated: number; seatsCreated: number; skippedCount: number }>> {
+    return apiClient.post(`/zone/${zoneId}/tables/bulk`, payload);
+  },
+
+  /**
+   * Delete a table cluster (admin or librarian)
+   */
+  async deleteTable(
+    zoneId: string,
+    tableNumber: string
+  ): Promise<ApiResponse<{ deletedCount: number; mode: string }>> {
+    return apiClient.delete(`/zone/${zoneId}/tables/${encodeURIComponent(tableNumber)}`);
+  },
+
+  /**
    * Get all seats for a zone with optional schedule booking status (all authenticated roles)
    */
   async getSeatsByZone(
