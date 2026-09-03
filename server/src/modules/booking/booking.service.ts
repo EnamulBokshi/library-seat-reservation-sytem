@@ -245,8 +245,6 @@ const createBooking = async (userId: string, payload: ICreateBookingPayload) => 
  * FCFS Quick-Assign: Automatically pick the next optimal seat or table for the given party size.
  */
 const getFCFSQuickAssign = async (userId: string, payload: IFCFSQuickAssignPayload) => {
-    const partySize = Math.max(1, payload.partySize || 1);
-
     const zone = await prisma.zone.findUnique({
         where: { id: payload.zoneId },
         include: {
@@ -264,6 +262,25 @@ const getFCFSQuickAssign = async (userId: string, payload: IFCFSQuickAssignPaylo
     if (!zone) {
         throw new AppError(status.NOT_FOUND, "Zone not found");
     }
+
+    const isMultiSeatAllowed = zone.allowMultiSeat && zone.zoneType !== ZoneType.silent_desk && zone.maxSeatsPerBooking > 1;
+    if (payload.partySize && payload.partySize > 1 && !isMultiSeatAllowed) {
+        throw new AppError(
+            status.BAD_REQUEST,
+            zone.zoneType === ZoneType.silent_desk
+                ? "Silent Study Zones only permit individual single-desk bookings to maintain strict focus."
+                : `Multi-seat group reservations are not enabled for "${zone.name}".`
+        );
+    }
+
+    if (payload.partySize && payload.partySize > zone.maxSeatsPerBooking) {
+        throw new AppError(
+            status.BAD_REQUEST,
+            `You cannot reserve more than ${zone.maxSeatsPerBooking} seats in one booking for "${zone.name}".`
+        );
+    }
+
+    const partySize = isMultiSeatAllowed ? Math.max(1, payload.partySize || 1) : 1;
 
     // Find all booked seat IDs for this schedule
     const bookedSeats = await prisma.bookingSeat.findMany({

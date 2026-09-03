@@ -323,9 +323,21 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
       setSchedules(validSchedules);
 
       if (validSchedules.length > 0) {
-        const firstDateStr = new Date(validSchedules[0].date).toISOString().split("T")[0];
-        setSelectedDate(firstDateStr);
-        setSelectedSlot(getFirstAvailableSlot(firstDateStr, validSchedules));
+        // Select the first schedule date and slot that has not yet ended
+        let chosenDateStr = new Date(validSchedules[0].date).toISOString().split("T")[0];
+        let chosenSlot: SlotType = getFirstAvailableSlot(chosenDateStr, validSchedules);
+
+        for (const s of validSchedules) {
+          const dStr = new Date(s.date).toISOString().split("T")[0];
+          if (!isSlotPast(dStr, s.slot)) {
+            chosenDateStr = dStr;
+            chosenSlot = s.slot;
+            break;
+          }
+        }
+
+        setSelectedDate(chosenDateStr);
+        setSelectedSlot(chosenSlot);
       }
     } catch (err: unknown) {
       console.error("Failed to load schedules:", err);
@@ -363,8 +375,15 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
     return zones.find((z) => z.id === selectedZoneId) || zones[0] || null;
   }, [zones, selectedZoneId]);
 
-  const maxAllowedSeats = selectedZone?.allowMultiSeat
-    ? selectedZone.maxSeatsPerBooking || 8
+  // A zone only permits multi-seat reservations if explicitly allowed, NOT a silent study zone, and capacity > 1
+  const isMultiSeatAllowed = Boolean(
+    selectedZone?.allowMultiSeat &&
+    selectedZone?.zoneType !== "silent_desk" &&
+    (selectedZone?.maxSeatsPerBooking || 1) > 1
+  );
+
+  const maxAllowedSeats = isMultiSeatAllowed
+    ? selectedZone?.maxSeatsPerBooking || 8
     : 1;
 
   // ── 3. Fetch Seats for Selected Zone & Schedule ────────────────────────────
@@ -403,7 +422,10 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
     setSelectedSeatIds([]);
     setReservationError(null);
     setFcfsMessage(null);
-  }, [selectedDate, selectedSlot, selectedZoneId]);
+    if (!isMultiSeatAllowed) {
+      setPartySize(1);
+    }
+  }, [selectedDate, selectedSlot, selectedZoneId, isMultiSeatAllowed]);
 
   // Group seats by Table Cluster
   const tableClusters = useMemo(() => {
@@ -469,9 +491,10 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
       return;
     }
 
-    // If single seat zone (e.g. silent zone), replace selection
-    if (maxAllowedSeats === 1) {
+    // If single seat zone (e.g. silent zone, or multi-seat not allowed), replace selection
+    if (maxAllowedSeats === 1 || !isMultiSeatAllowed) {
       setSelectedSeatIds([seat.id]);
+      setReservationError(null);
       return;
     }
 
@@ -488,6 +511,7 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
   };
 
   const handleSelectTable = (seatsToSelect: Seat[]) => {
+    if (!isMultiSeatAllowed) return;
     const seatIds = seatsToSelect.map((s) => s.id);
     const areAllIn = seatIds.every((id) => selectedSeatIds.includes(id));
 
@@ -511,22 +535,49 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
     setReservationError(null);
     setFcfsMessage(null);
 
+    const targetPartySize = isMultiSeatAllowed ? partySize : 1;
+
     try {
       const res = await bookingService.getFCFSSuggestion(
         selectedZoneId,
         activeSchedule.id,
-        partySize
+        targetPartySize
       );
 
       if (res.data?.suggestedSeats && res.data.suggestedSeats.length > 0) {
         const suggestedIds = res.data.suggestedSeats.map((s) => s.id);
         setSelectedSeatIds(suggestedIds);
         const seatNames = res.data.suggestedSeats.map((s) => s.seatNumber).join(", ");
-        setFcfsMessage(
-          `⚡ First-Come-First-Serve algorithm assigned ${suggestedIds.length} optimal seat(s) at ${
-            res.data.tableNumber || "Main Area"
-          }: ${seatNames}`
-        );
+
+        // Directly reserve seats in 1-click
+        setIsReserving(true);
+        try {
+          const bookRes = await bookingService.create({
+            seatIds: suggestedIds,
+            seatId: suggestedIds[0],
+            scheduleId: activeSchedule.id,
+            guestCount: suggestedIds.length,
+          });
+
+          if (bookRes.data?.booking && bookRes.data?.qrCodeImage) {
+            setCompletedBookingData({
+              booking: bookRes.data.booking,
+              qrCodeImage: bookRes.data.qrCodeImage,
+            });
+            setSelectedSeatIds([]);
+            fetchSeats();
+          }
+        } catch (reserveErr: unknown) {
+          const apiErr = reserveErr as ApiError;
+          setReservationError(apiErr?.message ?? "Auto-assigned seats, but failed to confirm booking.");
+          setFcfsMessage(
+            `⚡ First-Come-First-Serve algorithm assigned ${suggestedIds.length} optimal seat(s) at ${
+              res.data.tableNumber || "Main Area"
+            }: ${seatNames}. Please review and click Confirm Reservation below.`
+          );
+        } finally {
+          setIsReserving(false);
+        }
       } else {
         setReservationError("No available seats found matching your party size.");
       }
@@ -541,6 +592,16 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
   // ── Reserve Seats Action ──────────────────────────────────────────────────
   const handleReserveSeats = async () => {
     if (selectedSeatIds.length === 0 || !activeSchedule) return;
+
+    if (selectedSeatIds.length > 1 && !isMultiSeatAllowed) {
+      setReservationError(
+        selectedZone?.zoneType === "silent_desk"
+          ? "Silent Study Zones only permit individual single-desk bookings to maintain strict focus."
+          : `Multi-seat group reservations are not enabled for "${selectedZone?.name}".`
+      );
+      return;
+    }
+
     setIsReserving(true);
     setReservationError(null);
 
@@ -915,7 +976,7 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              {selectedZone.allowMultiSeat && (
+              {isMultiSeatAllowed && (
                 <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs">
                   <Users className="h-3.5 w-3.5 text-indigo-600" />
                   <span>Party Size:</span>
@@ -936,18 +997,32 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
               <button
                 type="button"
                 onClick={handleInstantFCFS}
-                disabled={isSuggestingFCFS || availableSeats.length === 0 || isSlotEnded}
-                className="pulse-button-primary py-2 px-4 text-xs inline-flex items-center gap-1.5 shadow-sm"
+                disabled={isSuggestingFCFS || isReserving || availableSeats.length === 0 || isSlotEnded}
+                className="pulse-button-primary py-2 px-4 text-xs inline-flex items-center gap-1.5 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title={
+                  isSlotEnded
+                    ? "This time slot has already ended."
+                    : availableSeats.length === 0
+                    ? "No available seats in this zone."
+                    : "Instantly auto-assign and reserve the optimal seat(s)"
+                }
               >
-                {isSuggestingFCFS ? (
+                {isSuggestingFCFS || isReserving ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <Zap className="h-3.5 w-3.5" />
                 )}
-                <span>1-Click FCFS Auto-Assign</span>
+                <span>{isReserving ? "Reserving Pass..." : "1-Click FCFS Auto-Assign"}</span>
               </button>
             </div>
           </div>
+
+          {isSlotEnded && (
+            <div className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 p-2.5 text-xs font-bold text-amber-800">
+              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+              <span>This time slot has already ended for today. Please select an upcoming slot or a future date above.</span>
+            </div>
+          )}
 
           {fcfsMessage && (
             <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-2.5 text-xs font-bold text-emerald-800">
@@ -1066,7 +1141,7 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
                       onlyAvailable={true}
                       onToggleSeat={handleToggleSeat}
                       onSelectEntireTable={
-                        selectedZone.allowMultiSeat ? handleSelectTable : undefined
+                        isMultiSeatAllowed ? handleSelectTable : undefined
                       }
                     />
                   ))}
@@ -1097,7 +1172,7 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
                         isSlotPast={isSlotEnded}
                         onToggleSeat={handleToggleSeat}
                         onSelectTable={
-                          selectedZone.allowMultiSeat ? handleSelectTable : undefined
+                          isMultiSeatAllowed ? handleSelectTable : undefined
                         }
                         zoneColor={zoneColor}
                       />
@@ -1116,7 +1191,7 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
                         isSlotPast={isSlotEnded}
                         onToggleSeat={handleToggleSeat}
                         onSelectTable={
-                          selectedZone.allowMultiSeat ? handleSelectTable : undefined
+                          isMultiSeatAllowed ? handleSelectTable : undefined
                         }
                         zoneColor={zoneColor}
                       />

@@ -6,22 +6,22 @@ import { BookingValidation } from "./booking.validation";
 
 const bookingRoute: Router = Router();
 
-// Create booking (Student only)
+// Create booking (Student, Admin, Librarian)
 bookingRoute.post(
     "/",
-    authCheck("student"),
+    authCheck("student", "admin", "librarian"),
     requestValidator(BookingValidation.createBookingSchema),
     BookingController.createBooking
 );
 
-// Get my bookings (Student only)
-bookingRoute.get("/my", authCheck("student"), BookingController.getMyBookings);
+// Get my bookings (Student, Admin, Librarian)
+bookingRoute.get("/my", authCheck("student", "admin", "librarian"), BookingController.getMyBookings);
 
 // Get all bookings (Librarians & Admins)
 bookingRoute.get("/", authCheck("admin", "librarian"), BookingController.getAllBookings);
 
-// FCFS Quick Assign suggestion (Student)
-bookingRoute.get("/fcfs-suggest", authCheck("student"), BookingController.getFCFSQuickAssign);
+// FCFS Quick Assign suggestion (Student, Admin, Librarian)
+bookingRoute.get("/fcfs-suggest", authCheck("student", "admin", "librarian"), BookingController.getFCFSQuickAssign);
 
 // Get available schedules (all authenticated roles)
 bookingRoute.get("/schedules", authCheck(), BookingController.getSchedules);
