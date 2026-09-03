@@ -448,9 +448,15 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
   );
   const maintenanceSeats = useMemo(() => seats.filter((s) => !s.isActive), [seats]);
 
-  // Available Table Clusters
+  // Available Table Clusters (containing ONLY available seats)
   const availableClusters = useMemo(
-    () => tableClusters.filter((c) => c.availableSeats > 0),
+    () =>
+      tableClusters
+        .map((c) => ({
+          ...c,
+          seats: c.seats.filter((s) => s.isActive && !s.isBooked && !s.isOccupied),
+        }))
+        .filter((c) => c.seats.length > 0),
     [tableClusters]
   );
 
@@ -1057,6 +1063,7 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
                       cluster={cluster}
                       selectedSeatIds={selectedSeatIds}
                       isStudent={isStudent}
+                      onlyAvailable={true}
                       onToggleSeat={handleToggleSeat}
                       onSelectEntireTable={
                         selectedZone.allowMultiSeat ? handleSelectTable : undefined

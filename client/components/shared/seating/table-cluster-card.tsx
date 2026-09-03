@@ -8,6 +8,7 @@ interface TableClusterCardProps {
   cluster: TableCluster;
   selectedSeatIds: string[];
   isStudent?: boolean;
+  onlyAvailable?: boolean;
   onToggleSeat: (seat: Seat) => void;
   onSelectEntireTable?: (seats: Seat[]) => void;
 }
@@ -16,13 +17,15 @@ export function TableClusterCard({
   cluster,
   selectedSeatIds,
   isStudent = true,
+  onlyAvailable = false,
   onToggleSeat,
   onSelectEntireTable,
 }: TableClusterCardProps) {
   const availableSeats = cluster.seats.filter((s) => s.isActive && !s.isBooked && !s.isOccupied);
+  const displaySeats = onlyAvailable ? availableSeats : cluster.seats;
   const isAllSelected =
-    cluster.seats.length > 0 && cluster.seats.every((s) => selectedSeatIds.includes(s.id));
-  const someSelected = cluster.seats.some((s) => selectedSeatIds.includes(s.id));
+    displaySeats.length > 0 && displaySeats.every((s) => selectedSeatIds.includes(s.id));
+  const someSelected = displaySeats.some((s) => selectedSeatIds.includes(s.id));
 
   const tableTypeIcon =
     cluster.tableType === "circle_table"
@@ -98,7 +101,7 @@ export function TableClusterCard({
 
       {/* Individual Chairs Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 pt-2 border-t border-slate-100/60">
-        {cluster.seats.map((seat) => {
+        {displaySeats.map((seat) => {
           const isInactive = !seat.isActive;
           const isBooked = !isInactive && (seat.isBooked || seat.isOccupied);
           const isMyBooking = seat.isMyBooking;

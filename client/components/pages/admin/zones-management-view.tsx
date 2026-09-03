@@ -60,15 +60,20 @@ export function ZonesManagementView() {
     name: "",
     description: "",
     color: "#4f46e5",
-    zoneType: "silent_desk",
-    allowMultiSeat: false,
-    maxSeatsPerBooking: 1,
-    defaultTableType: "individual_cubicle",
+    zoneType: "group_study",
+    allowMultiSeat: true,
+    maxSeatsPerBooking: 6,
+    defaultTableType: "circle_table",
     rules: [],
   });
   const [rulesInput, setRulesInput] = useState("");
   const [isSubmittingCreate, setIsSubmittingCreate] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+
+  // Table Cluster Generation on Zone Creation
+  const [initialTableCount, setInitialTableCount] = useState<number>(4);
+  const [initialSeatsPerTable, setInitialSeatsPerTable] = useState<number>(6);
+  const [initialSingleDesksCount, setInitialSingleDesksCount] = useState<number>(12);
 
   // Edit Modal State
   const [editingZone, setEditingZone] = useState<Zone | null>(null);
@@ -124,13 +129,16 @@ export function ZonesManagementView() {
       name: "",
       description: "",
       color: "#4f46e5",
-      zoneType: "silent_desk",
-      allowMultiSeat: false,
-      maxSeatsPerBooking: 1,
-      defaultTableType: "individual_cubicle",
-      rules: [],
+      zoneType: "group_study",
+      allowMultiSeat: true,
+      maxSeatsPerBooking: 6,
+      defaultTableType: "circle_table",
+      rules: ["Collaborative study permitted", "Keep discussions at moderate volume", "Laptops allowed"],
     });
-    setRulesInput("");
+    setRulesInput("Collaborative study permitted\nKeep discussions at moderate volume\nLaptops allowed");
+    setInitialTableCount(4);
+    setInitialSeatsPerTable(6);
+    setInitialSingleDesksCount(12);
     setCreateError(null);
     setIsCreateModalOpen(true);
   };
@@ -151,12 +159,36 @@ export function ZonesManagementView() {
       .filter((r) => r.length > 0);
 
     try {
-      await zoneService.create({
+      const zoneRes = await zoneService.create({
         ...createForm,
         name: createForm.name.trim(),
         description: createForm.description?.trim() || undefined,
         rules: rulesArray,
       });
+
+      const newZoneId = zoneRes.data?.id;
+
+      // Automatically generate tables and seats right away
+      if (newZoneId) {
+        const isGroup = createForm.zoneType === "group_study" || createForm.defaultTableType !== "individual_cubicle";
+        if (isGroup && initialTableCount > 0 && initialSeatsPerTable > 0) {
+          await zoneService.bulkCreateTables(newZoneId, {
+            tableType: createForm.defaultTableType || "circle_table",
+            tableCount: initialTableCount,
+            chairsPerTable: initialSeatsPerTable,
+            tablePrefix: "Table ",
+            startTableNumber: 1,
+          });
+        } else if (!isGroup && initialSingleDesksCount > 0) {
+          await zoneService.bulkCreateTables(newZoneId, {
+            tableType: "individual_cubicle",
+            tableCount: initialSingleDesksCount,
+            chairsPerTable: 1,
+            tablePrefix: "Desk ",
+            startTableNumber: 1,
+          });
+        }
+      }
 
       setIsCreateModalOpen(false);
       fetchZonesAndStats();
@@ -639,6 +671,119 @@ export function ZonesManagementView() {
                       </p>
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Table Shape & Seating Capacity Setup */}
+              <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700">Table &amp; Seat Setup</span>
+                    <h3 className="text-xs font-black text-slate-900">Table Shape &amp; Capacity In This Zone</h3>
+                  </div>
+                  <span className="text-[11px] font-extrabold text-indigo-800 bg-white px-2.5 py-0.5 rounded-full border border-indigo-200">
+                    Auto-Generates Seats
+                  </span>
+                </div>
+
+                {/* Table Shape Selector */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Table Shape / Seating Style
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    {[
+                      { type: "circle_table" as const, label: "Circle Table", icon: "🟢" },
+                      { type: "meeting_table" as const, label: "Meeting (Square)", icon: "🟦" },
+                      { type: "booth_pod" as const, label: "Booth Pod", icon: "🛋️" },
+                      { type: "individual_cubicle" as const, label: "Single Desk", icon: "🪑" },
+                    ].map((tbl) => (
+                      <button
+                        key={tbl.type}
+                        type="button"
+                        onClick={() => {
+                          const isSingle = tbl.type === "individual_cubicle";
+                          setCreateForm({
+                            ...createForm,
+                            defaultTableType: tbl.type,
+                            allowMultiSeat: !isSingle,
+                            maxSeatsPerBooking: isSingle ? 1 : initialSeatsPerTable,
+                            zoneType: isSingle ? "silent_desk" : "group_study",
+                          });
+                        }}
+                        className={`p-2 rounded-xl border text-center transition-all ${
+                          createForm.defaultTableType === tbl.type
+                            ? "bg-slate-900 border-slate-900 text-white shadow-xs"
+                            : "bg-white border-slate-200 hover:bg-slate-50 text-slate-700"
+                        }`}
+                      >
+                        <span className="text-sm block mb-0.5">{tbl.icon}</span>
+                        <span className="text-[11px] font-extrabold">{tbl.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Table Count & Chairs Per Table */}
+                {createForm.defaultTableType !== "individual_cubicle" ? (
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        How Many Tables?
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={initialTableCount}
+                        onChange={(e) => setInitialTableCount(parseInt(e.target.value, 10) || 1)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-slate-900 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Chairs in Each Table?
+                      </label>
+                      <input
+                        type="number"
+                        min={2}
+                        max={16}
+                        value={initialSeatsPerTable}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10) || 2;
+                          setInitialSeatsPerTable(val);
+                          setCreateForm((prev) => ({ ...prev, maxSeatsPerBooking: val }));
+                        }}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-slate-900 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Number of Individual Focus Desks
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={initialSingleDesksCount}
+                      onChange={(e) => setInitialSingleDesksCount(parseInt(e.target.value, 10) || 1)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                {/* Instant Calculation Preview */}
+                <div className="rounded-xl bg-white border border-indigo-200 p-2.5 text-xs text-indigo-950 font-semibold flex items-center justify-between">
+                  <span>
+                    ⚡ Ready to generate:{" "}
+                    <strong>
+                      {createForm.defaultTableType !== "individual_cubicle"
+                        ? `${initialTableCount} ${createForm.defaultTableType === "circle_table" ? "Circle Tables" : "Meeting Tables"} × ${initialSeatsPerTable} Chairs (${initialTableCount * initialSeatsPerTable} total seats)`
+                        : `${initialSingleDesksCount} Single Focus Desks`}
+                    </strong>
+                  </span>
                 </div>
               </div>
 
