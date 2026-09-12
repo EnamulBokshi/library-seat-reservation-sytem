@@ -229,7 +229,7 @@ interface BookSeatViewProps {
 }
 
 export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading: isLoadingSession } = useAuth();
   const searchParams = useSearchParams();
   const urlZoneId = searchParams.get("zoneId") || initialZoneId;
 
@@ -340,7 +340,13 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
         setSelectedSlot(chosenSlot);
       }
     } catch (err: unknown) {
-      console.error("Failed to load schedules:", err);
+      const apiErr = err as ApiError;
+      setSchedules([]);
+      setError(
+        apiErr?.status === 401
+          ? "Your session has expired. Please sign in again to reserve a seat."
+          : apiErr?.message ?? "Failed to load session schedules."
+      );
     } finally {
       setIsLoadingSchedules(false);
     }
@@ -406,10 +412,15 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
     }
   }, [selectedZoneId, canManage, showInactive, activeSchedule?.id]);
 
+  // Wait for the session bootstrap to finish — these endpoints require an
+  // authenticated cookie, so firing them early guarantees a 401.
   useEffect(() => {
+    if (isLoadingSession || !isAuthenticated) {
+      return;
+    }
     fetchInitialData();
     fetchSchedules();
-  }, [fetchInitialData, fetchSchedules]);
+  }, [isLoadingSession, isAuthenticated, fetchInitialData, fetchSchedules]);
 
   useEffect(() => {
     if (selectedZoneId) {
