@@ -17,6 +17,7 @@ interface EnvConfig {
     SUPER_ADMIN_EMAIL: string;
     SUPER_ADMIN_PASSWORD: string;
     FRONTEND_URL: string;
+    CORS_ORIGINS: string[];
     SMTP: {
         SMTP_HOST: string;
         SMTP_PORT: number;
@@ -61,6 +62,12 @@ const loadEnvVariables = (): EnvConfig => {
         SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL || "admin@library.com",
         SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD || "admin123",
         FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
+        // Comma-separated list of additional allowed browser origins.
+        // FRONTEND_URL is always allowed on top of these (see app.ts).
+        CORS_ORIGINS: (process.env.CORS_ORIGINS || "")
+            .split(",")
+            .map((origin) => origin.trim().replace(/\/+$/, ""))
+            .filter((origin) => origin.length > 0),
         SMTP: {
             SMTP_HOST: process.env.SMTP_HOST || "smtp.gmail.com",
             SMTP_PORT: parseInt(process.env.SMTP_PORT || "587", 10),
