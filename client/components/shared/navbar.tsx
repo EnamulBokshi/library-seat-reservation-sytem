@@ -59,8 +59,13 @@ export function Navbar() {
   const isCheckinActive = pathname.startsWith("/admin/checkin");
   const isAdminActive = pathname.startsWith("/admin") && !isCheckinActive;
 
-  // Dashboard routes render their own sidebar shell, so the public navbar stays out of them.
-  if (pathname.startsWith("/admin") || pathname.startsWith("/dashboard")) {
+  // Dashboard routes render their own sidebar shell and the auth pages render a
+  // full-bleed split screen, so the public navbar stays out of both.
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/auth")
+  ) {
     return null;
   }
 

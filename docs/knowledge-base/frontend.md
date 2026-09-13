@@ -111,6 +111,12 @@ param interfaces. Keep aligned with `server/prisma/schema.prisma`.
 
 ## Faculty, verification and approvals
 
+- `components/pages/auth/auth-shell.tsx`: split-screen shell shared by login, register and
+  verify-email. Left is a date-due pocket card — aged paper, mono stamps, one blank rule left
+  for the next borrower — built in markup, no image asset. Right is the form. The card
+  collapses below `lg`. Pages pass `kicker`, `heading`, `subheading` and `footer`.
+  `Navbar` returns null on `/auth/*`, so the auth group is full-bleed. `--font-mono` is
+  registered in `globals.css` `@theme inline` so `font-mono` resolves to JetBrains Mono.
 - `app/auth/verify-email/page.tsx` → `components/pages/auth/verify-email-form.tsx`: step two of
   signup. Students land on `/dashboard`; faculty get the "awaiting approval" panel because no
   session is issued. The route is in `proxy.ts` `PUBLIC_ROUTES`.
