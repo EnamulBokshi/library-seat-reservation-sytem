@@ -9,7 +9,7 @@
 * 🟢 You can import this file directly.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OtpPurpose = exports.PaymentMethod = exports.FineStatus = exports.LoanStatus = exports.BookingStatus = exports.SlotType = exports.WaiverRequestStatus = exports.ApprovalStatus = exports.Role = exports.TableType = exports.ZoneType = void 0;
+exports.OtpPurpose = exports.PaymentMethod = exports.FineStatus = exports.LoanStatus = exports.BookingStatus = exports.SlotType = exports.ReportPriority = exports.ReportStatus = exports.ReportCategory = exports.AnnouncementPriority = exports.AnnouncementAudience = exports.WaiverRequestStatus = exports.SuggestionStatus = exports.ApprovalStatus = exports.Role = exports.TableType = exports.ZoneType = void 0;
 exports.ZoneType = {
     silent_desk: 'silent_desk',
     group_study: 'group_study',
@@ -36,10 +36,46 @@ exports.ApprovalStatus = {
     approved: 'approved',
     rejected: 'rejected'
 };
+exports.SuggestionStatus = {
+    pending: 'pending',
+    approved: 'approved',
+    fulfilled: 'fulfilled',
+    rejected: 'rejected'
+};
 exports.WaiverRequestStatus = {
     pending: 'pending',
     approved: 'approved',
     rejected: 'rejected'
+};
+exports.AnnouncementAudience = {
+    all: 'all',
+    students: 'students',
+    faculty: 'faculty',
+    staff: 'staff'
+};
+exports.AnnouncementPriority = {
+    info: 'info',
+    important: 'important',
+    urgent: 'urgent'
+};
+exports.ReportCategory = {
+    bug: 'bug',
+    service: 'service',
+    facilities: 'facilities',
+    environment: 'environment',
+    book: 'book',
+    other: 'other'
+};
+exports.ReportStatus = {
+    open: 'open',
+    in_review: 'in_review',
+    resolved: 'resolved',
+    dismissed: 'dismissed'
+};
+exports.ReportPriority = {
+    low: 'low',
+    normal: 'normal',
+    high: 'high'
 };
 exports.SlotType = {
     morning: 'morning',

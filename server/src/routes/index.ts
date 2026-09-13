@@ -13,6 +13,9 @@ import userRoute from "../modules/user/user.route";
 import fineRoute from "../modules/fine/fine.route";
 import waiverRoute from "../modules/waiver/waiver.route";
 import dashboardRoute from "../modules/dashboard/dashboard.route";
+import announcementRoute from "../modules/announcement/announcement.route";
+import reportRoute from "../modules/report/report.route";
+import bookSuggestionRoute from "../modules/book-suggestion/book-suggestion.route";
 
 const indexRoutes: Router = Router();
 
@@ -30,5 +33,8 @@ indexRoutes.use("/user", userRoute);
 indexRoutes.use("/fine", fineRoute);
 indexRoutes.use("/waiver", waiverRoute);
 indexRoutes.use("/dashboard", dashboardRoute);
+indexRoutes.use("/announcement", announcementRoute);
+indexRoutes.use("/report", reportRoute);
+indexRoutes.use("/book-suggestion", bookSuggestionRoute);
 
 export default indexRoutes;

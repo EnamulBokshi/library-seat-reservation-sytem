@@ -9,6 +9,8 @@ import { isSelfServiceRole } from "@/lib/roles";
 import {
   HomeHero,
   TelemetryStats,
+  NoticeBoard,
+  ReportLink,
   ZonesCarousel,
   StudentMoments,
   StaffOnDuty,
@@ -16,7 +18,7 @@ import {
 } from "./home";
 
 export function HomeView() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [zones, setZones] = useState<Zone[]>([]);
   const [isStatsLoading, setIsStatsLoading] = useState(true);
@@ -74,18 +76,24 @@ export function HomeView() {
         {/* ── 2. Overall Live Telemetry Stats ── */}
         <TelemetryStats stats={stats} isStatsLoading={isStatsLoading} />
 
-        {/* ── 3. Interactive Study Zones Carousel ── */}
+        {/* ── 3. Library Notices (signed-in readers only) ── */}
+        <NoticeBoard isAuthenticated={isAuthenticated} />
+
+        {/* ── 4. Interactive Study Zones Carousel ── */}
         <ZonesCarousel zones={zones} stats={stats} />
 
-        {/* ── 4. Student Moments Gallery ── */}
+        {/* ── 5. Student Moments Gallery ── */}
         <StudentMoments />
 
-        {/* ── 5. Library Staff on Duty & Help Desk Spotlight ── */}
+        {/* ── 6. Library Staff on Duty & Help Desk Spotlight ── */}
         <StaffOnDuty />
 
-        {/* ── 6. Campus Library Amenities Strip ── */}
+        {/* ── 7. Campus Library Amenities Strip ── */}
         <AmenitiesStrip />
       </main>
+
+      {/* ── Quiet report affordance, bottom corner ── */}
+      <ReportLink />
     </div>
   );
 }

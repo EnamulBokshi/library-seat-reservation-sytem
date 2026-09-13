@@ -128,11 +128,32 @@ Student self-service profile and dues. All routes act on the caller's own record
 
 Empty placeholder router mounted at `/student`.
 
+## announcement — `modules/announcement/announcement.route.ts`
+
+| Method | Path | Guard | Notes |
+|---|---|---|---|
+| GET | `/announcement/my` | auth | the reader's feed: live notices for their role, pinned first. `?priority=`, `?searchTerm=`, `?page=`, `?limit=` |
+| GET | `/announcement` | admin, librarian | every notice, retired and scheduled included. `?isActive=`, `?audience=`, `?priority=`, `?searchTerm=`, `?sortBy=`, `?sortOrder=`, paging. `meta.counts.live` |
+| POST | `/announcement` | admin, librarian | `{ title, content, audience?, priority?, isPinned?, publishedAt?, expiresAt? }`; a future `publishedAt` schedules it |
+| GET | `/announcement/:id` | auth | |
+| PATCH | `/announcement/:id` | admin, librarian | any field, plus `isActive` to republish |
+| DELETE | `/announcement/:id` | admin, librarian | retires the notice (sets `isActive: false`); never a hard delete |
+
+## report — `modules/report/report.route.ts`
+
+| Method | Path | Guard | Notes |
+|---|---|---|---|
+| POST | `/report` | student, faculty, admin, librarian | `{ category, subject, description, priority?, location? }`; mails staff |
+| GET | `/report/my` | auth | the reporter's own reports, `meta.counts.open` |
+| GET | `/report` | admin, librarian | triage queue: `?status=`, `?category=`, `?priority=`, `?searchTerm=`, `?sortBy=`, `?sortOrder=`, paging. `meta.counts` per status |
+| GET | `/report/:id` | auth | staff open any; a reporter only their own (403 otherwise) |
+| PATCH | `/report/:id/status` | admin, librarian | `{ status, staffNote?, priority? }`; a changed status mails the reporter |
+
 ## dashboard — `modules/dashboard/dashboard.route.ts`
 
 | Method | Path | Guard | Notes |
 |---|---|---|---|
-| GET | `/dashboard/badges` | auth | navigation badge counters, scoped to the caller's role: `pendingApprovals` (admin), `pendingWaivers`, `activeBookings`, `unpaidFines` (staff), `myPendingWaivers` (faculty), `myUnpaidFines` (own). Every key is always present; a counter the role cannot see reads 0, and a counter whose query fails also reads 0 rather than failing the response |
+| GET | `/dashboard/badges` | auth | navigation badge counters, scoped to the caller's role: `pendingApprovals` (admin), `pendingWaivers`, `activeBookings`, `unpaidFines` (staff), `myPendingWaivers` (faculty), `myUnpaidFines` (own), `openReports` (staff), `myOpenReports` (own), `liveAnnouncements` (own role's feed), `newAnnouncements` (live notices published after the optional `?noticesSince=` ISO stamp; an absent or unparsable value counts every live notice as new). Every key is always present; a counter the role cannot see reads 0, and a counter whose query fails also reads 0 rather than failing the response |
 
 ## waiver — `modules/waiver/waiver.route.ts`
 

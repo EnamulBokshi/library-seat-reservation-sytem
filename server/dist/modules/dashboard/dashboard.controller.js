@@ -15,7 +15,12 @@ const getNavBadgeCounts = (0, CatchAsync_1.default)(async (req, res) => {
     if (!userId || !role) {
         throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, "Unauthorized");
     }
-    const result = await dashboard_service_1.DashboardService.getNavBadgeCounts(userId, role);
+    // The client tracks its own "last opened the notice page" stamp; an unparsable
+    // value is treated as absent, which simply counts every live notice as new.
+    const rawSince = req.query.noticesSince;
+    const parsedSince = rawSince ? new Date(rawSince) : null;
+    const noticesSince = parsedSince && !Number.isNaN(parsedSince.getTime()) ? parsedSince : null;
+    const result = await dashboard_service_1.DashboardService.getNavBadgeCounts(userId, role, { noticesSince });
     (0, SendResponse_1.sendResponse)(res, {
         httpStatusCode: http_status_1.default.OK,
         success: true,

@@ -96,3 +96,27 @@ export type BookLoan = Prisma.BookLoanModel
  * behalf. An admin decides it; approval waives the underlying fine record.
  */
 export type FineWaiverRequest = Prisma.FineWaiverRequestModel
+/**
+ * Model Announcement
+ * A notice written by library staff and shown to the audience it targets.
+ * Notices are never hard-deleted while they may still matter to a reader:
+ * `isActive` retires one, and `expiresAt` retires it on a schedule.
+ */
+export type Announcement = Prisma.AnnouncementModel
+/**
+ * Model Report
+ * A problem or request raised by a student or faculty member: a bug in the
+ * system, a service issue, something broken in the building, and so on.
+ */
+export type Report = Prisma.ReportModel
+/**
+ * Model BookSuggestion
+ * A faculty member's recommendation for a book to be added to the library collection.
+ * Other faculty members can upvote suggestions; top-voted books lead the acquisition queue.
+ */
+export type BookSuggestion = Prisma.BookSuggestionModel
+/**
+ * Model BookSuggestionVote
+ * 
+ */
+export type BookSuggestionVote = Prisma.BookSuggestionVoteModel

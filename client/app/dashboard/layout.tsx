@@ -28,10 +28,20 @@ const ROUTE_TITLES: Record<string, RouteMeta> = {
     subtitle: "Seat reservation fees and overdue book fees, settled at the desk",
     kicker: "ACCOUNT DUES",
   },
+  "/dashboard/reports": {
+    title: "My Reports",
+    subtitle: "What you reported to the library, and what came of it",
+    kicker: "MEMBER REPORTS",
+  },
   "/dashboard/waivers": {
     title: "Fine Waivers",
     subtitle: "Petition an administrator to clear a student's outstanding fine",
     kicker: "FACULTY PRIVILEGE",
+  },
+  "/dashboard/suggestions": {
+    title: "Book Recommendations",
+    subtitle: "Recommend new volumes for the library collection and upvote faculty submissions",
+    kicker: "FACULTY RECOMMENDATIONS",
   },
   "/dashboard/profile": {
     title: "Profile & Security",

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { useAuth } from "@/context/auth-context"
 import { dashboardService } from "@/services/dashboard-service"
 import { NavBadgeCounts } from "@/lib/types"
+import { NOTICES_SEEN_EVENT, getNoticesSeenAt } from "@/lib/notice-seen"
 
 const ZERO_COUNTS: NavBadgeCounts = {
   pendingApprovals: 0,
@@ -14,6 +15,10 @@ const ZERO_COUNTS: NavBadgeCounts = {
   unpaidFines: 0,
   myPendingWaivers: 0,
   myUnpaidFines: 0,
+  openReports: 0,
+  myOpenReports: 0,
+  liveAnnouncements: 0,
+  newAnnouncements: 0,
 }
 
 /** How often the counters refresh while the tab stays open. */
@@ -34,7 +39,9 @@ export function useNavBadges(): {
   counts: NavBadgeCounts
   refresh: () => void
 } {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  // Read once: an optional chain inside a dependency list defeats memoization.
+  const userId = user?.id
   const pathname = usePathname()
   const [counts, setCounts] = useState<NavBadgeCounts>(ZERO_COUNTS)
   // Guards against a slow response landing after the user signed out.
@@ -54,18 +61,27 @@ export function useNavBadges(): {
     }
 
     try {
-      const res = await dashboardService.getNavBadges()
+      const res = await dashboardService.getNavBadges({
+        noticesSince: getNoticesSeenAt(userId) ?? undefined,
+      })
       if (isMounted.current && res.data) {
         setCounts({ ...ZERO_COUNTS, ...res.data })
       }
     } catch {
       // Keep the last known numbers rather than flashing the badges away.
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, userId])
 
   useEffect(() => {
     refresh()
   }, [refresh, pathname])
+
+  // Opening the notice page moves the seen stamp; recount straight away.
+  useEffect(() => {
+    const onSeen = () => refresh()
+    window.addEventListener(NOTICES_SEEN_EVENT, onSeen)
+    return () => window.removeEventListener(NOTICES_SEEN_EVENT, onSeen)
+  }, [refresh])
 
   useEffect(() => {
     if (!isAuthenticated) return

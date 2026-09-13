@@ -145,3 +145,37 @@ tally. `formatBadgeCount` hides zero and caps at `99+`.
 Failures are deliberately silent: a rejected request keeps the previous numbers and never renders
 an error, because a badge must not be able to break the navigation. The badge replaces the
 active-row dot when a count is present.
+
+## Notices and reports
+
+- `/admin/announcements` → `components/pages/admin/announcements-view.tsx`: publish, schedule, pin,
+  edit, retire and republish, with state tabs, audience and priority filters, debounced search and
+  paging.
+- `/notice` → `components/pages/notices/notices-view.tsx`: the public notice board, inside the site
+  navbar rather than the dashboard shell. The API only returns live notices for the account's role,
+  so the view never filters after the fact. Opening it calls `markNoticesSeen`, which clears the
+  navbar badge. `/dashboard/notices` redirects here so old links keep working.
+- `/admin/reports` → `components/pages/admin/reports-view.tsx`: triage queue with status tabs and
+  tallies, category/priority filters, search, sort and paging. The note in the triage modal is the
+  email the reporter receives.
+- `components/shared/report-issue-modal.tsx` is the only place a report is written. Every entry
+  point opens it: the corner link on the home page and the "New report" button on
+  `/dashboard/reports`. A signed-out visitor sees the modal explain that reporting needs an account
+  and link to sign-in, rather than failing on submit.
+- `components/pages/home/report-link.tsx` pins a quiet, link-styled `report` control to the bottom
+  corner of the home page for every visitor. It sits above the mobile bottom navigation so it never
+  covers those controls.
+- `/dashboard/reports` → `components/pages/dashboard/my-reports-view.tsx` is now history only:
+  status filter, the library's replies, and a button that opens the shared modal.
+- `components/pages/home/notice-board.tsx` puts the three newest notices on the library home page,
+  with "All notices" and "Report an issue" beside the heading. It renders only for a signed-in
+  reader (the feed endpoint needs a session) and returns null when the feed is empty or the request
+  fails, so the home page never shows an empty or broken card.
+- `lib/notice-seen.ts` keeps a per-account "last opened the notice page" stamp in localStorage and
+  fires `notices:seen`; `useNavBadges` sends it as `noticesSince` so `newAnnouncements` is an
+  unseen count, and re-counts on that event. A blocked or cleared store just means every live
+  notice reads as new once more.
+- `Navbar` carries Notices and Report links (desktop pills; the mobile bar shows Report only for
+  self-service roles, since staff already carry Scan QR and Admin there), and `UserMenu` lists both.
+- `lib/announcement-labels.ts` holds the shared label and badge-style maps plus `formatNoticeDate`
+  (relative inside a week, absolute beyond).

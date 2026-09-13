@@ -18,4 +18,15 @@ export interface INavBadgeCounts {
     pendingBorrowRequests: number;
     /** The signed-in user's own outstanding fines. */
     myUnpaidFines: number;
+    /** Member reports still waiting on staff: open or under review. */
+    openReports: number;
+    /** The signed-in user's own reports that are not yet closed. */
+    myOpenReports: number;
+    /** Live notices aimed at the signed-in user's role. */
+    liveAnnouncements: number;
+    /**
+     * Live notices published after the caller's last visit to the notice page.
+     * Falls back to the live total when the caller sends no `noticesSince`.
+     */
+    newAnnouncements: number;
 }

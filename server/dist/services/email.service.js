@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.emailService = exports.sendWaiverDecisionEmail = exports.sendWaiverRequestedEmail = exports.sendFacultyRejectedEmail = exports.sendFacultyApprovedEmail = exports.sendFacultyPendingApprovalEmail = exports.sendProfileOtpEmail = exports.sendSeatFinePaidReceiptEmail = exports.sendSeatLateCancellationEmail = exports.sendSeatSlotEndingWarningEmail = exports.sendBookingCancelledByAdminEmail = exports.sendSeatNoShowCancellationEmail = exports.sendFinePaidReceiptEmail = exports.sendLoanOverdueAlertEmail = exports.sendLoanDueDateWarningEmail = exports.sendLoanConfirmationEmail = exports.sendBookingConfirmationEmail = void 0;
+exports.emailService = exports.sendReportStatusEmail = exports.sendReportFiledEmail = exports.sendWaiverDecisionEmail = exports.sendWaiverRequestedEmail = exports.sendFacultyRejectedEmail = exports.sendFacultyApprovedEmail = exports.sendFacultyPendingApprovalEmail = exports.sendProfileOtpEmail = exports.sendSeatFinePaidReceiptEmail = exports.sendSeatLateCancellationEmail = exports.sendSeatSlotEndingWarningEmail = exports.sendBookingCancelledByAdminEmail = exports.sendSeatNoShowCancellationEmail = exports.sendFinePaidReceiptEmail = exports.sendLoanOverdueAlertEmail = exports.sendLoanDueDateWarningEmail = exports.sendLoanConfirmationEmail = exports.sendBookingConfirmationEmail = void 0;
 const resend_1 = require("resend");
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -1063,6 +1063,191 @@ const sendWaiverDecisionEmail = async (opts) => {
 };
 exports.sendWaiverDecisionEmail = sendWaiverDecisionEmail;
 // ─── Export Email Service Object ──────────────────────────────────────────────
+// ─── Member Reports ───────────────────────────────────────────────────────────
+/** Report category codes rendered as words for a reader. */
+const REPORT_CATEGORY_LABELS = {
+    bug: "System Bug",
+    service: "Library Service",
+    facilities: "Facilities",
+    environment: "Study Environment",
+    book: "Book or Catalogue",
+    other: "Other",
+};
+const REPORT_STATUS_LABELS = {
+    open: "Open",
+    in_review: "Under Review",
+    resolved: "Resolved",
+    dismissed: "Closed without action",
+};
+/** Tells staff that a member of the library filed a report. */
+const sendReportFiledEmail = async (opts) => {
+    const { toEmails, reporterName, reporterRole, category, subject, description, location, priority } = opts;
+    if (toEmails.length === 0)
+        return;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const categoryLabel = REPORT_CATEGORY_LABELS[category] || category;
+    const content = `
+    <h1 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      New ${categoryLabel} Report Submitted
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      A ${reporterRole} member of the library has submitted a report for review by the Library Administration.
+    </p>
+
+    <div style="background-color: #f9fafb; border-left: 3px solid #2563eb; padding: 18px 22px; margin: 22px 0;">
+      <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #111827;">${subject}</p>
+      <p style="margin: 0 0 12px 0; font-size: 13px; line-height: 1.7; color: #374151;">${description}</p>
+      <p style="margin: 0; font-size: 12px; line-height: 1.7; color: #6b7280;">
+        <strong>Submitted by:</strong> ${reporterName}<br/>
+        <strong>Category:</strong> ${categoryLabel}<br/>
+        <strong>Priority:</strong> ${priority}<br/>
+        <strong>Location:</strong> ${location || "Not specified"}
+      </p>
+    </div>
+
+    <p style="margin: 0 0 24px 0;">
+      <a href="${frontendUrl}/admin/reports" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 11px 22px; border-radius: 4px; text-decoration: none;">
+        Open the Report Queue
+      </a>
+    </p>
+
+    <div style="margin-top: 28px; line-height: 1.6; color: #374151; font-size: 14px;">
+      Best regards,<br/>
+      <strong>Library Admin Panel,</strong><br/>
+      Daffodil International University.
+    </div>
+  `;
+    const htmlContent = buildFlatEmailShell({
+        title: "New Report Submitted",
+        preheader: `${reporterName} submitted a ${categoryLabel.toLowerCase()} report: ${subject}`,
+        content,
+    });
+    return Promise.all(toEmails.map((toEmail) => sendHtmlEmail(toEmail, `New ${categoryLabel.toLowerCase()} report: ${subject}`, htmlContent)));
+};
+exports.sendReportFiledEmail = sendReportFiledEmail;
+/** Tells the reporter where their report now stands. */
+const sendReportStatusEmail = async (opts) => {
+    const { toEmail, reporterName, subject, statusLabel, staffNote } = opts;
+    const readableStatus = REPORT_STATUS_LABELS[statusLabel] || statusLabel;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const content = `
+    <h1 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Your Report is Now ${readableStatus}
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Dear ${reporterName},
+    </p>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      The Library Administration has updated the report you submitted. Thank you for helping us keep the library running well.
+    </p>
+
+    <div style="background-color: #f9fafb; border-left: 3px solid #2563eb; padding: 18px 22px; margin: 22px 0;">
+      <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #111827;">${subject}</p>
+      <p style="margin: 0; font-size: 13px; line-height: 1.7; color: #374151;">
+        <strong>Current status:</strong> ${readableStatus}
+      </p>
+      ${staffNote ? `<p style="margin: 12px 0 0 0; font-size: 13px; line-height: 1.7; color: #374151;"><strong>Note from the library:</strong> ${staffNote}</p>` : ""}
+    </div>
+
+    <p style="margin: 0 0 24px 0;">
+      <a href="${frontendUrl}/dashboard/reports" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 11px 22px; border-radius: 4px; text-decoration: none;">
+        View My Reports
+      </a>
+    </p>
+
+    <div style="margin-top: 28px; line-height: 1.6; color: #374151; font-size: 14px;">
+      Best regards,<br/>
+      <strong>Library Admin Panel,</strong><br/>
+      Daffodil International University.
+    </div>
+  `;
+    const htmlContent = buildFlatEmailShell({
+        title: `Your report is now ${readableStatus.toLowerCase()}`,
+        preheader: `Your report "${subject}" is now ${readableStatus.toLowerCase()}.`,
+        content,
+    });
+    return sendHtmlEmail(toEmail, `Your library report is now ${readableStatus.toLowerCase()}`, htmlContent);
+};
+exports.sendReportStatusEmail = sendReportStatusEmail;
+/**
+ * Dispatches a formal letter of appreciation and gratitude to a faculty member
+ * informing them that their recommended book has been procured, catalogued,
+ * and placed on the library shelves.
+ */
+const sendBookSuggestionFulfilledEmail = async (params) => {
+    const { facultyName, facultyEmail, bookTitle, author, publisher, edition, isbn, block, shelfNumber, callNumber, adminNotes, } = params;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const content = `
+    <p style="margin: 0 0 16px 0; font-size: 15px; font-weight: 700; color: #111827;">
+      Dear Professor ${facultyName},
+    </p>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      On behalf of the Library Committee and the Administration of Daffodil International University, we would like to express our sincere appreciation and gratitude for your valuable academic book recommendation.
+    </p>
+
+    <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      We are delighted to inform you that the requested volume has been formally approved, procured, and integrated into the university's permanent library collection.
+    </p>
+
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px 20px; margin-bottom: 24px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #4338ca; margin-bottom: 12px;">
+        Procured Volume Specifications
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <tr>
+          <td style="padding: 6px 0; color: #64748b; width: 140px;">Title:</td>
+          <td style="padding: 6px 0; font-weight: 700; color: #0f172a;">${bookTitle}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #64748b;">Author(s):</td>
+          <td style="padding: 6px 0; font-weight: 600; color: #334155;">${author}</td>
+        </tr>
+        ${publisher ? `<tr><td style="padding: 6px 0; color: #64748b;">Publisher:</td><td style="padding: 6px 0; color: #334155;">${publisher}</td></tr>` : ""}
+        ${edition ? `<tr><td style="padding: 6px 0; color: #64748b;">Edition:</td><td style="padding: 6px 0; color: #334155;">${edition}</td></tr>` : ""}
+        ${isbn ? `<tr><td style="padding: 6px 0; color: #64748b;">ISBN:</td><td style="padding: 6px 0; font-family: monospace; color: #334155;">${isbn}</td></tr>` : ""}
+        ${block && shelfNumber ? `
+        <tr>
+          <td style="padding: 6px 0; color: #64748b;">Shelf Coordinates:</td>
+          <td style="padding: 6px 0; font-weight: 700; color: #4338ca;">${block} • ${shelfNumber}</td>
+        </tr>` : ""}
+        ${callNumber ? `<tr><td style="padding: 6px 0; color: #64748b;">Call Number:</td><td style="padding: 6px 0; font-family: monospace; color: #334155;">${callNumber}</td></tr>` : ""}
+      </table>
+    </div>
+
+    ${adminNotes ? `
+    <div style="background-color: #f1f5f9; border-left: 3px solid #64748b; padding: 12px 16px; margin-bottom: 24px; font-size: 13px; color: #334155;">
+      <strong>Note from Library Staff:</strong><br/>
+      ${adminNotes}
+    </div>
+    ` : ""}
+
+    <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      As a valued faculty member, you enjoy priority 365-day borrowing privileges and fine exemptions. The physical copy is ready for your perusal on the stacks or at the central circulation desk.
+    </p>
+
+    <p style="margin: 0 0 28px 0;">
+      <a href="${frontendUrl}/books" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        Locate Volume on Spatial Catalog
+      </a>
+    </p>
+
+    <div style="margin-top: 28px; line-height: 1.6; color: #374151; font-size: 14px;">
+      Best regards,<br/>
+      <strong>Library Admin Panel,</strong><br/>
+      Daffodil International University.
+    </div>
+  `;
+    const htmlContent = buildFlatEmailShell({
+        title: `Book Acquisition Complete: "${bookTitle}"`,
+        preheader: `Your recommended book "${bookTitle}" is now catalogued and available in the DIU Library.`,
+        content,
+    });
+    return sendHtmlEmail(facultyEmail, `Acquisition Complete: "${bookTitle}" is Now Available in the Library`, htmlContent);
+};
 exports.emailService = {
     sendBookingConfirmationEmail: exports.sendBookingConfirmationEmail,
     sendLoanConfirmationEmail: exports.sendLoanConfirmationEmail,
@@ -1080,5 +1265,8 @@ exports.emailService = {
     sendFacultyRejectedEmail: exports.sendFacultyRejectedEmail,
     sendWaiverRequestedEmail: exports.sendWaiverRequestedEmail,
     sendWaiverDecisionEmail: exports.sendWaiverDecisionEmail,
+    sendReportFiledEmail: exports.sendReportFiledEmail,
+    sendReportStatusEmail: exports.sendReportStatusEmail,
+    sendBookSuggestionFulfilledEmail,
 };
 exports.default = exports.emailService;

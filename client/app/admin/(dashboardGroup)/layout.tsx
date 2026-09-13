@@ -18,6 +18,11 @@ const ROUTE_TITLES: Record<string, RouteMeta> = {
     subtitle: "Catalogue records, copies, and shelf locations",
     kicker: "CATALOGUE",
   },
+  "/admin/suggestions": {
+    title: "Faculty Book Suggestions",
+    subtitle: "Review faculty book recommendations, prioritize high-demand volumes, and fulfill library additions",
+    kicker: "ACQUISITION QUEUE",
+  },
   "/admin/borrow-requests": {
     title: "Borrow Requests",
     subtitle: "Review and approve online book checkout requests from faculty and students",
@@ -43,10 +48,25 @@ const ROUTE_TITLES: Record<string, RouteMeta> = {
     subtitle: "Faculty petitions to clear a student's outstanding fine",
     kicker: "WAIVER QUEUE",
   },
+  "/admin/announcements": {
+    title: "Library Notices",
+    subtitle: "Publish, schedule, pin and retire notices for readers and staff",
+    kicker: "ANNOUNCEMENTS",
+  },
+  "/admin/reports": {
+    title: "Member Reports",
+    subtitle: "Bugs, facility faults, service feedback and everything else members raise",
+    kicker: "REPORT QUEUE",
+  },
   "/admin/approvals": {
     title: "Account Approvals",
     subtitle: "Faculty signups waiting for a decision",
     kicker: "ACCESS CONTROL",
+  },
+  "/admin/users": {
+    title: "User Management",
+    subtitle: "Manage accounts, roles, statuses, and administrative access",
+    kicker: "DIRECTORY CONTROL",
   },
   "/admin/checkin": {
     title: "QR Code Check-In Scanner",

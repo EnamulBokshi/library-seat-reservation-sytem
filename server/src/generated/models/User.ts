@@ -283,6 +283,11 @@ export type UserWhereInput = {
   otps?: Prisma.OtpVerificationListRelationFilter
   waiverRequestsMade?: Prisma.FineWaiverRequestListRelationFilter
   waiverRequestsReceived?: Prisma.FineWaiverRequestListRelationFilter
+  announcements?: Prisma.AnnouncementListRelationFilter
+  reports?: Prisma.ReportListRelationFilter
+  reportsHandled?: Prisma.ReportListRelationFilter
+  bookSuggestions?: Prisma.BookSuggestionListRelationFilter
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -308,6 +313,11 @@ export type UserOrderByWithRelationInput = {
   otps?: Prisma.OtpVerificationOrderByRelationAggregateInput
   waiverRequestsMade?: Prisma.FineWaiverRequestOrderByRelationAggregateInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestOrderByRelationAggregateInput
+  announcements?: Prisma.AnnouncementOrderByRelationAggregateInput
+  reports?: Prisma.ReportOrderByRelationAggregateInput
+  reportsHandled?: Prisma.ReportOrderByRelationAggregateInput
+  bookSuggestions?: Prisma.BookSuggestionOrderByRelationAggregateInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -336,6 +346,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   otps?: Prisma.OtpVerificationListRelationFilter
   waiverRequestsMade?: Prisma.FineWaiverRequestListRelationFilter
   waiverRequestsReceived?: Prisma.FineWaiverRequestListRelationFilter
+  announcements?: Prisma.AnnouncementListRelationFilter
+  reports?: Prisma.ReportListRelationFilter
+  reportsHandled?: Prisma.ReportListRelationFilter
+  bookSuggestions?: Prisma.BookSuggestionListRelationFilter
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteListRelationFilter
 }, "id" | "email" | "studentId" | "facultyId">
 
 export type UserOrderByWithAggregationInput = {
@@ -407,6 +422,11 @@ export type UserCreateInput = {
   otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
   waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -432,6 +452,11 @@ export type UserUncheckedCreateInput = {
   otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportUncheckedCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -457,6 +482,11 @@ export type UserUpdateInput = {
   otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -482,6 +512,11 @@ export type UserUncheckedUpdateInput = {
   otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUncheckedUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -609,6 +644,11 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
 export type StringFieldUpdateOperationsInput = {
   set?: string
 }
@@ -707,6 +747,78 @@ export type UserUpdateOneRequiredWithoutWaiverRequestsReceivedNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWaiverRequestsReceivedInput, Prisma.UserUpdateWithoutWaiverRequestsReceivedInput>, Prisma.UserUncheckedUpdateWithoutWaiverRequestsReceivedInput>
 }
 
+export type UserCreateNestedOneWithoutAnnouncementsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementsInput, Prisma.UserUncheckedCreateWithoutAnnouncementsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAnnouncementsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutAnnouncementsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementsInput, Prisma.UserUncheckedCreateWithoutAnnouncementsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAnnouncementsInput
+  upsert?: Prisma.UserUpsertWithoutAnnouncementsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAnnouncementsInput, Prisma.UserUpdateWithoutAnnouncementsInput>, Prisma.UserUncheckedUpdateWithoutAnnouncementsInput>
+}
+
+export type UserCreateNestedOneWithoutReportsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReportsInput, Prisma.UserUncheckedCreateWithoutReportsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReportsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutReportsHandledInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReportsHandledInput, Prisma.UserUncheckedCreateWithoutReportsHandledInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReportsHandledInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutReportsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReportsInput, Prisma.UserUncheckedCreateWithoutReportsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReportsInput
+  upsert?: Prisma.UserUpsertWithoutReportsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReportsInput, Prisma.UserUpdateWithoutReportsInput>, Prisma.UserUncheckedUpdateWithoutReportsInput>
+}
+
+export type UserUpdateOneWithoutReportsHandledNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReportsHandledInput, Prisma.UserUncheckedCreateWithoutReportsHandledInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReportsHandledInput
+  upsert?: Prisma.UserUpsertWithoutReportsHandledInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReportsHandledInput, Prisma.UserUpdateWithoutReportsHandledInput>, Prisma.UserUncheckedUpdateWithoutReportsHandledInput>
+}
+
+export type UserCreateNestedOneWithoutBookSuggestionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBookSuggestionsInput, Prisma.UserUncheckedCreateWithoutBookSuggestionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBookSuggestionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutBookSuggestionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBookSuggestionsInput, Prisma.UserUncheckedCreateWithoutBookSuggestionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBookSuggestionsInput
+  upsert?: Prisma.UserUpsertWithoutBookSuggestionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutBookSuggestionsInput, Prisma.UserUpdateWithoutBookSuggestionsInput>, Prisma.UserUncheckedUpdateWithoutBookSuggestionsInput>
+}
+
+export type UserCreateNestedOneWithoutBookSuggestionVotesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBookSuggestionVotesInput, Prisma.UserUncheckedCreateWithoutBookSuggestionVotesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBookSuggestionVotesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutBookSuggestionVotesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBookSuggestionVotesInput, Prisma.UserUncheckedCreateWithoutBookSuggestionVotesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBookSuggestionVotesInput
+  upsert?: Prisma.UserUpsertWithoutBookSuggestionVotesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutBookSuggestionVotesInput, Prisma.UserUpdateWithoutBookSuggestionVotesInput>, Prisma.UserUncheckedUpdateWithoutBookSuggestionVotesInput>
+}
+
 export type UserCreateWithoutOtpsInput = {
   id?: string
   name: string
@@ -729,6 +841,11 @@ export type UserCreateWithoutOtpsInput = {
   loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
   waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutOtpsInput = {
@@ -753,6 +870,11 @@ export type UserUncheckedCreateWithoutOtpsInput = {
   loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportUncheckedCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutOtpsInput = {
@@ -793,6 +915,11 @@ export type UserUpdateWithoutOtpsInput = {
   loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOtpsInput = {
@@ -817,6 +944,11 @@ export type UserUncheckedUpdateWithoutOtpsInput = {
   loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUncheckedUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutBookingsInput = {
@@ -841,6 +973,11 @@ export type UserCreateWithoutBookingsInput = {
   otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
   waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutBookingsInput = {
@@ -865,6 +1002,11 @@ export type UserUncheckedCreateWithoutBookingsInput = {
   otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportUncheckedCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutBookingsInput = {
@@ -905,6 +1047,11 @@ export type UserUpdateWithoutBookingsInput = {
   otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBookingsInput = {
@@ -929,6 +1076,11 @@ export type UserUncheckedUpdateWithoutBookingsInput = {
   otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUncheckedUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutLoansInput = {
@@ -953,6 +1105,11 @@ export type UserCreateWithoutLoansInput = {
   otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
   waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutLoansInput = {
@@ -977,6 +1134,11 @@ export type UserUncheckedCreateWithoutLoansInput = {
   otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportUncheckedCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutLoansInput = {
@@ -1017,6 +1179,11 @@ export type UserUpdateWithoutLoansInput = {
   otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLoansInput = {
@@ -1041,6 +1208,11 @@ export type UserUncheckedUpdateWithoutLoansInput = {
   otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUncheckedUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutWaiverRequestsMadeInput = {
@@ -1065,6 +1237,11 @@ export type UserCreateWithoutWaiverRequestsMadeInput = {
   loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
   otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutWaiverRequestsMadeInput = {
@@ -1089,6 +1266,11 @@ export type UserUncheckedCreateWithoutWaiverRequestsMadeInput = {
   loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
   otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportUncheckedCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutWaiverRequestsMadeInput = {
@@ -1118,6 +1300,11 @@ export type UserCreateWithoutWaiverRequestsReceivedInput = {
   loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
   otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
   waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+  announcements?: Prisma.AnnouncementCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutWaiverRequestsReceivedInput = {
@@ -1142,6 +1329,11 @@ export type UserUncheckedCreateWithoutWaiverRequestsReceivedInput = {
   loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
   otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+  announcements?: Prisma.AnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportUncheckedCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutWaiverRequestsReceivedInput = {
@@ -1182,6 +1374,11 @@ export type UserUpdateWithoutWaiverRequestsMadeInput = {
   loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
   otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutWaiverRequestsMadeInput = {
@@ -1206,6 +1403,11 @@ export type UserUncheckedUpdateWithoutWaiverRequestsMadeInput = {
   loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
   otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
   waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUncheckedUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutWaiverRequestsReceivedInput = {
@@ -1241,6 +1443,11 @@ export type UserUpdateWithoutWaiverRequestsReceivedInput = {
   loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
   otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+  announcements?: Prisma.AnnouncementUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutWaiverRequestsReceivedInput = {
@@ -1265,6 +1472,671 @@ export type UserUncheckedUpdateWithoutWaiverRequestsReceivedInput = {
   loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
   otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
   waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
+  announcements?: Prisma.AnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUncheckedUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutAnnouncementsInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+  reports?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutAnnouncementsInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportUncheckedCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutAnnouncementsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementsInput, Prisma.UserUncheckedCreateWithoutAnnouncementsInput>
+}
+
+export type UserUpsertWithoutAnnouncementsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAnnouncementsInput, Prisma.UserUncheckedUpdateWithoutAnnouncementsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAnnouncementsInput, Prisma.UserUncheckedCreateWithoutAnnouncementsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAnnouncementsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAnnouncementsInput, Prisma.UserUncheckedUpdateWithoutAnnouncementsInput>
+}
+
+export type UserUpdateWithoutAnnouncementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAnnouncementsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUncheckedUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutReportsInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementCreateNestedManyWithoutCreatedByInput
+  reportsHandled?: Prisma.ReportCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutReportsInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  reportsHandled?: Prisma.ReportUncheckedCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutReportsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutReportsInput, Prisma.UserUncheckedCreateWithoutReportsInput>
+}
+
+export type UserCreateWithoutReportsHandledInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  bookSuggestions?: Prisma.BookSuggestionCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutReportsHandledInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedCreateNestedManyWithoutUserInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutReportsHandledInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutReportsHandledInput, Prisma.UserUncheckedCreateWithoutReportsHandledInput>
+}
+
+export type UserUpsertWithoutReportsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReportsInput, Prisma.UserUncheckedUpdateWithoutReportsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReportsInput, Prisma.UserUncheckedCreateWithoutReportsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutReportsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReportsInput, Prisma.UserUncheckedUpdateWithoutReportsInput>
+}
+
+export type UserUpdateWithoutReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUpdateManyWithoutCreatedByNestedInput
+  reportsHandled?: Prisma.ReportUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  reportsHandled?: Prisma.ReportUncheckedUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUpsertWithoutReportsHandledInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReportsHandledInput, Prisma.UserUncheckedUpdateWithoutReportsHandledInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReportsHandledInput, Prisma.UserUncheckedCreateWithoutReportsHandledInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutReportsHandledInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReportsHandledInput, Prisma.UserUncheckedUpdateWithoutReportsHandledInput>
+}
+
+export type UserUpdateWithoutReportsHandledInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutReportsHandledInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedUpdateManyWithoutUserNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutBookSuggestionsInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportCreateNestedManyWithoutHandledByInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutBookSuggestionsInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportUncheckedCreateNestedManyWithoutHandledByInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutBookSuggestionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutBookSuggestionsInput, Prisma.UserUncheckedCreateWithoutBookSuggestionsInput>
+}
+
+export type UserUpsertWithoutBookSuggestionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutBookSuggestionsInput, Prisma.UserUncheckedUpdateWithoutBookSuggestionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutBookSuggestionsInput, Prisma.UserUncheckedCreateWithoutBookSuggestionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutBookSuggestionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutBookSuggestionsInput, Prisma.UserUncheckedUpdateWithoutBookSuggestionsInput>
+}
+
+export type UserUpdateWithoutBookSuggestionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUpdateManyWithoutHandledByNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutBookSuggestionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUncheckedUpdateManyWithoutHandledByNestedInput
+  bookSuggestionVotes?: Prisma.BookSuggestionVoteUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutBookSuggestionVotesInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutBookSuggestionVotesInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+  announcements?: Prisma.AnnouncementUncheckedCreateNestedManyWithoutCreatedByInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutReporterInput
+  reportsHandled?: Prisma.ReportUncheckedCreateNestedManyWithoutHandledByInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutBookSuggestionVotesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutBookSuggestionVotesInput, Prisma.UserUncheckedCreateWithoutBookSuggestionVotesInput>
+}
+
+export type UserUpsertWithoutBookSuggestionVotesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutBookSuggestionVotesInput, Prisma.UserUncheckedUpdateWithoutBookSuggestionVotesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutBookSuggestionVotesInput, Prisma.UserUncheckedCreateWithoutBookSuggestionVotesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutBookSuggestionVotesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutBookSuggestionVotesInput, Prisma.UserUncheckedUpdateWithoutBookSuggestionVotesInput>
+}
+
+export type UserUpdateWithoutBookSuggestionVotesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutBookSuggestionVotesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+  announcements?: Prisma.AnnouncementUncheckedUpdateManyWithoutCreatedByNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutReporterNestedInput
+  reportsHandled?: Prisma.ReportUncheckedUpdateManyWithoutHandledByNestedInput
+  bookSuggestions?: Prisma.BookSuggestionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -1278,6 +2150,11 @@ export type UserCountOutputType = {
   otps: number
   waiverRequestsMade: number
   waiverRequestsReceived: number
+  announcements: number
+  reports: number
+  reportsHandled: number
+  bookSuggestions: number
+  bookSuggestionVotes: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1286,6 +2163,11 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   otps?: boolean | UserCountOutputTypeCountOtpsArgs
   waiverRequestsMade?: boolean | UserCountOutputTypeCountWaiverRequestsMadeArgs
   waiverRequestsReceived?: boolean | UserCountOutputTypeCountWaiverRequestsReceivedArgs
+  announcements?: boolean | UserCountOutputTypeCountAnnouncementsArgs
+  reports?: boolean | UserCountOutputTypeCountReportsArgs
+  reportsHandled?: boolean | UserCountOutputTypeCountReportsHandledArgs
+  bookSuggestions?: boolean | UserCountOutputTypeCountBookSuggestionsArgs
+  bookSuggestionVotes?: boolean | UserCountOutputTypeCountBookSuggestionVotesArgs
 }
 
 /**
@@ -1333,6 +2215,41 @@ export type UserCountOutputTypeCountWaiverRequestsReceivedArgs<ExtArgs extends r
   where?: Prisma.FineWaiverRequestWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAnnouncementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AnnouncementWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReportWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountReportsHandledArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReportWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountBookSuggestionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BookSuggestionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountBookSuggestionVotesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BookSuggestionVoteWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1357,6 +2274,11 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   otps?: boolean | Prisma.User$otpsArgs<ExtArgs>
   waiverRequestsMade?: boolean | Prisma.User$waiverRequestsMadeArgs<ExtArgs>
   waiverRequestsReceived?: boolean | Prisma.User$waiverRequestsReceivedArgs<ExtArgs>
+  announcements?: boolean | Prisma.User$announcementsArgs<ExtArgs>
+  reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
+  reportsHandled?: boolean | Prisma.User$reportsHandledArgs<ExtArgs>
+  bookSuggestions?: boolean | Prisma.User$bookSuggestionsArgs<ExtArgs>
+  bookSuggestionVotes?: boolean | Prisma.User$bookSuggestionVotesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1427,6 +2349,11 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   otps?: boolean | Prisma.User$otpsArgs<ExtArgs>
   waiverRequestsMade?: boolean | Prisma.User$waiverRequestsMadeArgs<ExtArgs>
   waiverRequestsReceived?: boolean | Prisma.User$waiverRequestsReceivedArgs<ExtArgs>
+  announcements?: boolean | Prisma.User$announcementsArgs<ExtArgs>
+  reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
+  reportsHandled?: boolean | Prisma.User$reportsHandledArgs<ExtArgs>
+  bookSuggestions?: boolean | Prisma.User$bookSuggestionsArgs<ExtArgs>
+  bookSuggestionVotes?: boolean | Prisma.User$bookSuggestionVotesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1440,6 +2367,11 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     otps: Prisma.$OtpVerificationPayload<ExtArgs>[]
     waiverRequestsMade: Prisma.$FineWaiverRequestPayload<ExtArgs>[]
     waiverRequestsReceived: Prisma.$FineWaiverRequestPayload<ExtArgs>[]
+    announcements: Prisma.$AnnouncementPayload<ExtArgs>[]
+    reports: Prisma.$ReportPayload<ExtArgs>[]
+    reportsHandled: Prisma.$ReportPayload<ExtArgs>[]
+    bookSuggestions: Prisma.$BookSuggestionPayload<ExtArgs>[]
+    bookSuggestionVotes: Prisma.$BookSuggestionVotePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1868,6 +2800,11 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   otps<T extends Prisma.User$otpsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$otpsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OtpVerificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   waiverRequestsMade<T extends Prisma.User$waiverRequestsMadeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$waiverRequestsMadeArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FineWaiverRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   waiverRequestsReceived<T extends Prisma.User$waiverRequestsReceivedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$waiverRequestsReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FineWaiverRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  announcements<T extends Prisma.User$announcementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$announcementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AnnouncementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reports<T extends Prisma.User$reportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reportsHandled<T extends Prisma.User$reportsHandledArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reportsHandledArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  bookSuggestions<T extends Prisma.User$bookSuggestionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$bookSuggestionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookSuggestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  bookSuggestionVotes<T extends Prisma.User$bookSuggestionVotesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$bookSuggestionVotesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookSuggestionVotePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2424,6 +3361,126 @@ export type User$waiverRequestsReceivedArgs<ExtArgs extends runtime.Types.Extens
   take?: number
   skip?: number
   distinct?: Prisma.FineWaiverRequestScalarFieldEnum | Prisma.FineWaiverRequestScalarFieldEnum[]
+}
+
+/**
+ * User.announcements
+ */
+export type User$announcementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Announcement
+   */
+  select?: Prisma.AnnouncementSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Announcement
+   */
+  omit?: Prisma.AnnouncementOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AnnouncementInclude<ExtArgs> | null
+  where?: Prisma.AnnouncementWhereInput
+  orderBy?: Prisma.AnnouncementOrderByWithRelationInput | Prisma.AnnouncementOrderByWithRelationInput[]
+  cursor?: Prisma.AnnouncementWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AnnouncementScalarFieldEnum | Prisma.AnnouncementScalarFieldEnum[]
+}
+
+/**
+ * User.reports
+ */
+export type User$reportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Report
+   */
+  select?: Prisma.ReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Report
+   */
+  omit?: Prisma.ReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReportInclude<ExtArgs> | null
+  where?: Prisma.ReportWhereInput
+  orderBy?: Prisma.ReportOrderByWithRelationInput | Prisma.ReportOrderByWithRelationInput[]
+  cursor?: Prisma.ReportWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReportScalarFieldEnum | Prisma.ReportScalarFieldEnum[]
+}
+
+/**
+ * User.reportsHandled
+ */
+export type User$reportsHandledArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Report
+   */
+  select?: Prisma.ReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Report
+   */
+  omit?: Prisma.ReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReportInclude<ExtArgs> | null
+  where?: Prisma.ReportWhereInput
+  orderBy?: Prisma.ReportOrderByWithRelationInput | Prisma.ReportOrderByWithRelationInput[]
+  cursor?: Prisma.ReportWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReportScalarFieldEnum | Prisma.ReportScalarFieldEnum[]
+}
+
+/**
+ * User.bookSuggestions
+ */
+export type User$bookSuggestionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BookSuggestion
+   */
+  select?: Prisma.BookSuggestionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BookSuggestion
+   */
+  omit?: Prisma.BookSuggestionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BookSuggestionInclude<ExtArgs> | null
+  where?: Prisma.BookSuggestionWhereInput
+  orderBy?: Prisma.BookSuggestionOrderByWithRelationInput | Prisma.BookSuggestionOrderByWithRelationInput[]
+  cursor?: Prisma.BookSuggestionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BookSuggestionScalarFieldEnum | Prisma.BookSuggestionScalarFieldEnum[]
+}
+
+/**
+ * User.bookSuggestionVotes
+ */
+export type User$bookSuggestionVotesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BookSuggestionVote
+   */
+  select?: Prisma.BookSuggestionVoteSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BookSuggestionVote
+   */
+  omit?: Prisma.BookSuggestionVoteOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BookSuggestionVoteInclude<ExtArgs> | null
+  where?: Prisma.BookSuggestionVoteWhereInput
+  orderBy?: Prisma.BookSuggestionVoteOrderByWithRelationInput | Prisma.BookSuggestionVoteOrderByWithRelationInput[]
+  cursor?: Prisma.BookSuggestionVoteWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BookSuggestionVoteScalarFieldEnum | Prisma.BookSuggestionVoteScalarFieldEnum[]
 }
 
 /**

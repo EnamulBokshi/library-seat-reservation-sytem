@@ -1,5 +1,14 @@
 import prisma from "../../lib/prisma";
-import { ApprovalStatus, BookingStatus, FineStatus, LoanStatus, Role, WaiverRequestStatus } from "../../generated/enums";
+import {
+    AnnouncementAudience,
+    ApprovalStatus,
+    BookingStatus,
+    FineStatus,
+    LoanStatus,
+    ReportStatus,
+    Role,
+    WaiverRequestStatus,
+} from "../../generated/enums";
 import { INavBadgeCounts } from "./dashboard.interface";
 
 const EMPTY_COUNTS: INavBadgeCounts = {
@@ -10,6 +19,20 @@ const EMPTY_COUNTS: INavBadgeCounts = {
     myPendingWaivers: 0,
     pendingBorrowRequests: 0,
     myUnpaidFines: 0,
+    openReports: 0,
+    myOpenReports: 0,
+    liveAnnouncements: 0,
+    newAnnouncements: 0,
+};
+
+/** Reports that still need someone to act. */
+const OPEN_REPORT_STATUSES = [ReportStatus.open, ReportStatus.in_review];
+
+/** Audience buckets a role reads: its own bucket plus the catch-all. */
+const audiencesForRole = (role: Role): AnnouncementAudience[] => {
+    if (role === Role.student) return [AnnouncementAudience.all, AnnouncementAudience.students];
+    if (role === Role.faculty) return [AnnouncementAudience.all, AnnouncementAudience.faculty];
+    return [AnnouncementAudience.all, AnnouncementAudience.staff];
 };
 
 /** Midnight UTC of the current day, matching how schedules store their date. */
@@ -25,7 +48,11 @@ const todayDate = (): Date => {
  * so a single slow or broken query degrades one badge instead of blanking the
  * whole navigation.
  */
-const getNavBadgeCounts = async (userId: string, role: Role): Promise<INavBadgeCounts> => {
+const getNavBadgeCounts = async (
+    userId: string,
+    role: Role,
+    options: { noticesSince?: Date | null } = {}
+): Promise<INavBadgeCounts> => {
     const isAdmin = role === Role.admin || (role as string) === "super_admin";
     const isStaff = isAdmin || role === Role.librarian;
     const isFaculty = role === Role.faculty;
@@ -52,6 +79,10 @@ const getNavBadgeCounts = async (userId: string, role: Role): Promise<INavBadgeC
         myPendingWaivers,
         myUnpaidSeatFines,
         myUnpaidLoanFines,
+        openReports,
+        myOpenReports,
+        liveAnnouncements,
+        newAnnouncements,
     ] = await Promise.all([
         settle(isAdmin, () =>
             prisma.user.count({
@@ -105,6 +136,40 @@ const getNavBadgeCounts = async (userId: string, role: Role): Promise<INavBadgeC
                 where: { userId, fineStatus: FineStatus.unpaid, fineAmount: { gt: 0 } },
             })
         ),
+        settle(isStaff, () =>
+            prisma.report.count({ where: { status: { in: OPEN_REPORT_STATUSES } } })
+        ),
+        settle(true, () =>
+            prisma.report.count({
+                where: { reporterId: userId, status: { in: OPEN_REPORT_STATUSES } },
+            })
+        ),
+        settle(true, () => {
+            const now = new Date();
+            return prisma.announcement.count({
+                where: {
+                    isActive: true,
+                    publishedAt: { lte: now },
+                    audience: { in: audiencesForRole(role) },
+                    OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+                },
+            });
+        }),
+        // Unseen notices. With no `noticesSince` the caller has never opened the
+        // notice page, so every live notice still counts as new.
+        settle(true, () => {
+            const now = new Date();
+            return prisma.announcement.count({
+                where: {
+                    isActive: true,
+                    publishedAt: options.noticesSince
+                        ? { lte: now, gt: options.noticesSince }
+                        : { lte: now },
+                    audience: { in: audiencesForRole(role) },
+                    OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+                },
+            });
+        }),
     ]);
 
     return {
@@ -116,6 +181,10 @@ const getNavBadgeCounts = async (userId: string, role: Role): Promise<INavBadgeC
         unpaidFines: unpaidSeatFines + unpaidLoanFines,
         myPendingWaivers,
         myUnpaidFines: myUnpaidSeatFines + myUnpaidLoanFines,
+        openReports,
+        myOpenReports,
+        liveAnnouncements,
+        newAnnouncements,
     };
 };
 

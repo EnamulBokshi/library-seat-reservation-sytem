@@ -9,8 +9,11 @@ import {
   MapPin,
   Receipt,
   ScanLine,
+  Inbox,
+  Megaphone,
   Settings,
   ShieldCheck,
+  Sparkles,
   UserRound,
   UserRoundCheck,
   Users,
@@ -58,6 +61,11 @@ const ADMIN_WORKSPACE: DashboardWorkspace = {
     { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
     { href: "/admin/books", label: "Book Inventory", icon: BookOpen },
     {
+      href: "/admin/suggestions",
+      label: "Book Suggestions",
+      icon: Sparkles,
+    },
+    {
       href: "/admin/borrow-requests",
       label: "Borrow Requests",
       icon: BookCheck,
@@ -86,6 +94,19 @@ const ADMIN_WORKSPACE: DashboardWorkspace = {
       badgeTone: "alert",
     },
     // Only full admins decide who joins the faculty roster.
+    {
+      href: "/admin/announcements",
+      label: "Notices",
+      icon: Megaphone,
+      badgeKey: "liveAnnouncements",
+    },
+    {
+      href: "/admin/reports",
+      label: "Member Reports",
+      icon: Inbox,
+      badgeKey: "openReports",
+      badgeTone: "alert",
+    },
     {
       href: "/admin/approvals",
       label: "Account Approvals",
@@ -142,6 +163,19 @@ const STUDENT_WORKSPACE: DashboardWorkspace = {
       icon: ShieldCheck,
       roles: ["faculty"],
       badgeKey: "myPendingWaivers",
+    },
+    {
+      href: "/dashboard/suggestions",
+      label: "Book Suggestions",
+      icon: Sparkles,
+      roles: ["faculty"],
+    },
+    // Writing a report happens in the shared modal; this tab is the history.
+    {
+      href: "/dashboard/reports",
+      label: "My Reports",
+      icon: Inbox,
+      badgeKey: "myOpenReports",
     },
     { href: "/dashboard/profile", label: "Profile", icon: UserRound },
   ],

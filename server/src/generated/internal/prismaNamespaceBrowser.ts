@@ -61,7 +61,11 @@ export const ModelName = {
   Setting: 'Setting',
   Book: 'Book',
   BookLoan: 'BookLoan',
-  FineWaiverRequest: 'FineWaiverRequest'
+  FineWaiverRequest: 'FineWaiverRequest',
+  Announcement: 'Announcement',
+  Report: 'Report',
+  BookSuggestion: 'BookSuggestion',
+  BookSuggestionVote: 'BookSuggestionVote'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -281,6 +285,77 @@ export const FineWaiverRequestScalarFieldEnum = {
 } as const
 
 export type FineWaiverRequestScalarFieldEnum = (typeof FineWaiverRequestScalarFieldEnum)[keyof typeof FineWaiverRequestScalarFieldEnum]
+
+
+export const AnnouncementScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  content: 'content',
+  audience: 'audience',
+  priority: 'priority',
+  isPinned: 'isPinned',
+  isActive: 'isActive',
+  publishedAt: 'publishedAt',
+  expiresAt: 'expiresAt',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AnnouncementScalarFieldEnum = (typeof AnnouncementScalarFieldEnum)[keyof typeof AnnouncementScalarFieldEnum]
+
+
+export const ReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  category: 'category',
+  priority: 'priority',
+  status: 'status',
+  subject: 'subject',
+  description: 'description',
+  location: 'location',
+  staffNote: 'staffNote',
+  handledById: 'handledById',
+  handledAt: 'handledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
+
+
+export const BookSuggestionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  author: 'author',
+  publisher: 'publisher',
+  edition: 'edition',
+  isbn: 'isbn',
+  department: 'department',
+  courseCode: 'courseCode',
+  reason: 'reason',
+  status: 'status',
+  adminNotes: 'adminNotes',
+  bookId: 'bookId',
+  fulfilledAt: 'fulfilledAt',
+  fulfilledById: 'fulfilledById',
+  upvoteCount: 'upvoteCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BookSuggestionScalarFieldEnum = (typeof BookSuggestionScalarFieldEnum)[keyof typeof BookSuggestionScalarFieldEnum]
+
+
+export const BookSuggestionVoteScalarFieldEnum = {
+  id: 'id',
+  suggestionId: 'suggestionId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type BookSuggestionVoteScalarFieldEnum = (typeof BookSuggestionVoteScalarFieldEnum)[keyof typeof BookSuggestionVoteScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -394,7 +394,11 @@ export const ModelName = {
   Setting: 'Setting',
   Book: 'Book',
   BookLoan: 'BookLoan',
-  FineWaiverRequest: 'FineWaiverRequest'
+  FineWaiverRequest: 'FineWaiverRequest',
+  Announcement: 'Announcement',
+  Report: 'Report',
+  BookSuggestion: 'BookSuggestion',
+  BookSuggestionVote: 'BookSuggestionVote'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -410,7 +414,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "otpVerification" | "zone" | "seat" | "schedule" | "bookingSeat" | "booking" | "setting" | "book" | "bookLoan" | "fineWaiverRequest"
+    modelProps: "user" | "otpVerification" | "zone" | "seat" | "schedule" | "bookingSeat" | "booking" | "setting" | "book" | "bookLoan" | "fineWaiverRequest" | "announcement" | "report" | "bookSuggestion" | "bookSuggestionVote"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1228,6 +1232,302 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Announcement: {
+      payload: Prisma.$AnnouncementPayload<ExtArgs>
+      fields: Prisma.AnnouncementFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AnnouncementFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AnnouncementFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload>
+        }
+        findFirst: {
+          args: Prisma.AnnouncementFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AnnouncementFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload>
+        }
+        findMany: {
+          args: Prisma.AnnouncementFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload>[]
+        }
+        create: {
+          args: Prisma.AnnouncementCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload>
+        }
+        createMany: {
+          args: Prisma.AnnouncementCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AnnouncementCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload>[]
+        }
+        delete: {
+          args: Prisma.AnnouncementDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload>
+        }
+        update: {
+          args: Prisma.AnnouncementUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload>
+        }
+        deleteMany: {
+          args: Prisma.AnnouncementDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AnnouncementUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AnnouncementUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload>[]
+        }
+        upsert: {
+          args: Prisma.AnnouncementUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AnnouncementPayload>
+        }
+        aggregate: {
+          args: Prisma.AnnouncementAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAnnouncement>
+        }
+        groupBy: {
+          args: Prisma.AnnouncementGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AnnouncementGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AnnouncementCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AnnouncementCountAggregateOutputType> | number
+        }
+      }
+    }
+    Report: {
+      payload: Prisma.$ReportPayload<ExtArgs>
+      fields: Prisma.ReportFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ReportFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ReportFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>
+        }
+        findFirst: {
+          args: Prisma.ReportFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ReportFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>
+        }
+        findMany: {
+          args: Prisma.ReportFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>[]
+        }
+        create: {
+          args: Prisma.ReportCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>
+        }
+        createMany: {
+          args: Prisma.ReportCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ReportCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>[]
+        }
+        delete: {
+          args: Prisma.ReportDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>
+        }
+        update: {
+          args: Prisma.ReportUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>
+        }
+        deleteMany: {
+          args: Prisma.ReportDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ReportUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ReportUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>[]
+        }
+        upsert: {
+          args: Prisma.ReportUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ReportPayload>
+        }
+        aggregate: {
+          args: Prisma.ReportAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateReport>
+        }
+        groupBy: {
+          args: Prisma.ReportGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ReportGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ReportCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ReportCountAggregateOutputType> | number
+        }
+      }
+    }
+    BookSuggestion: {
+      payload: Prisma.$BookSuggestionPayload<ExtArgs>
+      fields: Prisma.BookSuggestionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BookSuggestionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BookSuggestionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload>
+        }
+        findFirst: {
+          args: Prisma.BookSuggestionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BookSuggestionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload>
+        }
+        findMany: {
+          args: Prisma.BookSuggestionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload>[]
+        }
+        create: {
+          args: Prisma.BookSuggestionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload>
+        }
+        createMany: {
+          args: Prisma.BookSuggestionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BookSuggestionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload>[]
+        }
+        delete: {
+          args: Prisma.BookSuggestionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload>
+        }
+        update: {
+          args: Prisma.BookSuggestionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload>
+        }
+        deleteMany: {
+          args: Prisma.BookSuggestionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BookSuggestionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BookSuggestionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload>[]
+        }
+        upsert: {
+          args: Prisma.BookSuggestionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionPayload>
+        }
+        aggregate: {
+          args: Prisma.BookSuggestionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBookSuggestion>
+        }
+        groupBy: {
+          args: Prisma.BookSuggestionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BookSuggestionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BookSuggestionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BookSuggestionCountAggregateOutputType> | number
+        }
+      }
+    }
+    BookSuggestionVote: {
+      payload: Prisma.$BookSuggestionVotePayload<ExtArgs>
+      fields: Prisma.BookSuggestionVoteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BookSuggestionVoteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BookSuggestionVoteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload>
+        }
+        findFirst: {
+          args: Prisma.BookSuggestionVoteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BookSuggestionVoteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload>
+        }
+        findMany: {
+          args: Prisma.BookSuggestionVoteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload>[]
+        }
+        create: {
+          args: Prisma.BookSuggestionVoteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload>
+        }
+        createMany: {
+          args: Prisma.BookSuggestionVoteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BookSuggestionVoteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload>[]
+        }
+        delete: {
+          args: Prisma.BookSuggestionVoteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload>
+        }
+        update: {
+          args: Prisma.BookSuggestionVoteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload>
+        }
+        deleteMany: {
+          args: Prisma.BookSuggestionVoteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BookSuggestionVoteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BookSuggestionVoteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload>[]
+        }
+        upsert: {
+          args: Prisma.BookSuggestionVoteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookSuggestionVotePayload>
+        }
+        aggregate: {
+          args: Prisma.BookSuggestionVoteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBookSuggestionVote>
+        }
+        groupBy: {
+          args: Prisma.BookSuggestionVoteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BookSuggestionVoteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BookSuggestionVoteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BookSuggestionVoteCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1468,6 +1768,77 @@ export const FineWaiverRequestScalarFieldEnum = {
 } as const
 
 export type FineWaiverRequestScalarFieldEnum = (typeof FineWaiverRequestScalarFieldEnum)[keyof typeof FineWaiverRequestScalarFieldEnum]
+
+
+export const AnnouncementScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  content: 'content',
+  audience: 'audience',
+  priority: 'priority',
+  isPinned: 'isPinned',
+  isActive: 'isActive',
+  publishedAt: 'publishedAt',
+  expiresAt: 'expiresAt',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AnnouncementScalarFieldEnum = (typeof AnnouncementScalarFieldEnum)[keyof typeof AnnouncementScalarFieldEnum]
+
+
+export const ReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  category: 'category',
+  priority: 'priority',
+  status: 'status',
+  subject: 'subject',
+  description: 'description',
+  location: 'location',
+  staffNote: 'staffNote',
+  handledById: 'handledById',
+  handledAt: 'handledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
+
+
+export const BookSuggestionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  author: 'author',
+  publisher: 'publisher',
+  edition: 'edition',
+  isbn: 'isbn',
+  department: 'department',
+  courseCode: 'courseCode',
+  reason: 'reason',
+  status: 'status',
+  adminNotes: 'adminNotes',
+  bookId: 'bookId',
+  fulfilledAt: 'fulfilledAt',
+  fulfilledById: 'fulfilledById',
+  upvoteCount: 'upvoteCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BookSuggestionScalarFieldEnum = (typeof BookSuggestionScalarFieldEnum)[keyof typeof BookSuggestionScalarFieldEnum]
+
+
+export const BookSuggestionVoteScalarFieldEnum = {
+  id: 'id',
+  suggestionId: 'suggestionId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type BookSuggestionVoteScalarFieldEnum = (typeof BookSuggestionVoteScalarFieldEnum)[keyof typeof BookSuggestionVoteScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1716,6 +2087,90 @@ export type EnumWaiverRequestStatusFieldRefInput<$PrismaModel> = FieldRefInputTy
 export type ListEnumWaiverRequestStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WaiverRequestStatus[]'>
     
 
+
+/**
+ * Reference to a field of type 'AnnouncementAudience'
+ */
+export type EnumAnnouncementAudienceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AnnouncementAudience'>
+    
+
+
+/**
+ * Reference to a field of type 'AnnouncementAudience[]'
+ */
+export type ListEnumAnnouncementAudienceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AnnouncementAudience[]'>
+    
+
+
+/**
+ * Reference to a field of type 'AnnouncementPriority'
+ */
+export type EnumAnnouncementPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AnnouncementPriority'>
+    
+
+
+/**
+ * Reference to a field of type 'AnnouncementPriority[]'
+ */
+export type ListEnumAnnouncementPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AnnouncementPriority[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportCategory'
+ */
+export type EnumReportCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportCategory'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportCategory[]'
+ */
+export type ListEnumReportCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportCategory[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportPriority'
+ */
+export type EnumReportPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportPriority'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportPriority[]'
+ */
+export type ListEnumReportPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportPriority[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportStatus'
+ */
+export type EnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportStatus[]'
+ */
+export type ListEnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'SuggestionStatus'
+ */
+export type EnumSuggestionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SuggestionStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'SuggestionStatus[]'
+ */
+export type ListEnumSuggestionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SuggestionStatus[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -1837,6 +2292,10 @@ export type GlobalOmitConfig = {
   book?: Prisma.BookOmit
   bookLoan?: Prisma.BookLoanOmit
   fineWaiverRequest?: Prisma.FineWaiverRequestOmit
+  announcement?: Prisma.AnnouncementOmit
+  report?: Prisma.ReportOmit
+  bookSuggestion?: Prisma.BookSuggestionOmit
+  bookSuggestionVote?: Prisma.BookSuggestionVoteOmit
 }
 
 /* Types for Logging */

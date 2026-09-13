@@ -212,3 +212,20 @@ petition with a snapshot of the amount; one open petition per fine. An admin dec
 `PATCH /waiver/:id/decide`. Approval calls `FineService.waiveFine` first and only marks the
 petition approved if that succeeds, so a fine that was paid in the meantime aborts the decision
 instead of leaving the two records disagreeing.
+
+## Notices (`modules/announcement`)
+
+A notice targets one audience bucket — `all`, `students`, `faculty` or `staff` — and a reader sees
+their own bucket plus `all`. A notice is live when `isActive` is true, `publishedAt` has passed and
+`expiresAt` is null or still ahead; the reader feed applies all three, so scheduling and expiry
+need no cron. Pinned notices lead the feed. Retiring sets `isActive: false` rather than deleting:
+a notice the library has already shown is part of the record, and staff can republish it.
+
+## Member reports (`modules/report`)
+
+Students and faculty file reports under one of six categories — bug, service, facilities,
+environment, book, other — with an optional location. Filing mails every active admin and
+librarian; a mail failure is logged and never loses the report. Staff move a report through
+`open → in_review → resolved | dismissed` and may attach a note, which is the reply the reporter
+receives by email. Only a status that actually changed sends mail. Reaching a closed state stamps
+`handledById` and `handledAt`; reopening clears both. A reporter can read only their own reports.

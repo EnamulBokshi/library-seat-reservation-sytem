@@ -98,6 +98,105 @@ export interface ApiResponse<T = unknown> {
   } | null;
 }
 
+// ─── Announcements ───────────────────────────────────────────────────────────
+
+export type AnnouncementAudience = "all" | "students" | "faculty" | "staff";
+export type AnnouncementPriority = "info" | "important" | "urgent";
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  audience: AnnouncementAudience;
+  priority: AnnouncementPriority;
+  isPinned: boolean;
+  isActive: boolean;
+  publishedAt: string;
+  expiresAt?: string | null;
+  createdAt: string;
+  createdBy?: { id: string; name: string; role: Role };
+}
+
+export interface CreateAnnouncementPayload {
+  title: string;
+  content: string;
+  audience?: AnnouncementAudience;
+  priority?: AnnouncementPriority;
+  isPinned?: boolean;
+  publishedAt?: string;
+  expiresAt?: string | null;
+}
+
+export type UpdateAnnouncementPayload = Partial<CreateAnnouncementPayload> & {
+  isActive?: boolean;
+};
+
+export interface AnnouncementQueryParams {
+  page?: number;
+  limit?: number;
+  audience?: AnnouncementAudience;
+  priority?: AnnouncementPriority;
+  isActive?: boolean;
+  searchTerm?: string;
+  sortBy?: "publishedAt" | "createdAt" | "title" | "priority";
+  sortOrder?: "asc" | "desc";
+}
+
+// ─── Member Reports ──────────────────────────────────────────────────────────
+
+export type ReportCategory = "bug" | "service" | "facilities" | "environment" | "book" | "other";
+export type ReportStatus = "open" | "in_review" | "resolved" | "dismissed";
+export type ReportPriority = "low" | "normal" | "high";
+
+export interface Report {
+  id: string;
+  reporterId: string;
+  category: ReportCategory;
+  priority: ReportPriority;
+  status: ReportStatus;
+  subject: string;
+  description: string;
+  location?: string | null;
+  staffNote?: string | null;
+  handledAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  reporter?: {
+    id: string;
+    name: string;
+    email: string;
+    role: Role;
+    studentId?: string | null;
+    facultyId?: string | null;
+  };
+  handledBy?: { id: string; name: string; role: Role } | null;
+}
+
+export interface CreateReportPayload {
+  category: ReportCategory;
+  subject: string;
+  description: string;
+  priority?: ReportPriority;
+  location?: string;
+}
+
+export interface UpdateReportStatusPayload {
+  status: ReportStatus;
+  staffNote?: string;
+  priority?: ReportPriority;
+}
+
+export interface ReportQueryParams {
+  page?: number;
+  limit?: number;
+  status?: ReportStatus;
+  category?: ReportCategory;
+  priority?: ReportPriority;
+  searchTerm?: string;
+  sortBy?: "createdAt" | "updatedAt" | "priority" | "status";
+  sortOrder?: "asc" | "desc";
+}
+
 /** Counters shown as badges on the workspace navigation. */
 export interface NavBadgeCounts {
   pendingApprovals: number;
@@ -107,6 +206,11 @@ export interface NavBadgeCounts {
   unpaidFines: number;
   myPendingWaivers: number;
   myUnpaidFines: number;
+  openReports: number;
+  myOpenReports: number;
+  liveAnnouncements: number;
+  /** Live notices published since the reader last opened the notice page. */
+  newAnnouncements: number;
 }
 
 export type NavBadgeKey = keyof NavBadgeCounts;
@@ -940,3 +1044,83 @@ export interface AdminUpdateUserPayload {
   designation?: string | null;
   password?: string;
 }
+
+// ─── Faculty Book Suggestions & Upvotes ───────────────────────────────────────
+
+export type SuggestionStatus = "pending" | "approved" | "fulfilled" | "rejected";
+
+export interface BookSuggestion {
+  id: string;
+  userId: string;
+  title: string;
+  author: string;
+  publisher?: string | null;
+  edition?: string | null;
+  isbn?: string | null;
+  department?: string | null;
+  courseCode?: string | null;
+  reason?: string | null;
+  status: SuggestionStatus;
+  adminNotes?: string | null;
+  bookId?: string | null;
+  fulfilledAt?: string | null;
+  fulfilledById?: string | null;
+  upvoteCount: number;
+  hasUpvoted?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    department?: string | null;
+    designation?: string | null;
+    facultyId?: string | null;
+  };
+  book?: {
+    id: string;
+    title: string;
+    block: string;
+    shelfNumber: string;
+    callNumber?: string | null;
+    availableCopies: number;
+    totalCopies: number;
+  } | null;
+}
+
+export interface CreateBookSuggestionPayload {
+  title: string;
+  author: string;
+  publisher?: string;
+  edition?: string;
+  isbn?: string;
+  department?: string;
+  courseCode?: string;
+  reason?: string;
+}
+
+export interface FulfillSuggestionPayload {
+  bookId?: string;
+  createCatalogBook?: boolean;
+  category?: string;
+  block?: string;
+  shelfNumber?: string;
+  rowNumber?: string;
+  callNumber?: string;
+  totalCopies?: number;
+  barcode?: string;
+  description?: string;
+  adminNotes?: string;
+}
+
+export interface SuggestionQueryParams {
+  searchTerm?: string;
+  status?: SuggestionStatus | "all";
+  department?: string;
+  onlyMySuggestions?: boolean;
+  page?: number;
+  limit?: number;
+  sortBy?: "upvoteCount" | "createdAt";
+  sortOrder?: "asc" | "desc";
+}
+

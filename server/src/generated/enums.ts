@@ -51,6 +51,16 @@ export const ApprovalStatus = {
 export type ApprovalStatus = (typeof ApprovalStatus)[keyof typeof ApprovalStatus]
 
 
+export const SuggestionStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  fulfilled: 'fulfilled',
+  rejected: 'rejected'
+} as const
+
+export type SuggestionStatus = (typeof SuggestionStatus)[keyof typeof SuggestionStatus]
+
+
 export const WaiverRequestStatus = {
   pending: 'pending',
   approved: 'approved',
@@ -58,6 +68,56 @@ export const WaiverRequestStatus = {
 } as const
 
 export type WaiverRequestStatus = (typeof WaiverRequestStatus)[keyof typeof WaiverRequestStatus]
+
+
+export const AnnouncementAudience = {
+  all: 'all',
+  students: 'students',
+  faculty: 'faculty',
+  staff: 'staff'
+} as const
+
+export type AnnouncementAudience = (typeof AnnouncementAudience)[keyof typeof AnnouncementAudience]
+
+
+export const AnnouncementPriority = {
+  info: 'info',
+  important: 'important',
+  urgent: 'urgent'
+} as const
+
+export type AnnouncementPriority = (typeof AnnouncementPriority)[keyof typeof AnnouncementPriority]
+
+
+export const ReportCategory = {
+  bug: 'bug',
+  service: 'service',
+  facilities: 'facilities',
+  environment: 'environment',
+  book: 'book',
+  other: 'other'
+} as const
+
+export type ReportCategory = (typeof ReportCategory)[keyof typeof ReportCategory]
+
+
+export const ReportStatus = {
+  open: 'open',
+  in_review: 'in_review',
+  resolved: 'resolved',
+  dismissed: 'dismissed'
+} as const
+
+export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus]
+
+
+export const ReportPriority = {
+  low: 'low',
+  normal: 'normal',
+  high: 'high'
+} as const
+
+export type ReportPriority = (typeof ReportPriority)[keyof typeof ReportPriority]
 
 
 export const SlotType = {

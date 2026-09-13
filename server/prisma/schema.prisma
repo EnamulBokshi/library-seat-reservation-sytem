@@ -44,10 +44,55 @@ enum ApprovalStatus {
   rejected
 }
 
+enum SuggestionStatus {
+  pending
+  approved
+  fulfilled
+  rejected
+}
+
 enum WaiverRequestStatus {
   pending
   approved
   rejected
+}
+
+/// Who a notice is meant for. `all` reaches every signed-in account.
+enum AnnouncementAudience {
+  all
+  students
+  faculty
+  staff
+}
+
+/// How loudly a notice is presented.
+enum AnnouncementPriority {
+  info
+  important
+  urgent
+}
+
+/// What a member of the library is reporting.
+enum ReportCategory {
+  bug
+  service
+  facilities
+  environment
+  book
+  other
+}
+
+enum ReportStatus {
+  open
+  in_review
+  resolved
+  dismissed
+}
+
+enum ReportPriority {
+  low
+  normal
+  high
 }
 
 enum SlotType {
@@ -129,6 +174,11 @@ model User {
 
   waiverRequestsMade     FineWaiverRequest[] @relation("WaiverRequester")
   waiverRequestsReceived FineWaiverRequest[] @relation("WaiverTarget")
+  announcements          Announcement[]      @relation("AnnouncementAuthor")
+  reports                Report[]            @relation("ReportAuthor")
+  reportsHandled         Report[]            @relation("ReportHandler")
+  bookSuggestions        BookSuggestion[]    @relation("SuggestionAuthor")
+  bookSuggestionVotes    BookSuggestionVote[] @relation("SuggestionVoter")
 
   @@map("users")
 }
@@ -299,6 +349,7 @@ model Book {
   updatedAt       DateTime   @updatedAt
 
   loans           BookLoan[]
+  suggestions     BookSuggestion[]
 
   @@index([category])
   @@index([block, shelfNumber])
@@ -371,4 +422,106 @@ model FineWaiverRequest {
   @@index([bookingId])
   @@index([loanId])
   @@map("fine_waiver_requests")
+}
+
+/// A notice written by library staff and shown to the audience it targets.
+/// Notices are never hard-deleted while they may still matter to a reader:
+/// `isActive` retires one, and `expiresAt` retires it on a schedule.
+model Announcement {
+  id          String               @id @default(uuid())
+  title       String
+  /// Named `content`, not `body`: `requestValidator` treats a schema with a
+  /// top-level `body` key as the wrap-the-request convention.
+  content     String
+  audience    AnnouncementAudience @default(all)
+  priority    AnnouncementPriority @default(info)
+  /// Pinned notices lead the feed regardless of date.
+  isPinned    Boolean              @default(false)
+  isActive    Boolean              @default(true)
+  publishedAt DateTime             @default(now())
+  /// Null means the notice stands until it is retired by hand.
+  expiresAt   DateTime?
+  createdById String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  createdBy User @relation("AnnouncementAuthor", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([isActive, audience, publishedAt])
+  @@index([isPinned])
+  @@map("announcements")
+}
+
+/// A problem or request raised by a student or faculty member: a bug in the
+/// system, a service issue, something broken in the building, and so on.
+model Report {
+  id          String         @id @default(uuid())
+  reporterId  String
+  category    ReportCategory @default(other)
+  priority    ReportPriority @default(normal)
+  status      ReportStatus   @default(open)
+  subject     String
+  description String
+  /// Where in the library it happened; free text, optional.
+  location    String?
+  /// Staff reply, shown to the reporter.
+  staffNote   String?
+  handledById String?
+  handledAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  reporter  User  @relation("ReportAuthor", fields: [reporterId], references: [id], onDelete: Cascade)
+  handledBy User? @relation("ReportHandler", fields: [handledById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([reporterId, status])
+  @@index([category])
+  @@map("reports")
+}
+
+/// A faculty member's recommendation for a book to be added to the library collection.
+/// Other faculty members can upvote suggestions; top-voted books lead the acquisition queue.
+model BookSuggestion {
+  id            String           @id @default(uuid())
+  userId        String
+  title         String
+  author        String
+  publisher     String?
+  edition       String?
+  isbn          String?
+  department    String?
+  courseCode    String?
+  reason        String?
+  status        SuggestionStatus @default(pending)
+  adminNotes    String?
+  bookId        String?
+  fulfilledAt   DateTime?
+  fulfilledById String?
+  upvoteCount   Int              @default(1)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user          User                 @relation("SuggestionAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  book          Book?                @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  votes         BookSuggestionVote[]
+
+  @@index([status])
+  @@index([userId])
+  @@index([upvoteCount(sort: Desc)])
+  @@map("book_suggestions")
+}
+
+model BookSuggestionVote {
+  id           String         @id @default(uuid())
+  suggestionId String
+  userId       String
+  createdAt    DateTime       @default(now())
+
+  suggestion   BookSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+  user         User           @relation("SuggestionVoter", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([suggestionId, userId])
+  @@index([userId])
+  @@map("book_suggestion_votes")
 }

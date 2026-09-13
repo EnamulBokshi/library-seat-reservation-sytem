@@ -16,6 +16,11 @@ Prisma client is generated to `server/src/generated`.
 - `OtpPurpose`: email_change | password_change | registration
 - `ApprovalStatus`: pending | approved | rejected
 - `WaiverRequestStatus`: pending | approved | rejected
+- `AnnouncementAudience`: all | students | faculty | staff
+- `AnnouncementPriority`: info | important | urgent
+- `ReportCategory`: bug | service | facilities | environment | book | other
+- `ReportStatus`: open | in_review | resolved | dismissed
+- `ReportPriority`: low | normal | high
 
 `client/lib/types.ts` mirrors these as string unions — update both together.
 
@@ -85,3 +90,17 @@ Indexes `[userId, status]`, `[bookId, status]`, `[fineStatus]`.
 - Seat reservations are refused once unpaid seat fines **plus** unpaid loan fines reach
   `BOOKING_MAX_UNPAID_FINE_LIMIT`. Loan borrowing does not count seat fines.
 - `datasource db` has no inline `url`; it comes from `DATABASE_URL`.
+
+**Announcement** (`announcements`) — title, `content` (the notice text), audience, priority,
+isPinned, isActive, publishedAt (a future value schedules the notice), expiresAt (null stands
+until retired by hand), createdById. Indexes `[isActive, audience, publishedAt]`, `[isPinned]`.
+
+The text column is `content`, not `body`, on purpose: `requestValidator` treats a Zod schema
+carrying a top-level `body` key as the wrap-the-request convention (`{body, query, params}`), so a
+payload field named `body` silently fails validation. Migration
+`20260914100000_rename_announcement_body_to_content` renamed it.
+
+**Report** (`reports`) — reporterId, category, priority, status, subject, description, location
+(free text, optional), staffNote (the reply the reporter sees), handledById, handledAt. Indexes
+`[status, createdAt]`, `[reporterId, status]`, `[category]`. Reaching `resolved` or `dismissed`
+stamps who handled it; moving back to an open state clears that stamp.

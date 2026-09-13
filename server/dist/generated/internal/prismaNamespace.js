@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defineExtension = exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.FineWaiverRequestScalarFieldEnum = exports.BookLoanScalarFieldEnum = exports.BookScalarFieldEnum = exports.SettingScalarFieldEnum = exports.BookingScalarFieldEnum = exports.BookingSeatScalarFieldEnum = exports.ScheduleScalarFieldEnum = exports.SeatScalarFieldEnum = exports.ZoneScalarFieldEnum = exports.OtpVerificationScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
+exports.defineExtension = exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.BookSuggestionVoteScalarFieldEnum = exports.BookSuggestionScalarFieldEnum = exports.ReportScalarFieldEnum = exports.AnnouncementScalarFieldEnum = exports.FineWaiverRequestScalarFieldEnum = exports.BookLoanScalarFieldEnum = exports.BookScalarFieldEnum = exports.SettingScalarFieldEnum = exports.BookingScalarFieldEnum = exports.BookingSeatScalarFieldEnum = exports.ScheduleScalarFieldEnum = exports.SeatScalarFieldEnum = exports.ZoneScalarFieldEnum = exports.OtpVerificationScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/client"));
 /**
  * Prisma Errors
@@ -113,7 +113,11 @@ exports.ModelName = {
     Setting: 'Setting',
     Book: 'Book',
     BookLoan: 'BookLoan',
-    FineWaiverRequest: 'FineWaiverRequest'
+    FineWaiverRequest: 'FineWaiverRequest',
+    Announcement: 'Announcement',
+    Report: 'Report',
+    BookSuggestion: 'BookSuggestion',
+    BookSuggestionVote: 'BookSuggestionVote'
 };
 /**
  * Enums
@@ -282,6 +286,61 @@ exports.FineWaiverRequestScalarFieldEnum = {
     decisionNote: 'decisionNote',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
+};
+exports.AnnouncementScalarFieldEnum = {
+    id: 'id',
+    title: 'title',
+    content: 'content',
+    audience: 'audience',
+    priority: 'priority',
+    isPinned: 'isPinned',
+    isActive: 'isActive',
+    publishedAt: 'publishedAt',
+    expiresAt: 'expiresAt',
+    createdById: 'createdById',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.ReportScalarFieldEnum = {
+    id: 'id',
+    reporterId: 'reporterId',
+    category: 'category',
+    priority: 'priority',
+    status: 'status',
+    subject: 'subject',
+    description: 'description',
+    location: 'location',
+    staffNote: 'staffNote',
+    handledById: 'handledById',
+    handledAt: 'handledAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.BookSuggestionScalarFieldEnum = {
+    id: 'id',
+    userId: 'userId',
+    title: 'title',
+    author: 'author',
+    publisher: 'publisher',
+    edition: 'edition',
+    isbn: 'isbn',
+    department: 'department',
+    courseCode: 'courseCode',
+    reason: 'reason',
+    status: 'status',
+    adminNotes: 'adminNotes',
+    bookId: 'bookId',
+    fulfilledAt: 'fulfilledAt',
+    fulfilledById: 'fulfilledById',
+    upvoteCount: 'upvoteCount',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.BookSuggestionVoteScalarFieldEnum = {
+    id: 'id',
+    suggestionId: 'suggestionId',
+    userId: 'userId',
+    createdAt: 'createdAt'
 };
 exports.SortOrder = {
     asc: 'asc',
