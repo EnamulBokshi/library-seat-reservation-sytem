@@ -5,6 +5,7 @@ import Link from "next/link";
 import { bookingService } from "@/services/booking-service";
 import { loanService } from "@/services/loan-service";
 import { userService } from "@/services/user-service";
+import { useAuth } from "@/context/auth-context";
 import { ApiError, Booking, MyFinesResult, StudentLoanSummary } from "@/lib/types";
 import {
   AlertCircle,
@@ -53,6 +54,7 @@ function StatCard({ label, value, hint, href, Icon, tone = "default" }: StatCard
 }
 
 export function OverviewView() {
+  const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loans, setLoans] = useState<StudentLoanSummary | null>(null);
   const [fines, setFines] = useState<MyFinesResult | null>(null);
@@ -104,15 +106,17 @@ export function OverviewView() {
     );
   }
 
+  const isFaculty = user?.role === "faculty" || Boolean(loans?.quota?.isFaculty);
+
   const activeBookings = bookings.filter((b) => ACTIVE_BOOKING_STATUSES.includes(b.status));
   const activeLoans = loans?.activeLoans?.length ?? 0;
   const overdueLoans = loans?.activeLoans?.filter((l) => l.status === "overdue").length ?? 0;
-  const totalUnpaid = fines?.summary.totalUnpaid ?? 0;
-  const isBookingBlocked = fines?.summary.isBookingBlocked ?? false;
+  const totalUnpaid = isFaculty ? 0 : fines?.summary.totalUnpaid ?? 0;
+  const isBookingBlocked = !isFaculty && (fines?.summary.isBookingBlocked ?? false);
 
   return (
     <div className="space-y-6">
-      {isBookingBlocked && (
+      {isBookingBlocked && !isFaculty && (
         <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
           <Ban className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
           <div>
@@ -128,7 +132,7 @@ export function OverviewView() {
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className={`grid gap-3 sm:grid-cols-2 ${isFaculty ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
         <StatCard
           label="ACTIVE RESERVATIONS"
           value={String(activeBookings.length)}
@@ -140,26 +144,30 @@ export function OverviewView() {
           label="BOOKS ON LOAN"
           value={String(activeLoans)}
           hint={
-            overdueLoans > 0
+            isFaculty
+              ? "Faculty Privilege • Unlimited Borrowing"
+              : overdueLoans > 0
               ? `${overdueLoans} overdue — return to stop the fine growing`
               : `Quota ${loans?.quota.availableQuota ?? 0} of ${loans?.quota.maxBorrowLimit ?? 0} left`
           }
           href="/dashboard/loans"
           Icon={BookOpen}
-          tone={overdueLoans > 0 ? "danger" : "default"}
+          tone={!isFaculty && overdueLoans > 0 ? "danger" : "default"}
         />
-        <StatCard
-          label="OUTSTANDING DUES"
-          value={`${totalUnpaid} BDT`}
-          hint={
-            totalUnpaid === 0
-              ? "Nothing owed"
-              : `${fines?.summary.seatUnpaidTotal ?? 0} seat · ${fines?.summary.loanUnpaidTotal ?? 0} books`
-          }
-          href="/dashboard/fines"
-          Icon={Receipt}
-          tone={totalUnpaid > 0 ? "danger" : "default"}
-        />
+        {!isFaculty && (
+          <StatCard
+            label="OUTSTANDING DUES"
+            value={`${totalUnpaid} BDT`}
+            hint={
+              totalUnpaid === 0
+                ? "Nothing owed"
+                : `${fines?.summary.seatUnpaidTotal ?? 0} seat · ${fines?.summary.loanUnpaidTotal ?? 0} books`
+            }
+            href="/dashboard/fines"
+            Icon={Receipt}
+            tone={totalUnpaid > 0 ? "danger" : "default"}
+          />
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">

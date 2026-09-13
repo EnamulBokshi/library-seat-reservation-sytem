@@ -10,6 +10,7 @@ const ZERO_COUNTS: NavBadgeCounts = {
   pendingApprovals: 0,
   pendingWaivers: 0,
   activeBookings: 0,
+  pendingBorrowRequests: 0,
   unpaidFines: 0,
   myPendingWaivers: 0,
   myUnpaidFines: 0,

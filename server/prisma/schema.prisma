@@ -31,6 +31,7 @@ enum TableType {
 }
 
 enum Role {
+  super_admin
   admin
   librarian
   student

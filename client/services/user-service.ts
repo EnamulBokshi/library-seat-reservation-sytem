@@ -9,15 +9,10 @@ import {
   UserProfile,
   VerifyPasswordChangePayload,
   ApprovalQueryParams,
+  ListUsersParams,
+  CreateUserPayload,
+  AdminUpdateUserPayload,
 } from "@/lib/types";
-
-export interface ListUsersParams {
-  page?: number;
-  limit?: number;
-  role?: string;
-  approvalStatus?: string;
-  searchTerm?: string;
-}
 
 export const userService = {
   /**
@@ -103,6 +98,27 @@ export const userService = {
    */
   async verifyPasswordChange(payload: VerifyPasswordChangePayload): Promise<ApiResponse<null>> {
     return apiClient.post<unknown, ApiResponse<null>>("/user/me/password/verify", payload);
+  },
+
+  /**
+   * Admin: create user directly.
+   */
+  async createUser(payload: CreateUserPayload): Promise<ApiResponse<UserProfile>> {
+    return apiClient.post<unknown, ApiResponse<UserProfile>>("/user", payload);
+  },
+
+  /**
+   * Admin: update an existing user's details, role, or active status.
+   */
+  async updateUser(userId: string, payload: AdminUpdateUserPayload): Promise<ApiResponse<UserProfile>> {
+    return apiClient.patch<unknown, ApiResponse<UserProfile>>(`/user/${userId}`, payload);
+  },
+
+  /**
+   * Admin: delete a user account.
+   */
+  async deleteUser(userId: string): Promise<ApiResponse<{ id: string; name: string; email: string }>> {
+    return apiClient.delete<unknown, ApiResponse<{ id: string; name: string; email: string }>>(`/user/${userId}`);
   },
 };
 

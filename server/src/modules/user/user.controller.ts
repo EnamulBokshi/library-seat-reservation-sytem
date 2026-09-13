@@ -18,12 +18,19 @@ const requireUserId = (req: Request): string => {
 };
 
 const listUsers = catchAsync(async (req: Request, res: Response) => {
+    const isActiveParam = req.query.isActive;
+    const isActive =
+        isActiveParam === "true" ? true : isActiveParam === "false" ? false : undefined;
+
     const result = await UserService.listUsers({
         page: req.query.page ? Number(req.query.page) : undefined,
         limit: req.query.limit ? Number(req.query.limit) : undefined,
         role: req.query.role as string | undefined,
+        isActive,
         approvalStatus: req.query.approvalStatus as string | undefined,
         searchTerm: req.query.searchTerm as string | undefined,
+        sortBy: req.query.sortBy as any,
+        sortOrder: req.query.sortOrder === "asc" ? "asc" : "desc",
     });
 
     sendResponse(res, {
@@ -31,7 +38,7 @@ const listUsers = catchAsync(async (req: Request, res: Response) => {
         success: true,
         message: "Users retrieved successfully",
         data: result.users,
-        meta: result.meta,
+        meta: { ...result.meta, stats: result.stats },
     });
 });
 
@@ -149,8 +156,55 @@ const getMyFines = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const createUser = catchAsync(async (req: Request, res: Response) => {
+    const creatorUser = {
+        userId: requireUserId(req),
+        role: req.user!.role,
+    };
+    const result = await UserService.createUser(creatorUser, req.body);
+    sendResponse(res, {
+        httpStatusCode: status.CREATED,
+        success: true,
+        message: "User created successfully",
+        data: result,
+    });
+});
+
+const updateUser = catchAsync(async (req: Request, res: Response) => {
+    const updaterUser = {
+        userId: requireUserId(req),
+        role: req.user!.role,
+    };
+    const targetUserId = requireIdParam(req);
+    const result = await UserService.updateUser(targetUserId, updaterUser, req.body);
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: "User updated successfully",
+        data: result,
+    });
+});
+
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+    const deleterUser = {
+        userId: requireUserId(req),
+        role: req.user!.role,
+    };
+    const targetUserId = requireIdParam(req);
+    const result = await UserService.deleteUser(targetUserId, deleterUser);
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: "User deleted successfully",
+        data: result,
+    });
+});
+
 export const UserController = {
     listUsers,
+    createUser,
+    updateUser,
+    deleteUser,
     getPendingApprovals,
     approveUser,
     rejectUser,

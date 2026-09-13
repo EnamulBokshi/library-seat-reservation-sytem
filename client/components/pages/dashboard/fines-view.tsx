@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { userService } from "@/services/user-service";
+import { useAuth } from "@/context/auth-context";
 import { ApiError, FineEntry, FineStatus, MyFinesResult } from "@/lib/types";
 import {
   AlertCircle,
@@ -83,6 +84,7 @@ function EmptyState({ label }: { label: string }) {
 }
 
 export function FinesView() {
+  const { user } = useAuth();
   const [data, setData] = useState<MyFinesResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,6 +108,28 @@ export function FinesView() {
   useEffect(() => {
     fetchFines();
   }, [fetchFines]);
+
+  if (user?.role === "faculty") {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-xs">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
+          <ShieldCheck className="h-7 w-7" />
+        </div>
+        <h3 className="text-base font-extrabold text-slate-900">
+          Faculty Fine Exemption Active
+        </h3>
+        <p className="mx-auto mt-1.5 max-w-md text-xs text-slate-500">
+          Faculty members of Daffodil International University are completely exempt from book loan fines, overdue penalties, and seat cancellation charges.
+        </p>
+        <Link
+          href="/dashboard/loans"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-extrabold text-white hover:bg-slate-800 transition-all shadow-xs"
+        >
+          <span>View My Loans</span>
+        </Link>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

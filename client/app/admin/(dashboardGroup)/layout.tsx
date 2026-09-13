@@ -18,6 +18,11 @@ const ROUTE_TITLES: Record<string, RouteMeta> = {
     subtitle: "Catalogue records, copies, and shelf locations",
     kicker: "CATALOGUE",
   },
+  "/admin/borrow-requests": {
+    title: "Borrow Requests",
+    subtitle: "Review and approve online book checkout requests from faculty and students",
+    kicker: "CIRCULATION DESK",
+  },
   "/admin/loans": {
     title: "Circulation Desk",
     subtitle: "Issue, return, renew, and settle overdue fines",

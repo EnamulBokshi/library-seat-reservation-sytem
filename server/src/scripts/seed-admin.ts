@@ -13,7 +13,15 @@ async function seedAdmin() {
 
     const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
     if (existing) {
-        console.log(`  ℹ️  Admin user already exists: ${adminEmail}`);
+        if (existing.role !== "super_admin") {
+            await prisma.user.update({
+                where: { id: existing.id },
+                data: { role: "super_admin" },
+            });
+            console.log(`  🔄 Promoted existing admin ${adminEmail} to super_admin`);
+        } else {
+            console.log(`  ℹ️  Admin user already exists: ${adminEmail}`);
+        }
         return;
     }
 
@@ -23,7 +31,7 @@ async function seedAdmin() {
             name: adminName,
             email: adminEmail,
             passwordHash,
-            role: "admin",
+            role: "super_admin",
             // Seeded staff skip the signup verification round-trip.
             emailVerifiedAt: new Date(),
             approvalStatus: "approved",

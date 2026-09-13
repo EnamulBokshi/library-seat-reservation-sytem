@@ -12,6 +12,7 @@ interface IResponse<T> {
         totalPages: number;
         /** Optional facet tallies a list endpoint may attach, e.g. rows per status. */
         counts?: Record<string, number>;
+        stats?: any;
     };
 }
 

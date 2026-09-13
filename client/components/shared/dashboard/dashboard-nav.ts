@@ -1,5 +1,6 @@
 import {
   Armchair,
+  BookCheck,
   BookMarked,
   BookOpen,
   Calendar,
@@ -12,6 +13,7 @@ import {
   ShieldCheck,
   UserRound,
   UserRoundCheck,
+  Users,
 } from "lucide-react"
 import { NavBadgeKey, Role } from "@/lib/types"
 
@@ -55,6 +57,13 @@ const ADMIN_WORKSPACE: DashboardWorkspace = {
   tabs: [
     { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
     { href: "/admin/books", label: "Book Inventory", icon: BookOpen },
+    {
+      href: "/admin/borrow-requests",
+      label: "Borrow Requests",
+      icon: BookCheck,
+      badgeKey: "pendingBorrowRequests",
+      badgeTone: "alert",
+    },
     { href: "/admin/loans", label: "Circulation Desk", icon: BookMarked },
     {
       href: "/admin/bookings",
@@ -84,6 +93,12 @@ const ADMIN_WORKSPACE: DashboardWorkspace = {
       roles: ["admin", "super_admin"],
       badgeKey: "pendingApprovals",
       badgeTone: "alert",
+    },
+    {
+      href: "/admin/users",
+      label: "User Management",
+      icon: Users,
+      roles: ["admin", "super_admin"],
     },
     { href: "/admin/checkin", label: "Check-In Scanner", icon: ScanLine },
     { href: "/admin/schedules", label: "Schedules & Slots", icon: Calendar },
@@ -116,6 +131,7 @@ const STUDENT_WORKSPACE: DashboardWorkspace = {
       href: "/dashboard/fines",
       label: "Fines",
       icon: Receipt,
+      roles: ["student"],
       badgeKey: "myUnpaidFines",
       badgeTone: "alert",
     },

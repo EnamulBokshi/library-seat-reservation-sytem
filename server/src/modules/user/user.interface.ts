@@ -1,12 +1,53 @@
+import { Role } from "../../generated/enums";
+
+export type UserSortField = "createdAt" | "name" | "email" | "role" | "isActive";
+
+export type ApprovalSortField = "createdAt" | "emailVerifiedAt" | "name" | "email" | "department";
+
 export interface IListUsersOptions {
     page?: number;
     limit?: number;
     role?: string;
+    isActive?: boolean;
     approvalStatus?: string;
     searchTerm?: string;
+    sortBy?: UserSortField;
+    sortOrder?: "asc" | "desc";
 }
 
-export type ApprovalSortField = "createdAt" | "emailVerifiedAt" | "name" | "email" | "department";
+export interface IUserStats {
+    totalUsers: number;
+    activeUsers: number;
+    suspendedUsers: number;
+    superAdmins: number;
+    admins: number;
+    librarians: number;
+    faculty: number;
+    students: number;
+}
+
+export interface ICreateUserPayload {
+    name: string;
+    email: string;
+    password: string;
+    role: Role;
+    studentId?: string | null;
+    facultyId?: string | null;
+    department?: string | null;
+    designation?: string | null;
+    isActive?: boolean;
+}
+
+export interface IAdminUpdateUserPayload {
+    name?: string;
+    role?: Role;
+    isActive?: boolean;
+    studentId?: string | null;
+    facultyId?: string | null;
+    department?: string | null;
+    designation?: string | null;
+    password?: string;
+}
 
 export interface IApprovalListOptions {
     page?: number;

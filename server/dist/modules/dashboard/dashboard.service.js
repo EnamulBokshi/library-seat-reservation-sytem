@@ -12,6 +12,7 @@ const EMPTY_COUNTS = {
     activeBookings: 0,
     unpaidFines: 0,
     myPendingWaivers: 0,
+    pendingBorrowRequests: 0,
     myUnpaidFines: 0,
 };
 /** Midnight UTC of the current day, matching how schedules store their date. */
@@ -27,8 +28,9 @@ const todayDate = () => {
  * whole navigation.
  */
 const getNavBadgeCounts = async (userId, role) => {
-    const isAdmin = role === enums_1.Role.admin;
+    const isAdmin = role === enums_1.Role.admin || role === "super_admin";
     const isStaff = isAdmin || role === enums_1.Role.librarian;
+    const isFaculty = role === enums_1.Role.faculty;
     const settle = async (enabled, query) => {
         if (!enabled) {
             return 0;
@@ -41,7 +43,7 @@ const getNavBadgeCounts = async (userId, role) => {
             return 0;
         }
     };
-    const [pendingApprovals, pendingWaivers, activeBookings, unpaidSeatFines, unpaidLoanFines, myPendingWaivers, myUnpaidSeatFines, myUnpaidLoanFines,] = await Promise.all([
+    const [pendingApprovals, pendingWaivers, activeBookings, pendingBorrowRequests, unpaidSeatFines, unpaidLoanFines, myPendingWaivers, myUnpaidSeatFines, myUnpaidLoanFines,] = await Promise.all([
         settle(isAdmin, () => prisma_1.default.user.count({
             where: {
                 approvalStatus: enums_1.ApprovalStatus.pending,
@@ -56,19 +58,24 @@ const getNavBadgeCounts = async (userId, role) => {
                 schedule: { date: todayDate() },
             },
         })),
+        settle(isStaff, () => prisma_1.default.bookLoan.count({
+            where: {
+                status: enums_1.LoanStatus.requested,
+            },
+        })),
         settle(isStaff, () => prisma_1.default.booking.count({
             where: { fineStatus: enums_1.FineStatus.unpaid, fineAmount: { gt: 0 } },
         })),
         settle(isStaff, () => prisma_1.default.bookLoan.count({
             where: { fineStatus: enums_1.FineStatus.unpaid, fineAmount: { gt: 0 } },
         })),
-        settle(role === enums_1.Role.faculty, () => prisma_1.default.fineWaiverRequest.count({
+        settle(isFaculty, () => prisma_1.default.fineWaiverRequest.count({
             where: { requestedById: userId, status: enums_1.WaiverRequestStatus.pending },
         })),
-        settle(true, () => prisma_1.default.booking.count({
+        settle(!isFaculty, () => prisma_1.default.booking.count({
             where: { userId, fineStatus: enums_1.FineStatus.unpaid, fineAmount: { gt: 0 } },
         })),
-        settle(true, () => prisma_1.default.bookLoan.count({
+        settle(!isFaculty, () => prisma_1.default.bookLoan.count({
             where: { userId, fineStatus: enums_1.FineStatus.unpaid, fineAmount: { gt: 0 } },
         })),
     ]);
@@ -77,6 +84,7 @@ const getNavBadgeCounts = async (userId, role) => {
         pendingApprovals,
         pendingWaivers,
         activeBookings,
+        pendingBorrowRequests,
         unpaidFines: unpaidSeatFines + unpaidLoanFines,
         myPendingWaivers,
         myUnpaidFines: myUnpaidSeatFines + myUnpaidLoanFines,

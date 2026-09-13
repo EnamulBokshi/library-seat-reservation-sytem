@@ -41,8 +41,14 @@ export const authCheck = (...roles: Role[]) => {
                 throw new AppError(status.UNAUTHORIZED, "Your account has been deactivated. Please contact support.");
             }
 
-            // 4. Check role-based access
-            if (roles.length > 0 && !roles.includes(user.role as Role)) {
+            // 4. Check role-based access (super_admin inherits all admin permissions)
+            const userRole = user.role as Role;
+            const isAuthorized =
+                roles.length === 0 ||
+                roles.includes(userRole) ||
+                (userRole === "super_admin" && roles.includes("admin"));
+
+            if (!isAuthorized) {
                 throw new AppError(status.FORBIDDEN, "Forbidden: You don't have permission to access this resource");
             }
 

@@ -9,6 +9,14 @@ const userRoute: Router = Router();
 // GET /api/v1/user — admin user directory
 userRoute.get("/", authCheck("admin"), UserController.listUsers);
 
+// POST /api/v1/user — admin create user directly
+userRoute.post(
+    "/",
+    authCheck("admin"),
+    requestValidator(UserValidation.createUserSchema),
+    UserController.createUser
+);
+
 // GET /api/v1/user/pending-approvals — faculty signups awaiting a decision
 userRoute.get("/pending-approvals", authCheck("admin"), UserController.getPendingApprovals);
 
@@ -67,6 +75,21 @@ userRoute.post(
     authCheck(),
     requestValidator(UserValidation.verifyPasswordChangeSchema),
     UserController.verifyPasswordChange
+);
+
+// PATCH /api/v1/user/:id — admin update user profile, role, or active status
+userRoute.patch(
+    "/:id",
+    authCheck("admin"),
+    requestValidator(UserValidation.adminUpdateUserSchema),
+    UserController.updateUser
+);
+
+// DELETE /api/v1/user/:id — admin delete user account
+userRoute.delete(
+    "/:id",
+    authCheck("admin"),
+    UserController.deleteUser
 );
 
 export default userRoute;

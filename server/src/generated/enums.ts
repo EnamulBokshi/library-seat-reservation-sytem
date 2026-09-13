@@ -32,6 +32,7 @@ export type TableType = (typeof TableType)[keyof typeof TableType]
 
 
 export const Role = {
+  super_admin: 'super_admin',
   admin: 'admin',
   librarian: 'librarian',
   student: 'student',

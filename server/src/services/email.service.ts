@@ -4,17 +4,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-interface SendBookingEmailOptions {
-  toEmail: string;
-  studentName: string;
-  seatNumber: string;
-  zoneName: string;
-  dateStr: string;
-  slotName: string;
-  qrToken: string;
-  qrCodeBase64: string;
-  bookingId?: string;
-}
+// ─── Slot Time Ranges ─────────────────────────────────────────────────────────
 
 const SLOT_TIME_RANGES: Record<string, string> = {
   morning: "08:00 AM – 12:00 PM",
@@ -23,9 +13,8 @@ const SLOT_TIME_RANGES: Record<string, string> = {
   evening: "06:00 PM – 09:00 PM",
 };
 
-/**
- * Creates a Nodemailer transporter based on .env configuration.
- */
+// ─── Nodemailer Transporter Setup ─────────────────────────────────────────────
+
 const createNodemailerTransporter = () => {
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
@@ -45,7 +34,6 @@ const createNodemailerTransporter = () => {
     });
   }
 
-  // Gmail convenience helper if GMAIL_USER & GMAIL_APP_PASSWORD are provided
   if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
     return nodemailer.createTransport({
       service: "gmail",
@@ -59,288 +47,8 @@ const createNodemailerTransporter = () => {
   return null;
 };
 
-/**
- * Send booking confirmation email with clean Flat UI design and downloadable QR pass.
- */
-export const sendBookingConfirmationEmail = async (opts: SendBookingEmailOptions) => {
-  const {
-    toEmail,
-    studentName,
-    seatNumber,
-    zoneName,
-    dateStr,
-    slotName,
-    qrToken,
-    qrCodeBase64,
-  } = opts;
+// ─── Generic HTML Email Dispatcher ────────────────────────────────────────────
 
-  console.log(`[Email Service] Preparing confirmation email for ${toEmail}...`);
-
-  const fromAddress =
-    process.env.EMAIL_FROM ||
-    process.env.RESEND_FROM_EMAIL ||
-    process.env.SMTP_USER ||
-    process.env.GMAIL_USER ||
-    "Smart Library <onboarding@resend.dev>";
-
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-
-  const base64Data = qrCodeBase64.includes(";base64,")
-    ? qrCodeBase64.split(";base64,").pop()!
-    : qrCodeBase64;
-
-  const normalizedSlot = slotName.toLowerCase();
-  const timeRange = SLOT_TIME_RANGES[normalizedSlot] || "";
-  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
-  const qrDownloadUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(qrToken)}&download=1&format=png`;
-  const qrDisplayUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrToken)}&format=png&margin=4`;
-
-  const htmlContent = `
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Seat Reservation Pass — ${seatNumber}</title>
-    <style type="text/css">
-      body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-      table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-      img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
-      body { margin: 0; padding: 0; width: 100% !important; background-color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-    </style>
-  </head>
-  <body style="margin: 0; padding: 24px 12px; background-color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
-      <tr>
-        <td align="center">
-          
-          <!-- Main Card Container -->
-          <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 540px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; text-align: left;">
-            
-            <!-- Top Header Bar -->
-            <tr>
-              <td style="padding: 18px 24px; border-bottom: 1px solid #e2e8f0; background-color: #ffffff;">
-                <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
-                  <tr>
-                    <td align="left" style="vertical-align: middle;">
-                      <table border="0" cellpadding="0" cellspacing="0" role="presentation">
-                        <tr>
-                          <td style="background-color: #0f172a; width: 28px; height: 28px; border-radius: 6px; text-align: center; vertical-align: middle; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;">
-                            SL
-                          </td>
-                          <td style="padding-left: 10px; font-size: 15px; font-weight: 700; color: #0f172a; letter-spacing: -0.2px;">
-                            Smart Library
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                    <td align="right" style="vertical-align: middle;">
-                      <span style="display: inline-block; background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 9999px; padding: 3px 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                        ● Confirmed
-                      </span>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-
-            <!-- Main Content Area -->
-            <tr>
-              <td style="padding: 28px 24px 20px 24px;">
-                
-                <!-- Kicker & Title -->
-                <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #64748b; margin-bottom: 4px;">
-                  RESERVATION &bull; DIGITAL PASS
-                </div>
-                <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.25;">
-                  Seat ${seatNumber} Pass
-                </h1>
-                <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.5; color: #475569;">
-                  Hello <strong>${studentName}</strong>, your seat reservation has been confirmed. Below are your booking details and entry QR pass.
-                </p>
-
-                <!-- Pass Details Table (Flat UI) -->
-                <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 24px; border-collapse: collapse;">
-                  <tr>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #64748b; width: 35%; font-weight: 500;">
-                      Seat Number
-                    </td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #0f172a; font-weight: 700;">
-                      ${seatNumber}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #64748b; font-weight: 500;">
-                      Study Zone
-                    </td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #0f172a; font-weight: 600;">
-                      ${zoneName}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #64748b; font-weight: 500;">
-                      Date
-                    </td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #0f172a; font-weight: 600;">
-                      ${dateStr}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #64748b; font-weight: 500;">
-                      Time Slot
-                    </td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #0f172a; font-weight: 600;">
-                      ${slotDisplay} ${timeRange ? `<span style="color: #64748b; font-size: 12px; font-weight: 400;">(${timeRange})</span>` : ""}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 12px 16px; font-size: 13px; color: #64748b; font-weight: 500;">
-                      Pass Token
-                    </td>
-                    <td style="padding: 12px 16px; font-size: 12px; color: #334155; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; word-break: break-all;">
-                      ${qrToken}
-                    </td>
-                  </tr>
-                </table>
-
-                <!-- QR Code Box (Flat Design) -->
-                <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; text-align: center; margin-bottom: 20px;">
-                  <tr>
-                    <td style="padding: 24px 16px; text-align: center;">
-                      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #64748b; margin-bottom: 14px;">
-                        ENTRANCE QR PASS
-                      </div>
-                      
-                      <!-- QR Image -->
-                      <div style="display: inline-block; background-color: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                        <img src="${qrDisplayUrl}" alt="QR Pass for Seat ${seatNumber}" width="170" height="170" style="display: block; width: 170px; height: 170px;" />
-                      </div>
-                      
-                      <div style="margin-top: 12px; font-size: 11px; color: #64748b;">
-                        Show this at the library scanner upon arrival
-                      </div>
-
-                      <!-- Action Buttons -->
-                      <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 18px auto 0 auto;">
-                        <tr>
-                          <td style="padding: 0 4px;">
-                            <a href="${qrDownloadUrl}" target="_blank" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 600; padding: 9px 16px; border-radius: 6px;">
-                              Download QR Pass
-                            </a>
-                          </td>
-                          <td style="padding: 0 4px;">
-                            <a href="${frontendUrl}/bookings" target="_blank" style="display: inline-block; background-color: #ffffff; color: #0f172a; text-decoration: none; font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                              View in Portal
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-
-                    </td>
-                  </tr>
-                </table>
-
-                <!-- Flat Notice Banner -->
-                <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #fffbeb; border: 1px solid #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px; margin-bottom: 8px;">
-                  <tr>
-                    <td style="padding: 12px 14px; font-size: 12px; line-height: 1.5; color: #92400e;">
-                      <strong>Check-in Policy:</strong> Please scan your pass at the entrance scanner within <strong>15 minutes</strong> of slot start time. Unclaimed seats are automatically released for other students.
-                    </td>
-                  </tr>
-                </table>
-
-              </td>
-            </tr>
-
-            <!-- Flat Footer -->
-            <tr>
-              <td style="padding: 18px 24px; border-top: 1px solid #e2e8f0; background-color: #fcfdfe; text-align: center; font-size: 11px; line-height: 1.6; color: #94a3b8;">
-                Smart Library Management System &bull; Automated Pass Notification<br />
-                To manage or release your reservation, please visit the <a href="${frontendUrl}/bookings" style="color: #0f172a; text-decoration: underline; font-weight: 500;">student portal</a>.
-              </td>
-            </tr>
-
-          </table>
-
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>
-  `;
-
-  const attachmentFilename = `library-pass-${seatNumber}.png`;
-  const attachmentBuffer = Buffer.from(base64Data, "base64");
-
-  // 1. Try Nodemailer SMTP if configured
-  const smtpTransporter = createNodemailerTransporter();
-  if (smtpTransporter) {
-    try {
-      const info = await smtpTransporter.sendMail({
-        from: fromAddress,
-        to: toEmail,
-        subject: `Your Library Seat Pass — Seat ${seatNumber} (${zoneName})`,
-        html: htmlContent,
-        attachments: [
-          {
-            filename: attachmentFilename,
-            content: attachmentBuffer,
-            contentType: "image/png",
-            cid: "qrcode",
-          },
-        ],
-      });
-      console.log(`[Email Service] SMTP email dispatched successfully to ${toEmail}. Message ID: ${info.messageId}`);
-      return info;
-    } catch (error) {
-      console.error("[Email Service] SMTP dispatch error:", error);
-    }
-  }
-
-  // 2. Try Resend API if configured
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (resendApiKey) {
-    const resendFrom =
-      process.env.RESEND_FROM_EMAIL ||
-      process.env.EMAIL_FROM ||
-      "Smart Library <onboarding@resend.dev>";
-
-    try {
-      const resend = new Resend(resendApiKey);
-      const response = await resend.emails.send({
-        from: resendFrom,
-        to: [toEmail],
-        subject: `Your Library Seat Pass — Seat ${seatNumber} (${zoneName})`,
-        html: htmlContent,
-        attachments: [
-          {
-            filename: attachmentFilename,
-            content: attachmentBuffer,
-          },
-        ],
-      });
-      if (response.error) {
-        console.error("[Email Service] Resend API error:", response.error);
-      } else {
-        console.log(`[Email Service] Resend email dispatched successfully. ID: ${response.data?.id}`);
-      }
-      return response;
-    } catch (error) {
-      console.error("[Email Service] Resend API exception:", error);
-    }
-  }
-
-  // 3. Fallback warning if no provider is configured in .env
-  console.warn(
-    `[Email Service] ⚠️ Email delivery skipped for ${toEmail}. No email credentials found in server/.env.\n` +
-      `  To enable emails via Nodemailer (SMTP/Gmail): Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS (or GMAIL_USER & GMAIL_APP_PASSWORD) in server/.env\n` +
-      `  To enable emails via Resend: Set RESEND_API_KEY in server/.env`
-  );
-};
-
-/**
- * Generic HTML Email Dispatcher supporting both Nodemailer (SMTP) and Resend
- */
 const sendHtmlEmail = async (toEmail: string, subject: string, htmlContent: string) => {
   console.log(`[Email Service] Dispatching email to ${toEmail}: "${subject}"`);
 
@@ -352,7 +60,7 @@ const sendHtmlEmail = async (toEmail: string, subject: string, htmlContent: stri
         process.env.EMAIL_FROM ||
         process.env.SMTP_USER ||
         process.env.GMAIL_USER ||
-        "Smart Library <onboarding@super-trader.xyz>";
+        "Daffodil International University Library <onboarding@super-trader.xyz>";
 
       const info = await transporter.sendMail({
         from,
@@ -373,7 +81,7 @@ const sendHtmlEmail = async (toEmail: string, subject: string, htmlContent: stri
     const resendFrom =
       process.env.RESEND_FROM_EMAIL ||
       process.env.EMAIL_FROM ||
-      "Smart Library <onboarding@resend.dev>";
+      "Daffodil International University Library <onboarding@resend.dev>";
 
     try {
       const resend = new Resend(resendApiKey);
@@ -397,7 +105,240 @@ const sendHtmlEmail = async (toEmail: string, subject: string, htmlContent: stri
   console.warn(`[Email Service] ⚠️ Email delivery skipped for ${toEmail}. (Subject: ${subject})`);
 };
 
-// ─── 1. Book Borrow Confirmation Email ───────────────────────────────────────
+// ─── Flat UI Google Mail-Style Base Shell ─────────────────────────────────────
+
+interface FlatEmailShellOptions {
+  title?: string;
+  preheader?: string;
+  content: string;
+}
+
+const buildFlatEmailShell = ({ title, preheader, content }: FlatEmailShellOptions): string => {
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  ${title ? `<title>${title}</title>` : ""}
+  <style type="text/css">
+    body, table, td, p, a, li { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #374151; -webkit-font-smoothing: antialiased; }
+  </style>
+</head>
+<body style="margin: 0; padding: 32px 16px; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #374151;">
+  ${preheader ? `<div style="display: none; font-size: 1px; color: #ffffff; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">${preheader}</div>` : ""}
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
+    <tr>
+      <td align="center" style="padding: 0;">
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 580px; text-align: left;">
+          <!-- Top Flat Header -->
+          <tr>
+            <td style="padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td align="left" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 700; color: #111827; letter-spacing: -0.2px;">
+                    Daffodil International University
+                    <span style="font-size: 13px; font-weight: 400; color: #6b7280;"> &middot; Smart Library</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Content Area -->
+          <tr>
+            <td style="padding-top: 26px; padding-bottom: 30px;">
+              ${content}
+            </td>
+          </tr>
+
+          <!-- Flat Institutional Footer -->
+          <tr>
+            <td style="padding-top: 20px; border-top: 1px solid #e5e7eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #6b7280;">
+              <p style="margin: 0 0 4px 0; font-weight: 600; color: #374151;">Library Admin Panel &middot; Daffodil International University</p>
+              <p style="margin: 0; color: #9ca3af;">This is an automated administrative notification. Please do not reply directly to this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+};
+
+// ─── 1. Seat Reservation Confirmation Email ───────────────────────────────────
+
+export interface SendBookingEmailOptions {
+  toEmail: string;
+  studentName: string;
+  seatNumber: string;
+  zoneName: string;
+  dateStr: string;
+  slotName: string;
+  qrToken: string;
+  qrCodeBase64: string;
+  bookingId?: string;
+}
+
+export const sendBookingConfirmationEmail = async (opts: SendBookingEmailOptions) => {
+  const {
+    toEmail,
+    studentName,
+    seatNumber,
+    zoneName,
+    dateStr,
+    slotName,
+    qrToken,
+    qrCodeBase64,
+  } = opts;
+
+  console.log(`[Email Service] Preparing confirmation email for ${toEmail}...`);
+
+  const fromAddress =
+    process.env.EMAIL_FROM ||
+    process.env.RESEND_FROM_EMAIL ||
+    process.env.SMTP_USER ||
+    process.env.GMAIL_USER ||
+    "Daffodil International University Library <onboarding@resend.dev>";
+
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+
+  const base64Data = qrCodeBase64.includes(";base64,")
+    ? qrCodeBase64.split(";base64,").pop()!
+    : qrCodeBase64;
+
+  const normalizedSlot = slotName.toLowerCase();
+  const timeRange = SLOT_TIME_RANGES[normalizedSlot] || "";
+  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
+  const qrDownloadUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(qrToken)}&download=1&format=png`;
+  const qrDisplayUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrToken)}&format=png&margin=4`;
+
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Seat Reservation Pass — ${seatNumber}
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>, your seat reservation has been confirmed. Below are your session details and digital entrance pass.
+    </p>
+
+    <!-- Details Table (Flat UI) -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 20px 0;">
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; width: 35%; border-bottom: 1px solid #f3f4f6;">Seat Number</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #111827; border-bottom: 1px solid #f3f4f6;">${seatNumber}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Study Zone</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${zoneName}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Date</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${dateStr}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Time Slot</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${slotDisplay} ${timeRange ? `(${timeRange})` : ""}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280;">Status</td>
+        <td style="padding: 10px 0; font-size: 13px; font-weight: 700; color: #16a34a;">Confirmed & Active</td>
+      </tr>
+    </table>
+
+    <!-- Digital QR Pass Section -->
+    <div style="margin: 24px 0; text-align: center; border: 1px solid #e5e7eb; padding: 20px; background-color: #fcfcfc;">
+      <p style="margin: 0 0 12px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">
+        Entrance QR Code Pass
+      </p>
+      <div style="display: inline-block; padding: 8px; background: #ffffff; border: 1px solid #e5e7eb;">
+        <img src="${qrDisplayUrl}" alt="Seat Pass QR Code" width="180" height="180" style="display: block; width: 180px; height: 180px;" />
+      </div>
+      <p style="margin: 10px 0 16px 0; font-family: monospace; font-size: 11px; color: #6b7280;">
+        Token: ${qrToken}
+      </p>
+      <div style="display: inline-block;">
+        <a href="${qrDownloadUrl}" target="_blank" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 12px; font-weight: 600; padding: 9px 18px; border-radius: 4px; text-decoration: none; margin-right: 8px;">
+          Download QR Pass
+        </a>
+        <a href="${frontendUrl}/dashboard/bookings" target="_blank" style="display: inline-block; background-color: #ffffff; color: #0f172a; font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 4px; border: 1px solid #cbd5e1; text-decoration: none;">
+          View My Bookings
+        </a>
+      </div>
+    </div>
+
+    <!-- Instructions / Guidelines -->
+    <div style="background-color: #f9fafb; border-left: 3px solid #2563eb; padding: 12px 16px; margin: 20px 0; font-size: 13px; color: #374151; line-height: 1.5;">
+      <strong>Entrance Guidelines:</strong> Present this QR pass at the entrance terminal scanner to check in. Check-in is required within the designated grace period to avoid cancellation.
+    </div>
+  `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: `Seat Reservation Pass — ${seatNumber}`,
+    preheader: `Your reservation for Seat ${seatNumber} (${zoneName}) on ${dateStr} is confirmed.`,
+    content,
+  });
+
+  // 1. Try Nodemailer with attachment
+  const transporter = createNodemailerTransporter();
+  const attachmentFilename = `seat-pass-${seatNumber.toLowerCase().replace(/[^a-z0-9]/g, "-")}.png`;
+  const attachmentBuffer = Buffer.from(base64Data, "base64");
+
+  if (transporter) {
+    try {
+      const info = await transporter.sendMail({
+        from: fromAddress,
+        to: toEmail,
+        subject: `Seat Reservation Pass — Seat ${seatNumber} (${zoneName})`,
+        html: htmlContent,
+        attachments: [
+          {
+            filename: attachmentFilename,
+            content: attachmentBuffer,
+            contentType: "image/png",
+          },
+        ],
+      });
+      console.log(`[Email Service] Confirmation dispatched via SMTP to ${toEmail}. Message ID: ${info.messageId}`);
+      return info;
+    } catch (error) {
+      console.error("[Email Service] SMTP confirmation error:", error);
+    }
+  }
+
+  // 2. Try Resend API with attachment
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    const resendFrom =
+      process.env.RESEND_FROM_EMAIL ||
+      process.env.EMAIL_FROM ||
+      "Daffodil International University Library <onboarding@resend.dev>";
+
+    try {
+      const resend = new Resend(resendApiKey);
+      const response = await resend.emails.send({
+        from: resendFrom,
+        to: [toEmail],
+        subject: `Seat Reservation Pass — Seat ${seatNumber} (${zoneName})`,
+        html: htmlContent,
+        attachments: [
+          {
+            filename: attachmentFilename,
+            content: attachmentBuffer,
+          },
+        ],
+      });
+      return response;
+    } catch (error) {
+      console.error("[Email Service] Resend confirmation error:", error);
+    }
+  }
+};
+
+// ─── 2. Book Loan Confirmation Email ──────────────────────────────────────────
 
 export interface SendLoanConfirmationOptions {
   toEmail: string;
@@ -426,77 +367,68 @@ export const sendLoanConfirmationEmail = async (opts: SendLoanConfirmationOption
     fineRatePerDay = 5,
   } = opts;
 
-  const subject = `📘 Book Borrowed: "${bookTitle}" — Due ${dueDateStr}`;
+  const subject = `Book Borrowed: "${bookTitle}" — Due ${dueDateStr}`;
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #0f172a; color: #ffffff; padding: 28px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.header p { margin: 6px 0 0 0; font-size: 12px; color: #94a3b8; }
-.body { padding: 28px; }
-.book-box { background: #f1f5f9; border-radius: 14px; padding: 18px; margin-bottom: 20px; border-left: 4px solid #4f46e5; }
-.book-title { font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
-.book-author { font-size: 13px; color: #64748b; font-weight: 600; }
-.grid { display: table; width: 100%; margin-bottom: 20px; }
-.col { display: table-cell; width: 50%; padding: 6px; }
-.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
-.meta-val { font-size: 13px; font-weight: 800; color: #0f172a; margin-top: 2px; }
-.due-badge { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 12px; padding: 12px; text-align: center; font-weight: 800; font-size: 14px; margin-bottom: 20px; }
-.notice { background: #fef3c7; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; font-size: 12px; color: #92400e; line-height: 1.5; margin-bottom: 20px; }
-.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>Library Book Issued</h1>
-    <p>Smart Library Circulation Desk</p>
-  </div>
-  <div class="body">
-    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
-    <p style="font-size:13px;color:#475569;">You have successfully checked out the following book from the university library:</p>
-    
-    <div class="book-box">
-      <div class="book-title">${bookTitle}</div>
-      <div class="book-author">By ${bookAuthor}</div>
-      ${barcodeOrIsbn ? `<div style="font-size:11px;color:#6366f1;font-weight:700;margin-top:6px;font-family:monospace;">Barcode / ISBN: ${barcodeOrIsbn}</div>` : ""}
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Library Book Borrowed
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>, the following book has been checked out to your library account:
+    </p>
+
+    <!-- Book Info Flat Table -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 20px 0;">
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; width: 35%; border-bottom: 1px solid #f3f4f6;">Title</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #111827; border-bottom: 1px solid #f3f4f6;">${bookTitle}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Author</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${bookAuthor}</td>
+      </tr>
+      ${barcodeOrIsbn ? `
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Identifier</td>
+        <td style="padding: 10px 0; font-family: monospace; font-size: 13px; color: #111827; border-bottom: 1px solid #f3f4f6;">${barcodeOrIsbn}</td>
+      </tr>` : ""}
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Shelf Location</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${block} &middot; ${shelfNumber}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Borrow Date</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #111827; border-bottom: 1px solid #f3f4f6;">${borrowDateStr}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280;">Return Due Date</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #1d4ed8;">${dueDateStr}</td>
+      </tr>
+    </table>
+
+    <div style="background-color: #f9fafb; border-left: 3px solid #2563eb; padding: 12px 16px; margin: 20px 0; font-size: 13px; color: #374151; line-height: 1.5;">
+      <strong>Circulation Policy:</strong> Please return or renew this book on or before <strong>${dueDateStr}</strong>. Overdue loans accrue fines at <strong>${fineRatePerDay} BDT/day</strong>.
     </div>
 
-    <div class="due-badge">
-      📅 Return Due Date: ${dueDateStr}
-    </div>
-
-    <div class="grid">
-      <div class="col">
-        <div class="meta-label">Borrow Date</div>
-        <div class="meta-val">${borrowDateStr}</div>
-      </div>
-      <div class="col">
-        <div class="meta-label">Shelf Location</div>
-        <div class="meta-val">${block} • ${shelfNumber}</div>
-      </div>
-    </div>
-
-    <div class="notice">
-      ⚠️ <strong>Circulation Notice:</strong> The standard loan duration is 10 days. Please return the book on or before the due date. An overdue fee of <strong>${fineRatePerDay} Tk / day</strong> applies if returned late. You may renew online up to 3 times if eligible.
-    </div>
-
-    <a href="${frontendUrl}/loans" class="btn">View My Loans & Renewals</a>
-  </div>
-  <div class="footer">Smart Library Management System • Automated Notice</div>
-</div>
-</body></html>
+    <p style="margin: 20px 0 0 0;">
+      <a href="${frontendUrl}/dashboard/loans" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        View My Active Loans
+      </a>
+    </p>
   `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: subject,
+    preheader: `You borrowed "${bookTitle}". Due date: ${dueDateStr}.`,
+    content,
+  });
 
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
-// ─── 2. Loan Due Date Reminder (2-Day Warning) ───────────────────────────────
+// ─── 3. Loan Due Date Warning Email ───────────────────────────────────────────
 
 export interface SendDueDateWarningOptions {
   toEmail: string;
@@ -517,55 +449,44 @@ export const sendLoanDueDateWarningEmail = async (opts: SendDueDateWarningOption
     fineRatePerDay = 5,
   } = opts;
 
-  const subject = `⚠️ Reminder: "${bookTitle}" is Due in ${daysRemaining} Days`;
+  const subject = `Reminder: "${bookTitle}" is Due in ${daysRemaining} Days`;
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #fed7aa; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #ea580c; color: #ffffff; padding: 28px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.body { padding: 28px; }
-.warn-box { background: #fff7ed; border: 1px solid #ffedd5; border-radius: 14px; padding: 18px; margin-bottom: 20px; text-align: center; }
-.due-text { font-size: 16px; font-weight: 800; color: #c2410c; }
-.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>Due Date Warning</h1>
-    <p style="margin:4px 0 0 0;font-size:12px;color:#ffedd5;">Your book loan expires in ${daysRemaining} days</p>
-  </div>
-  <div class="body">
-    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
-    <p style="font-size:13px;color:#475569;">This is a friendly reminder that your borrowed library book is due soon:</p>
-    
-    <div class="warn-box">
-      <div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:6px;">"${bookTitle}"</div>
-      <div class="due-text">Due Date: ${dueDateStr}</div>
-    </div>
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Book Due Date Reminder
+    </h1>
 
-    <p style="font-size:12px;color:#64748b;line-height:1.5;">
-      Please return the book to the library circulation desk by <strong>${dueDateStr}</strong> to avoid late fines (<strong>${fineRatePerDay} Tk / day</strong>). If you still need the book, you can extend your loan online through the student portal.
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>, this is an automated reminder that your borrowed book is due in <strong>${daysRemaining} day(s)</strong>:
     </p>
 
-    <div style="margin-top:20px;">
-      <a href="${frontendUrl}/loans" class="btn">Renew Loan or View Status</a>
+    <div style="background-color: #fffbeb; border-left: 3px solid #d97706; padding: 14px 18px; margin: 20px 0;">
+      <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 700; color: #92400e;">"${bookTitle}"</p>
+      <p style="margin: 0; font-size: 13px; color: #b45309; font-weight: 600;">Return Due Date: ${dueDateStr}</p>
     </div>
-  </div>
-  <div class="footer">Smart Library Management System • Automated 48-Hour Reminder</div>
-</div>
-</body></html>
+
+    <p style="margin: 0 0 20px 0; font-size: 13px; line-height: 1.6; color: #4b5563;">
+      Please return the book to the circulation desk by <strong>${dueDateStr}</strong> to avoid late fines (${fineRatePerDay} BDT/day). If you need more time and are eligible, you can extend your loan online.
+    </p>
+
+    <p style="margin: 0 0 0 0;">
+      <a href="${frontendUrl}/dashboard/loans" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        Renew Loan Online
+      </a>
+    </p>
   `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: subject,
+    preheader: `Reminder: "${bookTitle}" is due on ${dueDateStr}.`,
+    content,
+  });
 
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
-// ─── 3. Loan Overdue Alert Email ─────────────────────────────────────────────
+// ─── 4. Loan Overdue Alert Email ──────────────────────────────────────────────
 
 export interface SendOverdueAlertOptions {
   toEmail: string;
@@ -588,61 +509,45 @@ export const sendLoanOverdueAlertEmail = async (opts: SendOverdueAlertOptions) =
     fineRatePerDay = 5,
   } = opts;
 
-  const subject = `🚨 Overdue Notice: "${bookTitle}" — ${fineAmount} BDT Fine Accrued`;
+  const subject = `Overdue Notice: "${bookTitle}" — ${fineAmount} BDT Fine Accrued`;
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #fecdd3; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #be123c; color: #ffffff; padding: 28px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.body { padding: 28px; }
-.alert-box { background: #fff1f2; border: 1px solid #ffe4e6; border-radius: 14px; padding: 18px; margin-bottom: 20px; text-align: center; }
-.fine-text { font-size: 22px; font-weight: 900; color: #be123c; margin-top: 6px; }
-.inst-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 12px; color: #334155; line-height: 1.6; margin-bottom: 20px; }
-.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>Overdue Book & Fine Alert</h1>
-    <p style="margin:4px 0 0 0;font-size:12px;color:#fecdd3;">Borrowing privileges are currently suspended</p>
-  </div>
-  <div class="body">
-    <p style="margin-top:0;font-size:14px;">Dear <strong>${studentName}</strong>,</p>
-    <p style="font-size:13px;color:#475569;">The following book checked out to your account is now <strong>${daysOverdue} day(s) overdue</strong>:</p>
-    
-    <div class="alert-box">
-      <div style="font-size:15px;font-weight:800;color:#0f172a;">"${bookTitle}"</div>
-      <div style="font-size:12px;color:#64748b;margin-top:2px;">Original Due Date: ${dueDateStr}</div>
-      <div class="fine-text">Accumulated Fine: ${fineAmount} BDT</div>
-      <div style="font-size:11px;color:#9f1239;margin-top:2px;">(Calculated at ${fineRatePerDay} Tk / day overdue)</div>
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #b91c1c; line-height: 1.3;">
+      Notice: Overdue Book Loan
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>, your borrowed library book is currently past its return deadline.
+    </p>
+
+    <div style="background-color: #fef2f2; border-left: 3px solid #dc2626; padding: 14px 18px; margin: 20px 0;">
+      <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 700; color: #991b1b;">"${bookTitle}"</p>
+      <p style="margin: 0 0 4px 0; font-size: 13px; color: #b91c1c;">Due Date: ${dueDateStr} (${daysOverdue} day(s) overdue)</p>
+      <p style="margin: 0; font-size: 14px; font-weight: 700; color: #b91c1c;">Current Accrued Fine: ${fineAmount} BDT</p>
     </div>
 
-    <div class="inst-box">
-      <strong>⚠️ What to do next:</strong>
-      <ol style="margin:8px 0 0 0;padding-left:18px;">
-        <li>Bring the physical book to the library circulation desk immediately.</li>
-        <li>Pay the outstanding fine in <strong>Cash</strong> directly at the counter, OR deposit via <strong>Bank Chalan</strong> and submit the chalan receipt number.</li>
-        <li>Once the librarian marks your fine as <strong>Paid</strong>, your borrowing access will be fully restored.</li>
-      </ol>
-    </div>
+    <p style="margin: 0 0 20px 0; font-size: 13px; line-height: 1.6; color: #4b5563;">
+      Daily fines accumulate at <strong>${fineRatePerDay} BDT/day</strong> until the book is received at the circulation desk. Outstanding fines exceeding the library threshold will lock your seat booking and borrowing privileges.
+    </p>
 
-    <a href="${frontendUrl}/loans" class="btn">View Fine Breakdown in Portal</a>
-  </div>
-  <div class="footer">Smart Library Management System • Circulation Enforcer</div>
-</div>
-</body></html>
+    <p style="margin: 0 0 0 0;">
+      <a href="${frontendUrl}/dashboard/fines" style="display: inline-block; background-color: #b91c1c; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        View Fine Statement
+      </a>
+    </p>
   `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: subject,
+    preheader: `Overdue Notice for "${bookTitle}". Current fine: ${fineAmount} BDT.`,
+    content,
+  });
 
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
-// ─── 4. Fine Payment Receipt Email ──────────────────────────────────────────
+// ─── 5. Loan Fine Payment Receipt ─────────────────────────────────────────────
 
 export interface SendFinePaidReceiptOptions {
   toEmail: string;
@@ -665,56 +570,63 @@ export const sendFinePaidReceiptEmail = async (opts: SendFinePaidReceiptOptions)
     paidDateStr,
   } = opts;
 
-  const subject = `✅ Fine Cleared: ${fineAmount} BDT Receipt — Borrowing Restored`;
+  const subject = `Payment Receipt: ${fineAmount} BDT Settled — Library Fine`;
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #bbf7d0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #059669; color: #ffffff; padding: 28px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.body { padding: 28px; }
-.receipt-box { background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 14px; padding: 18px; margin-bottom: 20px; text-align: center; }
-.amount-text { font-size: 24px; font-weight: 900; color: #059669; }
-.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>Fine Payment Receipt</h1>
-    <p style="margin:4px 0 0 0;font-size:12px;color:#d1fae5;">Account Status: Clear & In Good Standing</p>
-  </div>
-  <div class="body">
-    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
-    <p style="font-size:13px;color:#475569;">Your overdue library fine has been successfully settled and recorded:</p>
-    
-    <div class="receipt-box">
-      <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;">Amount Paid</div>
-      <div class="amount-text">${fineAmount} BDT</div>
-      <div style="font-size:12px;color:#047857;margin-top:4px;font-weight:700;">Method: ${paymentMethod.toUpperCase()} ${chalanNumber ? `• Chalan: ${chalanNumber}` : ""}</div>
-    </div>
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Official Payment Receipt
+    </h1>
 
-    <div style="font-size:12px;color:#475569;margin-bottom:20px;line-height:1.6;">
-      <strong>Book:</strong> "${bookTitle}"<br/>
-      <strong>Paid Date:</strong> ${paidDateStr}<br/>
-      <strong>Status:</strong> All dues cleared. Your borrowing quota has been restored.
-    </div>
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>, your overdue fine payment has been successfully recorded by the library circulation desk.
+    </p>
 
-    <a href="${frontendUrl}/books" class="btn">Browse & Borrow New Books</a>
-  </div>
-  <div class="footer">Smart Library Management System • Official Receipt</div>
-</div>
-</body></html>
+    <!-- Flat Receipt Table -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 20px 0;">
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; width: 35%; border-bottom: 1px solid #f3f4f6;">Item</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">"${bookTitle}" (Overdue Fine)</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Payment Date</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #111827; border-bottom: 1px solid #f3f4f6;">${paidDateStr}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Payment Method</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6; text-transform: capitalize;">${paymentMethod} ${chalanNumber ? `(Chalan #${chalanNumber})` : ""}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Amount Settled</td>
+        <td style="padding: 10px 0; font-size: 16px; font-weight: 700; color: #16a34a; border-bottom: 1px solid #f3f4f6;">${fineAmount} BDT</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280;">Account Status</td>
+        <td style="padding: 10px 0; font-size: 13px; font-weight: 700; color: #16a34a;">Cleared & Active</td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 20px 0; font-size: 13px; line-height: 1.6; color: #4b5563;">
+      Your borrowing privileges are fully restored. You can browse catalogue titles or check out books at any time.
+    </p>
+
+    <p style="margin: 0 0 0 0;">
+      <a href="${frontendUrl}/books" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        Browse Library Books
+      </a>
+    </p>
   `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: subject,
+    preheader: `Official receipt: ${fineAmount} BDT cleared for "${bookTitle}".`,
+    content,
+  });
 
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
-// ─── 5. Seat No-Show Auto-Cancellation Email ─────────────────────────────────
+// ─── 6. Seat No-Show Cancellation Email ───────────────────────────────────────
 
 export interface SendSeatNoShowCancellationOptions {
   toEmail: string;
@@ -740,91 +652,65 @@ export const sendSeatNoShowCancellationEmail = async (opts: SendSeatNoShowCancel
     slotName,
     timeRange = "",
     graceMinutes = 15,
-    fineAmount = 0,
-    totalUnpaid = 0,
-    maxUnpaidFineLimit = 0,
+    fineAmount = 50,
+    totalUnpaid = 50,
+    maxUnpaidFineLimit = 200,
   } = opts;
 
-  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
-  const subject = `⚠️ Reservation Released: Seat ${seatNumber} (${zoneName}) — Check-in Window Expired`;
+  const subject = `Notice: Reservation Cancelled (No-Show) — Seat ${seatNumber}`;
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #fed7aa; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #ea580c; color: #ffffff; padding: 26px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.header p { margin: 6px 0 0 0; font-size: 12px; color: #ffedd5; }
-.body { padding: 28px; }
-.box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
-.grid { display: table; width: 100%; margin-bottom: 16px; }
-.col { display: table-cell; width: 50%; padding: 6px; }
-.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
-.meta-val { font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px; }
-.notice { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 14px; font-size: 12px; color: #991b1b; line-height: 1.5; margin-bottom: 20px; }
-.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>Seat Reservation Cancelled</h1>
-    <p>Check-In Grace Period (${graceMinutes} min) Expired</p>
-  </div>
-  <div class="body">
-    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
-    <p style="font-size:13px;color:#475569;line-height:1.5;">
-      Your seat reservation was automatically cancelled and released because no QR check-in scan was recorded within the <strong>${graceMinutes}-minute grace period</strong> of the session start.
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #b91c1c; line-height: 1.3;">
+      Seat Reservation Cancelled — No-Show
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>, your reservation for <strong>Seat ${seatNumber}</strong> was automatically released because check-in was not recorded within the ${graceMinutes}-minute window.
     </p>
-    
-    <div class="box">
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Seat Number</div>
-          <div class="meta-val">${seatNumber}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Study Zone</div>
-          <div class="meta-val">${zoneName}</div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Date</div>
-          <div class="meta-val">${dateStr}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Time Slot</div>
-          <div class="meta-val">${slotDisplay} ${timeRange ? `<span style="font-size:11px;color:#64748b;font-weight:400;">(${timeRange})</span>` : ""}</div>
-        </div>
-      </div>
+
+    <!-- Flat Details Table -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 20px 0;">
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; width: 35%; border-bottom: 1px solid #f3f4f6;">Seat</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #111827; border-bottom: 1px solid #f3f4f6;">${seatNumber} (${zoneName})</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Session</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #111827; border-bottom: 1px solid #f3f4f6;">${dateStr} &middot; ${slotDisplay} ${timeRange ? `(${timeRange})` : ""}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">No-Show Penalty</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #b91c1c; border-bottom: 1px solid #f3f4f6;">${fineAmount} BDT</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280;">Total Unpaid Dues</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #b91c1c;">${totalUnpaid} BDT (Limit: ${maxUnpaidFineLimit} BDT)</td>
+      </tr>
+    </table>
+
+    <div style="background-color: #fef2f2; border-left: 3px solid #dc2626; padding: 12px 16px; margin: 20px 0; font-size: 13px; color: #991b1b; line-height: 1.5;">
+      <strong>Policy Notice:</strong> Unpaid fines may be settled at the library circulation desk or through the student portal. Reaching the ${maxUnpaidFineLimit} BDT threshold will lock further seat bookings.
     </div>
 
-    <div class="notice">
-      ℹ️ <strong>Why did this happen?</strong> To ensure fair seat availability for all university students, unclaimed seats are automatically released after ${graceMinutes} minutes. If you still need a workspace, you can browse available seats and make a new reservation.
-    </div>
-    ${fineAmount > 0 ? `
-    <div class="notice">
-      💰 <strong>No-show fee: ${fineAmount} BDT.</strong> Because the seat was held and left unused, a no-show charge has been added to your library account.
-      ${maxUnpaidFineLimit > 0 ? `Your unpaid dues now total <strong>${totalUnpaid} BDT</strong> of the ${maxUnpaidFineLimit} BDT limit${totalUnpaid >= maxUnpaidFineLimit ? ", so new seat reservations are locked until you settle them" : ""}.` : ""}
-      Settle at the library circulation desk (Cash / Bank Chalan).
-    </div>
-    ` : ""}
-
-    <a href="${frontendUrl}/zones" class="btn">Reserve Another Seat</a>
-  </div>
-  <div class="footer">Smart Library Management System • Automated Policy Enforcer</div>
-</div>
-</body></html>
+    <p style="margin: 20px 0 0 0;">
+      <a href="${frontendUrl}/dashboard/fines" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        View Fines Statement
+      </a>
+    </p>
   `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: subject,
+    preheader: `No-show notice: Reservation for Seat ${seatNumber} was cancelled.`,
+    content,
+  });
 
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
-// ─── 6. Booking Cancelled by Admin / Librarian Email ─────────────────────────
+// ─── 7. Booking Cancelled by Admin Email ───────────────────────────────────────
 
 export interface SendBookingCancelledByAdminOptions {
   toEmail: string;
@@ -833,8 +719,8 @@ export interface SendBookingCancelledByAdminOptions {
   zoneName: string;
   dateStr: string;
   slotName: string;
-  timeRange?: string;
-  cancelReason?: string;
+  cancelReason?: string | null;
+  reason?: string | null;
 }
 
 export const sendBookingCancelledByAdminEmail = async (opts: SendBookingCancelledByAdminOptions) => {
@@ -845,96 +731,71 @@ export const sendBookingCancelledByAdminEmail = async (opts: SendBookingCancelle
     zoneName,
     dateStr,
     slotName,
-    timeRange = "",
-    cancelReason = "Cancelled by Library Administration",
+    cancelReason,
+    reason,
   } = opts;
 
-  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
-  const subject = `ℹ️ Notice: Seat Reservation Cancelled (Seat ${seatNumber} • ${zoneName})`;
+  const finalReason = cancelReason ?? reason;
+  const subject = `Notice: Reservation Cancelled by Administration — Seat ${seatNumber}`;
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #0f172a; color: #ffffff; padding: 26px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.header p { margin: 6px 0 0 0; font-size: 12px; color: #94a3b8; }
-.body { padding: 28px; }
-.box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
-.grid { display: table; width: 100%; margin-bottom: 16px; }
-.col { display: table-cell; width: 50%; padding: 6px; }
-.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
-.meta-val { font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px; }
-.reason-box { background: #fff1f2; border: 1px solid #ffe4e6; border-radius: 12px; padding: 14px; font-size: 13px; color: #9f1239; margin-bottom: 20px; font-weight: 600; }
-.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>Reservation Cancelled</h1>
-    <p>Smart Library Administration Desk</p>
-  </div>
-  <div class="body">
-    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
-    <p style="font-size:13px;color:#475569;line-height:1.5;">
-      Your library seat reservation has been cancelled by the library administrative desk.
-    </p>
-    
-    <div class="box">
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Seat Number</div>
-          <div class="meta-val">${seatNumber}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Study Zone</div>
-          <div class="meta-val">${zoneName}</div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Date</div>
-          <div class="meta-val">${dateStr}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Time Slot</div>
-          <div class="meta-val">${slotDisplay} ${timeRange ? `<span style="font-size:11px;color:#64748b;font-weight:400;">(${timeRange})</span>` : ""}</div>
-        </div>
-      </div>
-    </div>
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Seat Reservation Cancelled by Administration
+    </h1>
 
-    <div class="reason-box">
-      📋 <strong>Cancellation Reason:</strong> ${cancelReason}
-    </div>
-
-    <p style="font-size:12px;color:#64748b;line-height:1.5;margin-bottom:20px;">
-      If you require a study seat, please visit the portal to view live zone availability and reserve another open seat.
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>, your seat reservation has been cancelled by the library administration. No penalty fine was assessed for this cancellation.
     </p>
 
-    <a href="${frontendUrl}/zones" class="btn">Browse Available Study Zones</a>
-  </div>
-  <div class="footer">Smart Library Management System • Administrative Notification</div>
-</div>
-</body></html>
+    <!-- Flat Details Table -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 20px 0;">
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; width: 35%; border-bottom: 1px solid #f3f4f6;">Seat</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #111827; border-bottom: 1px solid #f3f4f6;">${seatNumber} (${zoneName})</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Session</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #111827; border-bottom: 1px solid #f3f4f6;">${dateStr} &middot; ${slotDisplay}</td>
+      </tr>
+      ${finalReason ? `
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280;">Reason Given</td>
+        <td style="padding: 10px 0; font-size: 13px; color: #991b1b; font-weight: 600;">${finalReason}</td>
+      </tr>` : ""}
+    </table>
+
+    <p style="margin: 0 0 20px 0; font-size: 13px; line-height: 1.6; color: #4b5563;">
+      We apologise for any inconvenience caused. You may book another available seat or slot online through the library portal.
+    </p>
+
+    <p style="margin: 0 0 0 0;">
+      <a href="${frontendUrl}/booking" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        Book Another Seat
+      </a>
+    </p>
   `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: subject,
+    preheader: `Your reservation for Seat ${seatNumber} was cancelled by administration.`,
+    content,
+  });
 
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
-// ─── 7. Seat Slot 10-Minute Ending Warning Email ─────────────────────────────
+// ─── 8. Seat Slot Ending Warning Email ────────────────────────────────────────
 
 export interface SendSeatSlotEndingWarningOptions {
   toEmail: string;
   studentName: string;
   seatNumber: string;
   zoneName: string;
-  dateStr: string;
+  dateStr?: string;
   slotName: string;
-  slotEndTimeStr?: string;
+  slotEndTimeStr: string;
   minutesRemaining?: number;
 }
 
@@ -946,95 +807,42 @@ export const sendSeatSlotEndingWarningEmail = async (opts: SendSeatSlotEndingWar
     zoneName,
     dateStr,
     slotName,
-    slotEndTimeStr = "",
-    minutesRemaining = 10,
+    slotEndTimeStr,
+    minutesRemaining = 15,
   } = opts;
 
+  const subject = `Session Ending Soon: ${minutesRemaining} min left — Seat ${seatNumber}`;
   const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
-  const subject = `⏰ Warning: Your Seat Reservation Ends in ${minutesRemaining} Minutes (Seat ${seatNumber})`;
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #fef08a; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #ca8a04; color: #ffffff; padding: 26px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.header p { margin: 6px 0 0 0; font-size: 12px; color: #fef9c3; }
-.body { padding: 28px; }
-.timer-box { background: #fefce8; border: 1px solid #fef08a; border-radius: 14px; padding: 18px; margin-bottom: 20px; text-align: center; }
-.timer-text { font-size: 22px; font-weight: 900; color: #854d0e; }
-.box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
-.grid { display: table; width: 100%; margin-bottom: 16px; }
-.col { display: table-cell; width: 50%; padding: 6px; }
-.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
-.meta-val { font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px; }
-.instructions { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 14px; font-size: 12px; color: #166534; line-height: 1.5; margin-bottom: 20px; }
-.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>Session Ending Soon</h1>
-    <p>Time Slot Expiration Warning (${minutesRemaining} Minutes Remaining)</p>
-  </div>
-  <div class="body">
-    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
-    <p style="font-size:13px;color:#475569;line-height:1.5;">
-      This is an automated reminder that your reserved library seat session for today is ending in <strong>${minutesRemaining} minutes</strong>${slotEndTimeStr ? ` at <strong>${slotEndTimeStr}</strong>` : ""}.
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Study Session Ending Soon
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>, this is a courtesy reminder that your study session at <strong>Seat ${seatNumber}</strong> (${zoneName}${dateStr ? ` on ${dateStr}` : ""}) will conclude in approximately <strong>${minutesRemaining} minutes</strong> (at ${slotEndTimeStr}).
     </p>
-    
-    <div class="timer-box">
-      <div style="font-size:11px;font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:0.5px;">Session Expiring</div>
-      <div class="timer-text">~${minutesRemaining} Minutes Left</div>
-      ${slotEndTimeStr ? `<div style="font-size:12px;color:#854d0e;margin-top:4px;font-weight:600;">Slot Ends At: ${slotEndTimeStr}</div>` : ""}
-    </div>
 
-    <div class="box">
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Seat Number</div>
-          <div class="meta-val">${seatNumber}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Study Zone</div>
-          <div class="meta-val">${zoneName}</div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Date</div>
-          <div class="meta-val">${dateStr}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Time Slot</div>
-          <div class="meta-val">${slotDisplay} Slot</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="instructions">
-      ✅ <strong>Check-Out & Release Reminder:</strong>
-      <ul style="margin:6px 0 0 0;padding-left:18px;">
-        <li>Please start packing your belongings so the desk is clean.</li>
-        <li>Scan your pass at the exit scanner or your seat will be automatically released when the slot finishes so the next student can occupy it.</li>
+    <div style="background-color: #f9fafb; border-left: 3px solid #2563eb; padding: 14px 18px; margin: 20px 0; font-size: 13px; color: #374151; line-height: 1.5;">
+      <strong>Session Wrap-Up Reminder:</strong>
+      <ul style="margin: 6px 0 0 0; padding-left: 18px; color: #4b5563;">
+        <li>Please pack your personal belongings, charging cables, and materials.</li>
+        <li>Leave the seat clean and orderly for the next arriving student.</li>
+        <li>If you wish to continue studying and seats are available, you can book the next slot via the portal.</li>
       </ul>
     </div>
-
-    <a href="${frontendUrl}/bookings" class="btn">View My Reservation Pass</a>
-  </div>
-  <div class="footer">Smart Library Management System • Slot Expiration Monitor</div>
-</div>
-</body></html>
   `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: subject,
+    preheader: `Your session at Seat ${seatNumber} concludes in ${minutesRemaining} minutes.`,
+    content,
+  });
 
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
-// ─── 9. Seat Late Cancellation Fee Email ─────────────────────────────────────
+// ─── 9. Seat Late Cancellation Email ──────────────────────────────────────────
 
 export interface SendSeatLateCancellationOptions {
   toEmail: string;
@@ -1044,9 +852,9 @@ export interface SendSeatLateCancellationOptions {
   dateStr: string;
   slotName: string;
   fineAmount: number;
-  totalUnpaid: number;
-  maxUnpaidFineLimit: number;
-  minutesSinceBooking: number;
+  totalUnpaid?: number;
+  maxUnpaidFineLimit?: number;
+  minutesSinceBooking?: number;
 }
 
 export const sendSeatLateCancellationEmail = async (opts: SendSeatLateCancellationOptions) => {
@@ -1058,111 +866,79 @@ export const sendSeatLateCancellationEmail = async (opts: SendSeatLateCancellati
     dateStr,
     slotName,
     fineAmount,
-    totalUnpaid,
-    maxUnpaidFineLimit,
-    minutesSinceBooking,
+    totalUnpaid = fineAmount,
+    maxUnpaidFineLimit = 200,
   } = opts;
 
-  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
-  const subject = `Late Cancellation Fee: ${fineAmount} BDT — Seat ${seatNumber} (${zoneName})`;
+  const subject = `Notice: Late Cancellation Fee (${fineAmount} BDT) — Seat ${seatNumber}`;
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-  const isLocked = maxUnpaidFineLimit > 0 && totalUnpaid >= maxUnpaidFineLimit;
+  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #fed7aa; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #ea580c; color: #ffffff; padding: 26px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.header p { margin: 6px 0 0 0; font-size: 12px; color: #ffedd5; }
-.body { padding: 28px; }
-.box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
-.grid { display: table; width: 100%; margin-bottom: 16px; }
-.col { display: table-cell; width: 50%; padding: 6px; }
-.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
-.meta-val { font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px; }
-.amount { text-align: center; font-size: 30px; font-weight: 900; color: #ea580c; margin: 4px 0 18px 0; }
-.notice { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 14px; font-size: 12px; color: #991b1b; line-height: 1.5; margin-bottom: 20px; }
-.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>Late Cancellation Fee Applied</h1>
-    <p>Cancelled ${minutesSinceBooking} minute(s) after booking</p>
-  </div>
-  <div class="body">
-    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
-    <p style="font-size:13px;color:#475569;line-height:1.5;">
-      Your reservation was cancelled after the free cancellation window had closed and close to the start of the session, so a late cancellation fee has been charged to your library account.
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #b91c1c; line-height: 1.3;">
+      Notice: Late Cancellation Fee Assessed
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>, your seat reservation was cancelled within the late cancellation window. Per library policy, a late cancellation fee has been applied.
     </p>
 
-    <div class="amount">${fineAmount} BDT</div>
+    <!-- Flat Details Table -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 20px 0;">
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; width: 35%; border-bottom: 1px solid #f3f4f6;">Seat</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #111827; border-bottom: 1px solid #f3f4f6;">${seatNumber} (${zoneName})</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Session</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #111827; border-bottom: 1px solid #f3f4f6;">${dateStr} &middot; ${slotDisplay}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Cancellation Fee</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #b91c1c; border-bottom: 1px solid #f3f4f6;">${fineAmount} BDT</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280;">Current Total Dues</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #b91c1c;">${totalUnpaid} BDT (Limit: ${maxUnpaidFineLimit} BDT)</td>
+      </tr>
+    </table>
 
-    <div class="box">
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Seat Number</div>
-          <div class="meta-val">${seatNumber}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Study Zone</div>
-          <div class="meta-val">${zoneName}</div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Date</div>
-          <div class="meta-val">${dateStr}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Time Slot</div>
-          <div class="meta-val">${slotDisplay}</div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Total Unpaid Dues</div>
-          <div class="meta-val">${totalUnpaid} BDT</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Reservation Limit</div>
-          <div class="meta-val">${maxUnpaidFineLimit} BDT</div>
-        </div>
-      </div>
+    <div style="background-color: #fef2f2; border-left: 3px solid #dc2626; padding: 12px 16px; margin: 20px 0; font-size: 13px; color: #991b1b; line-height: 1.5;">
+      <strong>Note:</strong> To prevent empty seats and ensure fair access, cancellations within 30 minutes of session start incur this fee. You can settle outstanding dues at the circulation desk.
     </div>
 
-    <div class="notice">
-      ${isLocked
-        ? "🔒 <strong>Seat reservations are now locked.</strong> Your unpaid dues have reached the limit. Settle them at the library circulation desk (Cash / Bank Chalan) to restore your reservation privileges."
-        : "ℹ️ Cancel within the free window, or well ahead of your session, to avoid this charge. Settle dues at the library circulation desk (Cash / Bank Chalan)."}
-    </div>
-
-    <a href="${frontendUrl}/bookings" class="btn">View My Bookings</a>
-  </div>
-  <div class="footer">Smart Library Management System • Automated Policy Enforcer</div>
-</div>
-</body></html>
+    <p style="margin: 20px 0 0 0;">
+      <a href="${frontendUrl}/dashboard/fines" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        View Fine Statement
+      </a>
+    </p>
   `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: subject,
+    preheader: `Late cancellation fee of ${fineAmount} BDT for Seat ${seatNumber}.`,
+    content,
+  });
 
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
-// ─── 10. Seat Fine Paid Receipt Email ────────────────────────────────────────
+// ─── 10. Seat Fine Paid Receipt Email ─────────────────────────────────────────
 
 export interface SendSeatFinePaidReceiptOptions {
   toEmail: string;
   studentName: string;
   seatNumber: string;
   zoneName: string;
-  amountPaid: number;
+  dateStr?: string;
+  slotName?: string;
+  fineAmount?: number;
+  amountPaid?: number;
   paymentMethod: string;
   chalanNumber?: string;
-  paidAtStr: string;
-  remainingUnpaid: number;
+  paidDateStr?: string;
+  paidAtStr?: string;
+  remainingUnpaid?: number;
 }
 
 export const sendSeatFinePaidReceiptEmail = async (opts: SendSeatFinePaidReceiptOptions) => {
@@ -1171,195 +947,158 @@ export const sendSeatFinePaidReceiptEmail = async (opts: SendSeatFinePaidReceipt
     studentName,
     seatNumber,
     zoneName,
-    amountPaid,
+    dateStr,
+    slotName,
     paymentMethod,
     chalanNumber,
-    paidAtStr,
-    remainingUnpaid,
   } = opts;
 
-  const methodDisplay = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1).toLowerCase();
-  const subject = `Payment Receipt: ${amountPaid} BDT Seat Reservation Fine Settled`;
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const fineAmount = opts.amountPaid ?? opts.fineAmount ?? 0;
+  const paidDateStr =
+    opts.paidAtStr ||
+    opts.paidDateStr ||
+    new Date().toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #bbf7d0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #16a34a; color: #ffffff; padding: 26px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.header p { margin: 6px 0 0 0; font-size: 12px; color: #dcfce7; }
-.body { padding: 28px; }
-.box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
-.grid { display: table; width: 100%; margin-bottom: 16px; }
-.col { display: table-cell; width: 50%; padding: 6px; }
-.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
-.meta-val { font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px; }
-.amount { text-align: center; font-size: 30px; font-weight: 900; color: #16a34a; margin: 4px 0 18px 0; }
-.notice { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 14px; font-size: 12px; color: #075985; line-height: 1.5; margin-bottom: 20px; }
-.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>Payment Received</h1>
-    <p>Seat Reservation Fine Settled</p>
-  </div>
-  <div class="body">
-    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
-    <p style="font-size:13px;color:#475569;line-height:1.5;">
-      This is your official receipt for the seat reservation fine settled at the library circulation desk.
+  const subject = `Payment Receipt: ${fineAmount} BDT Cleared — Seat Reservation Penalty`;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const slotDisplay = slotName
+    ? slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase()
+    : "";
+  const sessionItem = [
+    `Seat ${seatNumber}`,
+    zoneName ? `(${zoneName})` : "",
+    dateStr ? `· ${dateStr}` : "",
+    slotDisplay ? `· ${slotDisplay}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Official Payment Receipt
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>, your seat reservation fine has been settled and recorded at the circulation desk.
     </p>
 
-    <div class="amount">${amountPaid} BDT</div>
+    <!-- Flat Receipt Table -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 20px 0;">
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; width: 35%; border-bottom: 1px solid #f3f4f6;">Item</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${sessionItem || `Seat ${seatNumber}`}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Payment Date</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #111827; border-bottom: 1px solid #f3f4f6;">${paidDateStr}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Method</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6; text-transform: capitalize;">${paymentMethod} ${chalanNumber ? `(Chalan #${chalanNumber})` : ""}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Amount Settled</td>
+        <td style="padding: 10px 0; font-size: 16px; font-weight: 700; color: #16a34a; border-bottom: 1px solid #f3f4f6;">${fineAmount} BDT</td>
+      </tr>
+      ${
+        opts.remainingUnpaid !== undefined && opts.remainingUnpaid > 0
+          ? `<tr>
+              <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Remaining Fine Balance</td>
+              <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #dc2626; border-bottom: 1px solid #f3f4f6;">${opts.remainingUnpaid} BDT</td>
+            </tr>`
+          : ""
+      }
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280;">Status</td>
+        <td style="padding: 10px 0; font-size: 13px; font-weight: 700; color: #16a34a;">Cleared & Active</td>
+      </tr>
+    </table>
 
-    <div class="box">
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Seat Number</div>
-          <div class="meta-val">${seatNumber}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Study Zone</div>
-          <div class="meta-val">${zoneName}</div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Payment Method</div>
-          <div class="meta-val">${methodDisplay}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Settled At</div>
-          <div class="meta-val">${paidAtStr}</div>
-        </div>
-      </div>
-      ${chalanNumber ? `
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Chalan Number</div>
-          <div class="meta-val">${chalanNumber}</div>
-        </div>
-        <div class="col">
-          <div class="meta-label">Remaining Dues</div>
-          <div class="meta-val">${remainingUnpaid} BDT</div>
-        </div>
-      </div>` : `
-      <div class="grid">
-        <div class="col">
-          <div class="meta-label">Remaining Dues</div>
-          <div class="meta-val">${remainingUnpaid} BDT</div>
-        </div>
-        <div class="col"></div>
-      </div>`}
-    </div>
+    <p style="margin: 0 0 20px 0; font-size: 13px; line-height: 1.6; color: #4b5563;">
+      Your seat reservation privileges are in good standing. Thank you for your cooperation with library policies.
+    </p>
 
-    <div class="notice">
-      ${remainingUnpaid > 0
-        ? `ℹ️ You still have <strong>${remainingUnpaid} BDT</strong> in unpaid library dues. Clear the balance to keep full borrowing and reservation privileges.`
-        : "✅ Your library account is fully clear. Seat reservations and book borrowing are available again."}
-    </div>
-
-    <a href="${frontendUrl}/bookings" class="btn">View My Bookings</a>
-  </div>
-  <div class="footer">Smart Library Management System • Circulation Desk Receipt</div>
-</div>
-</body></html>
+    <p style="margin: 0 0 0 0;">
+      <a href="${frontendUrl}/booking" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        Book a Library Seat
+      </a>
+    </p>
   `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: subject,
+    preheader: `Official receipt: ${fineAmount} BDT cleared for Seat ${seatNumber}.`,
+    content,
+  });
 
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
-// ─── 11. Profile Change Verification Code (OTP) ──────────────────────────────
+// ─── 11. Profile OTP Verification Email (Google Security Style) ───────────────
 
 export interface SendProfileOtpOptions {
   toEmail: string;
   studentName: string;
-  code: string;
-  /** What the code authorises, in plain words, e.g. "change your account email". */
-  purposeLabel: string;
-  expiresInMinutes: number;
+  code?: string;
+  otpCode?: string;
+  purpose?: "email_change" | "password_change";
+  purposeLabel?: string;
+  expiresInMinutes?: number;
 }
 
 export const sendProfileOtpEmail = async (opts: SendProfileOtpOptions) => {
-  const { toEmail, studentName, code, purposeLabel, expiresInMinutes } = opts;
+  const { toEmail, studentName, purpose } = opts;
+  const otpCode = opts.code || opts.otpCode || "";
+  const purposeLabel =
+    opts.purposeLabel ||
+    (purpose === "email_change" ? "Email Address Update" : "Password Reset / Security Update");
+  const expiresInMinutes = opts.expiresInMinutes || 10;
 
-  const subject = `Your Smart Library verification code: ${code}`;
+  const subject = `${otpCode} is your Daffodil International University Library verification code`;
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #0f172a; color: #ffffff; padding: 26px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.header p { margin: 6px 0 0 0; font-size: 12px; color: #cbd5e1; }
-.body { padding: 28px; }
-.code { text-align: center; font-size: 34px; letter-spacing: 10px; font-weight: 900; color: #0f172a; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 0; margin: 4px 0 18px 0; }
-.notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; font-size: 12px; color: #92400e; line-height: 1.5; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>Verification Code</h1>
-    <p>Smart Library Management</p>
-  </div>
-  <div class="body">
-    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
-    <p style="font-size:13px;color:#475569;line-height:1.5;">
-      Use the code below to ${purposeLabel}. It expires in ${expiresInMinutes} minutes and can be used once.
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Security Verification Code
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Hello <strong>${studentName}</strong>,
     </p>
-    <div class="code">${code}</div>
-    <div class="notice">
-      If you did not request this change, ignore this email and consider changing your password.
-      Library staff will never ask you for this code.
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      We received a request for <strong>${purposeLabel}</strong> associated with your university library account. Use the verification code below to proceed:
+    </p>
+
+    <!-- Google-style Flat OTP box -->
+    <div style="margin: 24px 0; padding: 18px 24px; background-color: #f9fafb; border: 1px solid #e5e7eb; text-align: center;">
+      <span style="font-family: Consolas, 'SF Mono', Monaco, 'Roboto Mono', monospace; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #111827;">${otpCode}</span>
     </div>
-  </div>
-  <div class="footer">Smart Library Management &middot; Automated message, do not reply</div>
-</div>
-</body>
-</html>`;
+
+    <p style="margin: 0 0 16px 0; font-size: 13px; line-height: 1.5; color: #6b7280;">
+      This single-use code is valid for <strong>${expiresInMinutes} minutes</strong>.
+    </p>
+
+    <div style="background-color: #fffbeb; border-left: 3px solid #d97706; padding: 12px 16px; margin: 20px 0; font-size: 13px; color: #92400e; line-height: 1.5;">
+      <strong>Security Notice:</strong> If you did not initiate this request, no action is needed and you can safely ignore this message. Never share this verification code with anyone; library staff will never request it.
+    </div>
+  `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: subject,
+    preheader: `Your verification code is ${otpCode}. Valid for ${expiresInMinutes} minutes.`,
+    content,
+  });
 
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
-// ─── 12. Faculty Account Lifecycle ───────────────────────────────────────────
-
-const facultyEmailShell = (heading: string, subheading: string, inner: string) => `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/><style>
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
-.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-.header { background: #0f172a; color: #ffffff; padding: 26px; text-align: center; }
-.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-.header p { margin: 6px 0 0 0; font-size: 12px; color: #cbd5e1; }
-.body { padding: 28px; font-size: 13px; color: #475569; line-height: 1.6; }
-.body p { margin: 0 0 12px 0; }
-.detail { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-size: 12px; color: #0f172a; }
-.detail div { margin: 3px 0; }
-.notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; font-size: 12px; color: #92400e; }
-.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
-</style></head>
-<body>
-<div class="card">
-  <div class="header">
-    <h1>${heading}</h1>
-    <p>${subheading}</p>
-  </div>
-  <div class="body">${inner}</div>
-  <div class="footer">Smart Library Management &middot; Automated message, do not reply</div>
-</div>
-</body>
-</html>`;
+// ─── 12. Faculty Account Lifecycle (Formal Institutional Correspondence) ─────
 
 export interface SendFacultyPendingApprovalOptions {
-  /** Library staff addresses that review faculty signups. */
   toEmails: string[];
   facultyName: string;
   facultyEmail: string;
@@ -1373,21 +1112,63 @@ export const sendFacultyPendingApprovalEmail = async (opts: SendFacultyPendingAp
   const { toEmails, facultyName, facultyEmail, facultyId, department, designation } = opts;
   if (toEmails.length === 0) return;
 
-  const htmlContent = facultyEmailShell(
-    "Faculty Approval Pending",
-    "Smart Library Management",
-    `
-    <p>A faculty account has verified its email address and is waiting for approval.</p>
-    <div class="detail">
-      <div><strong>Name:</strong> ${facultyName}</div>
-      <div><strong>Email:</strong> ${facultyEmail}</div>
-      <div><strong>Faculty ID:</strong> ${facultyId || "—"}</div>
-      <div><strong>Department:</strong> ${department || "—"}</div>
-      <div><strong>Designation:</strong> ${designation || "—"}</div>
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Faculty Membership Registration Awaiting Review
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Dear Library Administrator,
+    </p>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      A new faculty member has verified their institutional email address and submitted their registration for library membership. The application is now pending your administrative review.
+    </p>
+
+    <!-- Flat Details Table -->
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 20px 0;">
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; width: 35%; border-bottom: 1px solid #f3f4f6;">Faculty Name</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${facultyName}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Institutional Email</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${facultyEmail}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Faculty ID</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${facultyId || "—"}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Department</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${department || "—"}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280;">Designation</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827;">${designation || "—"}</td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 24px 0;">
+      <a href="${frontendUrl}/admin/settings" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        Review in Admin Console
+      </a>
+    </p>
+
+    <div style="margin-top: 28px; line-height: 1.6; color: #374151; font-size: 14px;">
+      Best regards,<br/>
+      <strong>Library Admin Panel,</strong><br/>
+      Daffodil International University.
     </div>
-    <p style="margin-top:14px;">Review the request under Admin &rsaquo; Approvals to approve or reject it.</p>
-  `
-  );
+  `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: `Faculty approval pending: ${facultyName}`,
+    preheader: `New faculty registration submitted by ${facultyName} (${department || "Academic Faculty"}).`,
+    content,
+  });
 
   return Promise.all(
     toEmails.map((toEmail) =>
@@ -1403,42 +1184,129 @@ export interface SendFacultyDecisionOptions {
   reason?: string | null;
 }
 
-/** Confirms to the applicant that the faculty account is now usable. */
+/**
+ * Confirms to the faculty member that their account is approved.
+ * Structured as a formal institutional welcome letter outlining all faculty facilities.
+ */
 export const sendFacultyApprovedEmail = async (opts: SendFacultyDecisionOptions) => {
-  const htmlContent = facultyEmailShell(
-    "Faculty Account Approved",
-    "Smart Library Management",
-    `
-    <p>Hello <strong>${opts.facultyName}</strong>,</p>
-    <p>Your faculty account is approved. You can sign in now.</p>
-    <div class="detail">
-      <div>Seat reservations are never auto-cancelled for a missed check-in.</div>
-      <div>Reservation and overdue fines do not apply to your account.</div>
-      <div>Extended borrowing period and borrow limit are active.</div>
-      <div>You can petition an admin to waive a student's fine.</div>
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+
+  const content = `
+    <h1 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Official Approval of Faculty Library Membership
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Dear ${opts.facultyName},
+    </p>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      We are pleased to inform you that your faculty library membership account at Daffodil International University has been officially reviewed, verified, and approved by the Library Administration.
+    </p>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Your account is now fully active. As an esteemed faculty member, you have unrestricted access to our institutional collections, physical study spaces, research databases, and faculty-exclusive facilities:
+    </p>
+
+    <!-- Faculty Facilities and Privileges (Flat clean callout) -->
+    <div style="background-color: #f9fafb; border-left: 3px solid #2563eb; padding: 18px 22px; margin: 22px 0;">
+      <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #111827;">
+        Your Faculty Privileges & Facilities:
+      </p>
+      <ul style="margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; color: #374151;">
+        <li style="margin-bottom: 8px;">
+          <strong>Exemption from Seat Booking Fines & Cancellation:</strong> Your study seat reservations are never auto-cancelled due to missed check-in windows, and no cancellation or no-show penalties will apply to your account.
+        </li>
+        <li style="margin-bottom: 8px;">
+          <strong>Zero Overdue Fines on Book Loans:</strong> Academic literature, textbooks, and research monographs are completely exempt from daily overdue fines upon return.
+        </li>
+        <li style="margin-bottom: 8px;">
+          <strong>Enhanced Borrowing Quotas & Durations:</strong> Benefit from an expanded borrowing quota with extended loan terms tailored for teaching and academic research.
+        </li>
+        <li style="margin-bottom: 8px;">
+          <strong>Student Fine Waiver Sponsorship:</strong> You are authorized to formally petition and sponsor fine waivers on behalf of students experiencing verified extenuating circumstances or emergencies.
+        </li>
+        <li style="margin-bottom: 4px;">
+          <strong>Priority Access to Research Spaces:</strong> Priority reservation privileges across quiet study pods, conference halls, digital workstations, and faculty reading areas.
+        </li>
+      </ul>
     </div>
-  `
-  );
+
+    <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      You may now sign in to the Smart Library Portal using your institutional credentials:
+    </p>
+
+    <p style="margin: 0 0 24px 0;">
+      <a href="${frontendUrl}/auth/login" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 11px 22px; border-radius: 4px; text-decoration: none;">
+        Sign In to Library Portal
+      </a>
+    </p>
+
+    <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Should you require specialized curriculum reserves, research literature procurement, or inter-library loan services, please feel free to reach out to the library administration or visit the circulation counter.
+    </p>
+
+    <div style="margin-top: 28px; line-height: 1.6; color: #374151; font-size: 14px;">
+      Best regards,<br/>
+      <strong>Library Admin Panel,</strong><br/>
+      Daffodil International University.
+    </div>
+  `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: "Your Faculty Account is Approved",
+    preheader: `Dear ${opts.facultyName}, your Daffodil International University faculty library account has been approved.`,
+    content,
+  });
 
   return sendHtmlEmail(opts.toEmail, "Your faculty account is approved", htmlContent);
 };
 
 /** Tells the applicant the faculty request was declined, with the stated reason. */
 export const sendFacultyRejectedEmail = async (opts: SendFacultyDecisionOptions) => {
-  const htmlContent = facultyEmailShell(
-    "Faculty Request Declined",
-    "Smart Library Management",
-    `
-    <p>Hello <strong>${opts.facultyName}</strong>,</p>
-    <p>Your faculty account request was not approved.</p>
-    <div class="notice">${opts.reason || "No reason was recorded. Contact the library office for details."}</div>
-  `
-  );
+  const content = `
+    <h1 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Update on Faculty Library Membership Application
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Dear ${opts.facultyName},
+    </p>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Thank you for applying for a faculty library membership account at Daffodil International University.
+    </p>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Following an administrative review of the submitted registration details, we regret to inform you that your faculty account request could not be approved at this time.
+    </p>
+
+    <div style="background-color: #fef2f2; border-left: 3px solid #dc2626; padding: 14px 18px; margin: 20px 0; font-size: 13px; color: #991b1b; line-height: 1.5;">
+      <strong>Reason for Decision:</strong><br/>
+      ${opts.reason || "The submitted institutional credentials or faculty designation could not be verified with university records."}
+    </div>
+
+    <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      If you believe this determination was made in error or if you wish to provide updated verification documentation from your department, please contact the Library Help Desk or visit the administrative office.
+    </p>
+
+    <div style="margin-top: 28px; line-height: 1.6; color: #374151; font-size: 14px;">
+      Best regards,<br/>
+      <strong>Library Admin Panel,</strong><br/>
+      Daffodil International University.
+    </div>
+  `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: "Your Faculty Account Request Was Declined",
+    preheader: `Dear ${opts.facultyName}, update regarding your faculty library account application.`,
+    content,
+  });
 
   return sendHtmlEmail(opts.toEmail, "Your faculty account request was declined", htmlContent);
 };
 
-// ─── 13. Fine Waiver Petitions ───────────────────────────────────────────────
+// ─── 13. Fine Waiver Petitions ────────────────────────────────────────────────
 
 export interface SendWaiverRequestedOptions {
   toEmails: string[];
@@ -1454,19 +1322,62 @@ export const sendWaiverRequestedEmail = async (opts: SendWaiverRequestedOptions)
   const { toEmails, facultyName, targetName, amount, reason, fineType } = opts;
   if (toEmails.length === 0) return;
 
-  const htmlContent = facultyEmailShell(
-    "Fine Waiver Requested",
-    "Smart Library Management",
-    `
-    <p><strong>${facultyName}</strong> requested a waiver of a ${fineType} fine.</p>
-    <div class="detail">
-      <div><strong>Student:</strong> ${targetName}</div>
-      <div><strong>Amount:</strong> ${amount} BDT</div>
-      <div><strong>Reason:</strong> ${reason}</div>
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Faculty Fine Waiver Petition Submitted
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Dear Library Administrator,
+    </p>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Faculty member <strong>${facultyName}</strong> has submitted an official petition requesting a waiver for a student's ${fineType} fine.
+    </p>
+
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; margin: 20px 0;">
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; width: 35%; border-bottom: 1px solid #f3f4f6;">Sponsoring Faculty</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${facultyName}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Student Recipient</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #111827; border-bottom: 1px solid #f3f4f6;">${targetName}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Fine Type</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #111827; border-bottom: 1px solid #f3f4f6; text-transform: capitalize;">${fineType}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280; border-bottom: 1px solid #f3f4f6;">Amount</td>
+        <td style="padding: 10px 0; font-size: 14px; font-weight: 700; color: #111827; border-bottom: 1px solid #f3f4f6;">${amount} BDT</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #6b7280;">Stated Justification</td>
+        <td style="padding: 10px 0; font-size: 13px; color: #374151;">${reason}</td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 24px 0;">
+      <a href="${frontendUrl}/admin/fines" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 4px; text-decoration: none;">
+        Decide Request in Admin Console
+      </a>
+    </p>
+
+    <div style="margin-top: 28px; line-height: 1.6; color: #374151; font-size: 14px;">
+      Best regards,<br/>
+      <strong>Library Admin Panel,</strong><br/>
+      Daffodil International University.
     </div>
-    <p style="margin-top:14px;">Decide the request under Admin &rsaquo; Waivers.</p>
-  `
-  );
+  `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: `Fine waiver requested for ${targetName}`,
+    preheader: `${facultyName} requested a waiver of ${amount} BDT for ${targetName}.`,
+    content,
+  });
 
   return Promise.all(
     toEmails.map((toEmail) =>
@@ -1488,18 +1399,44 @@ export interface SendWaiverDecisionOptions {
 export const sendWaiverDecisionEmail = async (opts: SendWaiverDecisionOptions) => {
   const { toEmail, recipientName, targetName, amount, approved, decisionNote } = opts;
 
-  const htmlContent = facultyEmailShell(
-    approved ? "Fine Waiver Approved" : "Fine Waiver Declined",
-    "Smart Library Management",
-    `
-    <p>Hello <strong>${recipientName}</strong>,</p>
-    <p>
-      The ${amount} BDT fine waiver you requested for <strong>${targetName}</strong> was
-      ${approved ? "approved. The fine is cleared." : "declined. The fine still stands."}
+  const content = `
+    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #111827; line-height: 1.3;">
+      Update on Student Fine Waiver Petition
+    </h1>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      Dear ${recipientName},
     </p>
-    ${decisionNote ? `<div class="notice">${decisionNote}</div>` : ""}
-  `
-  );
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">
+      The ${amount} BDT fine waiver you petitioned for <strong>${targetName}</strong> has been
+      <strong>${approved ? "approved and cleared" : "declined"}</strong> by the library administration.
+    </p>
+
+    ${
+      approved
+        ? `<div style="background-color: #f0fdf4; border-left: 3px solid #16a34a; padding: 12px 16px; margin: 20px 0; font-size: 13px; color: #166534;">
+             <strong>Decision:</strong> The ${amount} BDT penalty has been completely waived on the student's record.
+             ${decisionNote ? `<br/><span style="color:#15803d;margin-top:4px;display:inline-block;">Note: ${decisionNote}</span>` : ""}
+           </div>`
+        : `<div style="background-color: #fef2f2; border-left: 3px solid #dc2626; padding: 12px 16px; margin: 20px 0; font-size: 13px; color: #991b1b;">
+             <strong>Decision:</strong> The waiver request was declined. The fine remains outstanding on the student's record.
+             ${decisionNote ? `<br/><span style="color:#b91c1c;margin-top:4px;display:inline-block;">Reason: ${decisionNote}</span>` : ""}
+           </div>`
+    }
+
+    <div style="margin-top: 28px; line-height: 1.6; color: #374151; font-size: 14px;">
+      Best regards,<br/>
+      <strong>Library Admin Panel,</strong><br/>
+      Daffodil International University.
+    </div>
+  `;
+
+  const htmlContent = buildFlatEmailShell({
+    title: approved ? `Fine waiver approved for ${targetName}` : `Fine waiver declined for ${targetName}`,
+    preheader: `Update on the ${amount} BDT fine waiver petition for ${targetName}.`,
+    content,
+  });
 
   return sendHtmlEmail(
     toEmail,
@@ -1507,6 +1444,8 @@ export const sendWaiverDecisionEmail = async (opts: SendWaiverDecisionOptions) =
     htmlContent
   );
 };
+
+// ─── Export Email Service Object ──────────────────────────────────────────────
 
 export const emailService = {
   sendBookingConfirmationEmail,
@@ -1527,3 +1466,4 @@ export const emailService = {
   sendWaiverDecisionEmail,
 };
 
+export default emailService;

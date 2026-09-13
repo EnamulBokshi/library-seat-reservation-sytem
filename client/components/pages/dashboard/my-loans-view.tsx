@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { loanService } from "@/services/loan-service";
+import { useAuth } from "@/context/auth-context";
 import { ApiError, StudentLoanSummary, BookLoan } from "@/lib/types";
 import {
   BookOpen,
@@ -17,6 +18,7 @@ import {
   DollarSign,
   Receipt,
   Building,
+  GraduationCap,
   X,
 } from "lucide-react";
 
@@ -29,6 +31,9 @@ export function MyLoansView() {
   const [renewingLoanId, setRenewingLoanId] = useState<string | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
   const [actionErrorMsg, setActionErrorMsg] = useState<string | null>(null);
+
+  const { user } = useAuth();
+  const isFaculty = user?.role === "faculty" || Boolean(summary?.quota?.isFaculty);
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<"active" | "pending" | "fines" | "history">("active");
@@ -64,9 +69,9 @@ export function MyLoansView() {
       const res = await loanService.renewLoan(loan.id);
       if (res.success && res.data) {
         setActionSuccessMsg(
-          `Successfully renewed "${loan.book?.title}"! New due date is ${new Date(
+          `Book renewed successfully! New due date: ${new Date(
             res.data.dueDate
-          ).toLocaleDateString()}.`
+          ).toLocaleDateString()}`
         );
         fetchLoans();
         setTimeout(() => setActionSuccessMsg(null), 5000);
@@ -87,9 +92,9 @@ export function MyLoansView() {
     return diffDays;
   };
 
-  const hasUnpaidFines = summary?.fines?.hasUnpaidDues || false;
-  const totalDueBDT = summary?.fines?.totalDueBDT || 0;
-  const totalPaidBDT = summary?.fines?.totalPaidBDT || 0;
+  const hasUnpaidFines = !isFaculty && (summary?.fines?.hasUnpaidDues || false);
+  const totalDueBDT = isFaculty ? 0 : summary?.fines?.totalDueBDT || 0;
+  const totalPaidBDT = isFaculty ? 0 : summary?.fines?.totalPaidBDT || 0;
 
   return (
     <div className="text-slate-900 pb-20">
@@ -98,13 +103,15 @@ export function MyLoansView() {
           <div className="px-5 sm:px-6 py-6">
             <div className="flex flex-col md:flex-row md:items-center justify-end gap-6">
               <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={() => setIsChalanModalOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50 shadow-sm transition-all"
-                >
-                  <Building className="w-4 h-4 text-indigo-600" />
-                  Bank Chalan Info
-                </button>
+                {!isFaculty && (
+                  <button
+                    onClick={() => setIsChalanModalOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50 shadow-sm transition-all"
+                  >
+                    <Building className="w-4 h-4 text-indigo-600" />
+                    Bank Chalan Info
+                  </button>
+                )}
 
                 <Link
                   href="/books"
@@ -116,8 +123,8 @@ export function MyLoansView() {
               </div>
             </div>
 
-            {/* ── Unpaid Fine Warning Banner ── */}
-            {hasUnpaidFines && (
+            {/* ── Unpaid Fine Warning Banner (Students only) ── */}
+            {hasUnpaidFines && !isFaculty && (
               <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-rose-50 border border-rose-200 shadow-sm text-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
@@ -148,68 +155,121 @@ export function MyLoansView() {
             )}
 
             {/* ── Stat KPI Cards ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Currently Borrowed</span>
-                  <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
-                    <BookOpen className="w-4 h-4" />
+            {isFaculty ? (
+              /* Faculty KPIs: Zero restrictions, no fines */
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Currently Borrowed</span>
+                    <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
+                      <BookOpen className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 mt-2">
+                    {summary?.activeLoans.length ?? 0}{" "}
+                    <span className="text-xs text-slate-400 font-bold">Books</span>
+                  </div>
+                  <div className="text-xs font-semibold text-purple-700 mt-1 flex items-center gap-1">
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    Faculty Privilege • Unlimited Borrowing
                   </div>
                 </div>
-                <div className="text-2xl font-black text-slate-900 mt-2">
-                  {summary?.quota.currentlyBorrowed ?? 0}{" "}
-                  <span className="text-xs text-slate-400 font-bold">/ {summary?.quota.maxBorrowLimit ?? 3} Books</span>
-                </div>
-                <div className="text-xs font-semibold text-indigo-600 mt-1">
-                  {summary?.quota.availableQuota ?? 3} slots available
-                </div>
-              </div>
 
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Pending Requests</span>
-                  <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">
-                    <Clock className="w-4 h-4" />
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Pending Requests</span>
+                    <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 mt-2">
+                    {summary?.pendingRequests.length ?? 0}
+                  </div>
+                  <div className="text-xs font-semibold text-amber-600 mt-1">
+                    Awaiting desk approval
                   </div>
                 </div>
-                <div className="text-2xl font-black text-slate-900 mt-2">
-                  {summary?.pendingRequests.length ?? 0}
-                </div>
-                <div className="text-xs font-semibold text-amber-600 mt-1">
-                  Awaiting desk approval
-                </div>
-              </div>
 
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Overdue Dues</span>
-                  <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs">
-                    <DollarSign className="w-4 h-4" />
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Loan History</span>
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                      <History className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 mt-2">
+                    {summary?.returnedHistory.length ?? 0}
+                  </div>
+                  <div className="text-xs font-semibold text-emerald-600 mt-1">
+                    Completed book loans
                   </div>
                 </div>
-                <div className="text-2xl font-black text-rose-600 mt-2">
-                  {totalDueBDT} <span className="text-sm font-bold text-rose-700">BDT</span>
-                </div>
-                <div className="text-xs font-semibold text-rose-600 mt-1">
-                  {hasUnpaidFines ? "Suspended (Clear dues)" : "Account in good standing"}
-                </div>
               </div>
+            ) : (
+              /* Student KPIs: Standard Quota + Fines */
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Currently Borrowed</span>
+                    <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                      <BookOpen className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 mt-2">
+                    {summary?.quota.currentlyBorrowed ?? 0}{" "}
+                    <span className="text-xs text-slate-400 font-bold">/ {summary?.quota.maxBorrowLimit ?? 3} Books</span>
+                  </div>
+                  <div className="text-xs font-semibold text-indigo-600 mt-1">
+                    {summary?.quota.availableQuota ?? 3} slots available
+                  </div>
+                </div>
 
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Cleared Fines</span>
-                  <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
-                    <Receipt className="w-4 h-4" />
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Pending Requests</span>
+                    <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900 mt-2">
+                    {summary?.pendingRequests.length ?? 0}
+                  </div>
+                  <div className="text-xs font-semibold text-amber-600 mt-1">
+                    Awaiting desk approval
                   </div>
                 </div>
-                <div className="text-2xl font-black text-emerald-600 mt-2">
-                  {totalPaidBDT} <span className="text-sm font-bold text-emerald-700">BDT</span>
+
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Overdue Dues</span>
+                    <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs">
+                      <DollarSign className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-black text-rose-600 mt-2">
+                    {totalDueBDT} <span className="text-sm font-bold text-rose-700">BDT</span>
+                  </div>
+                  <div className="text-xs font-semibold text-rose-600 mt-1">
+                    {hasUnpaidFines ? "Suspended (Clear dues)" : "Account in good standing"}
+                  </div>
                 </div>
-                <div className="text-xs font-semibold text-emerald-600 mt-1">
-                  {summary?.fines?.paidFines.length ?? 0} transaction(s) verified
+
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Cleared Fines</span>
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                      <Receipt className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-black text-emerald-600 mt-2">
+                    {totalPaidBDT} <span className="text-sm font-bold text-emerald-700">BDT</span>
+                  </div>
+                  <div className="text-xs font-semibold text-emerald-600 mt-1">
+                    {summary?.fines?.paidFines.length ?? 0} transaction(s) verified
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -256,22 +316,24 @@ export function MyLoansView() {
                 Borrow Requests ({summary?.pendingRequests.length ?? 0})
               </button>
 
-              <button
-                onClick={() => setActiveTab("fines")}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
-                  activeTab === "fines"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                }`}
-              >
-                <Receipt className="w-4 h-4" />
-                Fines & Settlements
-                {hasUnpaidFines && (
-                  <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[10px] font-black rounded-full">
-                    {totalDueBDT} Tk
-                  </span>
-                )}
-              </button>
+              {!isFaculty && (
+                <button
+                  onClick={() => setActiveTab("fines")}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+                    activeTab === "fines"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                  }`}
+                >
+                  <Receipt className="w-4 h-4" />
+                  Fines & Settlements
+                  {hasUnpaidFines && (
+                    <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[10px] font-black rounded-full">
+                      {totalDueBDT} Tk
+                    </span>
+                  )}
+                </button>
+              )}
 
               <button
                 onClick={() => setActiveTab("history")}
@@ -407,8 +469,8 @@ export function MyLoansView() {
                             </span>
                           </div>
 
-                          {/* Overdue Fine Tag if Overdue */}
-                          {isOverdue && loan.fineAmount > 0 && (
+                          {/* Overdue Fine Tag if Overdue (Students only) */}
+                          {!isFaculty && isOverdue && loan.fineAmount > 0 && (
                             <div className="mt-3 p-3 bg-rose-50 rounded-2xl border border-rose-200 text-xs text-rose-800 font-bold flex items-center justify-between">
                               <span>Accumulated Late Fine:</span>
                               <span className="text-sm font-black text-rose-900">{loan.fineAmount} BDT</span>

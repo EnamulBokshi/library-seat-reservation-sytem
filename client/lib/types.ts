@@ -103,6 +103,7 @@ export interface NavBadgeCounts {
   pendingApprovals: number;
   pendingWaivers: number;
   activeBookings: number;
+  pendingBorrowRequests: number;
   unpaidFines: number;
   myPendingWaivers: number;
   myUnpaidFines: number;
@@ -578,6 +579,9 @@ export interface BookLoan {
     name: string;
     email: string;
     studentId?: string | null;
+    facultyId?: string | null;
+    role?: Role;
+    department?: string | null;
   };
 }
 
@@ -588,6 +592,8 @@ export interface StudentLoanSummary {
     currentlyBorrowed: number;
     pendingRequests: number;
     availableQuota: number;
+    isFaculty?: boolean;
+    isUnlimited?: boolean;
   };
   fines: {
     totalDueBDT: number;
@@ -884,4 +890,53 @@ export interface StudentFineLookup {
   student: WaiverPartyRef & { role: Role };
   fines: PetitionableFine[];
   totalUnpaid: number;
+}
+
+// ─── Admin User Management ───────────────────────────────────────────────────
+
+export type UserSortField = "createdAt" | "name" | "email" | "role" | "isActive";
+
+export interface UserStats {
+  totalUsers: number;
+  activeUsers: number;
+  suspendedUsers: number;
+  superAdmins: number;
+  admins: number;
+  librarians: number;
+  faculty: number;
+  students: number;
+}
+
+export interface ListUsersParams {
+  page?: number;
+  limit?: number;
+  role?: string;
+  isActive?: boolean;
+  approvalStatus?: string;
+  searchTerm?: string;
+  sortBy?: UserSortField;
+  sortOrder?: "asc" | "desc";
+}
+
+export interface CreateUserPayload {
+  name: string;
+  email: string;
+  password: string;
+  role: Role;
+  studentId?: string | null;
+  facultyId?: string | null;
+  department?: string | null;
+  designation?: string | null;
+  isActive?: boolean;
+}
+
+export interface AdminUpdateUserPayload {
+  name?: string;
+  role?: Role;
+  isActive?: boolean;
+  studentId?: string | null;
+  facultyId?: string | null;
+  department?: string | null;
+  designation?: string | null;
+  password?: string;
 }

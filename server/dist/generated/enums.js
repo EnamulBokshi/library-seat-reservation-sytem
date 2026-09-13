@@ -25,6 +25,7 @@ exports.TableType = {
     workstation_bench: 'workstation_bench'
 };
 exports.Role = {
+    super_admin: 'super_admin',
     admin: 'admin',
     librarian: 'librarian',
     student: 'student',

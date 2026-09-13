@@ -698,7 +698,13 @@ const adminRenewLoan = async (loanId: string, payload: IAdminRenewPayload) => {
  * Student personal loans, quotas, and fines summary
  */
 const getMyLoans = async (userId: string) => {
-  const { maxBorrowLimit, maxRenewalLimit } = await SettingService.getBorrowConfig();
+  const [borrowConfig, privileges] = await Promise.all([
+    SettingService.getBorrowConfig(),
+    getUserPrivileges(userId),
+  ]);
+
+  const maxBorrowLimit = privileges.isFaculty ? privileges.maxBorrowLimit : borrowConfig.maxBorrowLimit;
+  const maxRenewalLimit = borrowConfig.maxRenewalLimit;
 
   const allLoans = await prisma.bookLoan.findMany({
     where: { userId },
@@ -712,14 +718,19 @@ const getMyLoans = async (userId: string) => {
   const pendingRequests = allLoans.filter((loan) => loan.status === LoanStatus.requested);
   const returnedHistory = allLoans.filter((loan) => loan.status === LoanStatus.returned);
 
-  const unpaidFines = allLoans.filter((l) => l.fineStatus === FineStatus.unpaid && l.fineAmount > 0);
-  const paidFines = allLoans.filter((l) => l.fineStatus === FineStatus.paid && l.fineAmount > 0);
+  // Faculty accounts are completely exempt from overdue loan fines
+  const unpaidFines = privileges.exemptLoanFines
+    ? []
+    : allLoans.filter((l) => l.fineStatus === FineStatus.unpaid && l.fineAmount > 0);
+  const paidFines = privileges.exemptLoanFines
+    ? []
+    : allLoans.filter((l) => l.fineStatus === FineStatus.paid && l.fineAmount > 0);
 
   const totalDueBDT = unpaidFines.reduce((sum, l) => sum + l.fineAmount, 0);
   const totalPaidBDT = paidFines.reduce((sum, l) => sum + l.fineAmount, 0);
 
   const currentlyBorrowed = activeLoans.length + pendingRequests.length;
-  const availableQuota = Math.max(0, maxBorrowLimit - currentlyBorrowed);
+  const availableQuota = privileges.isFaculty ? 999 : Math.max(0, maxBorrowLimit - currentlyBorrowed);
 
   return {
     quota: {
@@ -728,6 +739,8 @@ const getMyLoans = async (userId: string) => {
       currentlyBorrowed,
       pendingRequests: pendingRequests.length,
       availableQuota,
+      isFaculty: privileges.isFaculty,
+      isUnlimited: privileges.isFaculty,
     },
     fines: {
       totalDueBDT,
@@ -804,7 +817,7 @@ const getAllLoans = async (options: ILoanFilterOptions) => {
       include: {
         book: true,
         user: {
-          select: { id: true, name: true, email: true, studentId: true },
+          select: { id: true, name: true, email: true, studentId: true, facultyId: true, role: true, department: true },
         },
       },
       skip,

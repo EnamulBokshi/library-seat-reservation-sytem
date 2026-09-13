@@ -1,5 +1,5 @@
 import prisma from "../../lib/prisma";
-import { ApprovalStatus, BookingStatus, FineStatus, Role, WaiverRequestStatus } from "../../generated/enums";
+import { ApprovalStatus, BookingStatus, FineStatus, LoanStatus, Role, WaiverRequestStatus } from "../../generated/enums";
 import { INavBadgeCounts } from "./dashboard.interface";
 
 const EMPTY_COUNTS: INavBadgeCounts = {
@@ -8,6 +8,7 @@ const EMPTY_COUNTS: INavBadgeCounts = {
     activeBookings: 0,
     unpaidFines: 0,
     myPendingWaivers: 0,
+    pendingBorrowRequests: 0,
     myUnpaidFines: 0,
 };
 
@@ -25,8 +26,9 @@ const todayDate = (): Date => {
  * whole navigation.
  */
 const getNavBadgeCounts = async (userId: string, role: Role): Promise<INavBadgeCounts> => {
-    const isAdmin = role === Role.admin;
+    const isAdmin = role === Role.admin || (role as string) === "super_admin";
     const isStaff = isAdmin || role === Role.librarian;
+    const isFaculty = role === Role.faculty;
 
     const settle = async (enabled: boolean, query: () => Promise<number>): Promise<number> => {
         if (!enabled) {
@@ -44,6 +46,7 @@ const getNavBadgeCounts = async (userId: string, role: Role): Promise<INavBadgeC
         pendingApprovals,
         pendingWaivers,
         activeBookings,
+        pendingBorrowRequests,
         unpaidSeatFines,
         unpaidLoanFines,
         myPendingWaivers,
@@ -71,6 +74,13 @@ const getNavBadgeCounts = async (userId: string, role: Role): Promise<INavBadgeC
             })
         ),
         settle(isStaff, () =>
+            prisma.bookLoan.count({
+                where: {
+                    status: LoanStatus.requested,
+                },
+            })
+        ),
+        settle(isStaff, () =>
             prisma.booking.count({
                 where: { fineStatus: FineStatus.unpaid, fineAmount: { gt: 0 } },
             })
@@ -80,17 +90,17 @@ const getNavBadgeCounts = async (userId: string, role: Role): Promise<INavBadgeC
                 where: { fineStatus: FineStatus.unpaid, fineAmount: { gt: 0 } },
             })
         ),
-        settle(role === Role.faculty, () =>
+        settle(isFaculty, () =>
             prisma.fineWaiverRequest.count({
                 where: { requestedById: userId, status: WaiverRequestStatus.pending },
             })
         ),
-        settle(true, () =>
+        settle(!isFaculty, () =>
             prisma.booking.count({
                 where: { userId, fineStatus: FineStatus.unpaid, fineAmount: { gt: 0 } },
             })
         ),
-        settle(true, () =>
+        settle(!isFaculty, () =>
             prisma.bookLoan.count({
                 where: { userId, fineStatus: FineStatus.unpaid, fineAmount: { gt: 0 } },
             })
@@ -102,6 +112,7 @@ const getNavBadgeCounts = async (userId: string, role: Role): Promise<INavBadgeC
         pendingApprovals,
         pendingWaivers,
         activeBookings,
+        pendingBorrowRequests,
         unpaidFines: unpaidSeatFines + unpaidLoanFines,
         myPendingWaivers,
         myUnpaidFines: myUnpaidSeatFines + myUnpaidLoanFines,

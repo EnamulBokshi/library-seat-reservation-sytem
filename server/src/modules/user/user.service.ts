@@ -9,7 +9,15 @@ import { consumeOtp, issueOtp } from "../../lib/otp";
 import { getUserPrivileges } from "../../lib/privileges";
 import { Prisma } from "../../generated/client";
 import { ApprovalStatus, Role } from "../../generated/enums";
-import { ApprovalSortField, IApprovalListOptions, IListUsersOptions, IRejectUserPayload } from "./user.interface";
+import {
+    ApprovalSortField,
+    IApprovalListOptions,
+    IListUsersOptions,
+    IRejectUserPayload,
+    ICreateUserPayload,
+    IAdminUpdateUserPayload,
+    UserSortField,
+} from "./user.interface";
 import { SettingService } from "../../modules/setting/setting.service";
 import {
     IFineEntry,
@@ -263,16 +271,21 @@ const getMyFines = async (userId: string): Promise<IMyFinesResult> => {
     };
 };
 
+const USER_SORT_FIELDS: UserSortField[] = ["createdAt", "name", "email", "role", "isActive"];
+
 /**
- * Admin user directory with role, approval and free-text filters.
+ * Admin user directory with role, active status, approval and free-text filters,
+ * sorting, pagination, and real-time user statistics.
  */
 const listUsers = async (options: IListUsersOptions) => {
     const page = Math.max(1, options.page ?? 1);
-    const limit = Math.min(100, Math.max(1, options.limit ?? 20));
+    const limit = Math.min(100, Math.max(1, options.limit ?? 10));
 
-    const where: Record<string, unknown> = {};
-    if (options.role) where.role = options.role;
-    if (options.approvalStatus) where.approvalStatus = options.approvalStatus;
+    const where: Prisma.UserWhereInput = {};
+    if (options.role) where.role = options.role as Role;
+    if (options.isActive !== undefined) where.isActive = options.isActive;
+    if (options.approvalStatus) where.approvalStatus = options.approvalStatus as ApprovalStatus;
+
     if (options.searchTerm?.trim()) {
         const term = options.searchTerm.trim();
         where.OR = [
@@ -280,23 +293,67 @@ const listUsers = async (options: IListUsersOptions) => {
             { email: { contains: term, mode: "insensitive" } },
             { studentId: { contains: term, mode: "insensitive" } },
             { facultyId: { contains: term, mode: "insensitive" } },
+            { department: { contains: term, mode: "insensitive" } },
         ];
     }
 
-    const [users, total] = await Promise.all([
+    const sortBy = options.sortBy && USER_SORT_FIELDS.includes(options.sortBy)
+        ? options.sortBy
+        : "createdAt";
+    const sortOrder = options.sortOrder === "asc" ? "asc" : "desc";
+
+    const [users, total, statsGroup] = await Promise.all([
         prisma.user.findMany({
             where,
             select: PROFILE_SELECT,
-            orderBy: { createdAt: "desc" },
+            orderBy: { [sortBy]: sortOrder },
             skip: (page - 1) * limit,
             take: limit,
         }),
         prisma.user.count({ where }),
+        prisma.user.groupBy({
+            by: ["role", "isActive"],
+            _count: { _all: true },
+        }),
     ]);
+
+    let totalUsers = 0;
+    let activeUsers = 0;
+    let suspendedUsers = 0;
+    let superAdmins = 0;
+    let admins = 0;
+    let librarians = 0;
+    let faculty = 0;
+    let students = 0;
+
+    for (const row of statsGroup) {
+        const count = row._count._all;
+        totalUsers += count;
+        if (row.isActive) {
+            activeUsers += count;
+        } else {
+            suspendedUsers += count;
+        }
+        if (row.role === Role.super_admin) superAdmins += count;
+        else if (row.role === Role.admin) admins += count;
+        else if (row.role === Role.librarian) librarians += count;
+        else if (row.role === Role.faculty) faculty += count;
+        else if (row.role === Role.student) students += count;
+    }
 
     return {
         users,
         meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        stats: {
+            totalUsers,
+            activeUsers,
+            suspendedUsers,
+            superAdmins,
+            admins,
+            librarians,
+            faculty,
+            students,
+        },
     };
 };
 
@@ -468,6 +525,209 @@ const rejectUser = async (userId: string, adminId: string, payload: IRejectUserP
     return rejected;
 };
 
+/**
+ * Admin creates a user directly.
+ * Enforces rule: Only a super_admin can create another super_admin.
+ */
+const createUser = async (
+    creator: { userId: string; role: Role },
+    payload: ICreateUserPayload
+) => {
+    if (payload.role === Role.super_admin && creator.role !== Role.super_admin) {
+        throw new AppError(
+            status.FORBIDDEN,
+            "Only a Super Admin can create another Super Admin account"
+        );
+    }
+
+    const email = payload.email.trim().toLowerCase();
+    const existingEmail = await prisma.user.findUnique({ where: { email } });
+    if (existingEmail) {
+        throw new AppError(status.CONFLICT, "A user with this email address already exists");
+    }
+
+    if (payload.studentId?.trim()) {
+        const existingStudent = await prisma.user.findUnique({
+            where: { studentId: payload.studentId.trim() },
+        });
+        if (existingStudent) {
+            throw new AppError(status.CONFLICT, "A user with this Student ID already exists");
+        }
+    }
+
+    if (payload.facultyId?.trim()) {
+        const existingFaculty = await prisma.user.findUnique({
+            where: { facultyId: payload.facultyId.trim() },
+        });
+        if (existingFaculty) {
+            throw new AppError(status.CONFLICT, "A user with this Faculty ID already exists");
+        }
+    }
+
+    const passwordHash = await bcrypt.hash(payload.password, 12);
+
+    const user = await prisma.user.create({
+        data: {
+            name: payload.name.trim(),
+            email,
+            passwordHash,
+            role: payload.role,
+            studentId: payload.studentId?.trim() || null,
+            facultyId: payload.facultyId?.trim() || null,
+            department: payload.department?.trim() || null,
+            designation: payload.designation?.trim() || null,
+            isActive: payload.isActive ?? true,
+            emailVerifiedAt: new Date(),
+            approvalStatus: ApprovalStatus.approved,
+            approvedById: creator.userId,
+            approvedAt: new Date(),
+        },
+        select: PROFILE_SELECT,
+    });
+
+    return user;
+};
+
+/**
+ * Admin updates an existing user profile, role, or active status.
+ * Enforces rules:
+ * - Only super_admin can modify a super_admin account.
+ * - Only super_admin can promote a user to super_admin.
+ * - Prevents self-deactivation and self-role demotion.
+ */
+const updateUser = async (
+    targetUserId: string,
+    updater: { userId: string; role: Role },
+    payload: IAdminUpdateUserPayload
+) => {
+    const targetUser = await getUserOrThrow(targetUserId);
+
+    if (targetUser.role === Role.super_admin && updater.role !== Role.super_admin) {
+        throw new AppError(
+            status.FORBIDDEN,
+            "Only a Super Admin can modify a Super Admin account"
+        );
+    }
+
+    if (
+        payload.role === Role.super_admin &&
+        targetUser.role !== Role.super_admin &&
+        updater.role !== Role.super_admin
+    ) {
+        throw new AppError(
+            status.FORBIDDEN,
+            "Only a Super Admin can assign the Super Admin role"
+        );
+    }
+
+    if (targetUserId === updater.userId) {
+        if (payload.isActive === false) {
+            throw new AppError(status.BAD_REQUEST, "You cannot deactivate your own account");
+        }
+        if (payload.role && payload.role !== updater.role) {
+            throw new AppError(status.BAD_REQUEST, "You cannot modify your own role");
+        }
+    }
+
+    if (payload.studentId && payload.studentId.trim() !== targetUser.studentId) {
+        const existingStudent = await prisma.user.findUnique({
+            where: { studentId: payload.studentId.trim() },
+        });
+        if (existingStudent && existingStudent.id !== targetUserId) {
+            throw new AppError(status.CONFLICT, "A user with this Student ID already exists");
+        }
+    }
+
+    if (payload.facultyId && payload.facultyId.trim() !== targetUser.facultyId) {
+        const existingFaculty = await prisma.user.findUnique({
+            where: { facultyId: payload.facultyId.trim() },
+        });
+        if (existingFaculty && existingFaculty.id !== targetUserId) {
+            throw new AppError(status.CONFLICT, "A user with this Faculty ID already exists");
+        }
+    }
+
+    const data: Prisma.UserUpdateInput = {};
+    if (payload.name !== undefined) data.name = payload.name.trim();
+    if (payload.role !== undefined) data.role = payload.role;
+    if (payload.isActive !== undefined) data.isActive = payload.isActive;
+    if (payload.studentId !== undefined) {
+        data.studentId = payload.studentId ? payload.studentId.trim() : null;
+    }
+    if (payload.facultyId !== undefined) {
+        data.facultyId = payload.facultyId ? payload.facultyId.trim() : null;
+    }
+    if (payload.department !== undefined) {
+        data.department = payload.department ? payload.department.trim() : null;
+    }
+    if (payload.designation !== undefined) {
+        data.designation = payload.designation ? payload.designation.trim() : null;
+    }
+    if (payload.password) {
+        data.passwordHash = await bcrypt.hash(payload.password, 12);
+    }
+
+    const updated = await prisma.user.update({
+        where: { id: targetUserId },
+        data,
+        select: PROFILE_SELECT,
+    });
+
+    return updated;
+};
+
+/**
+ * Admin deletes a user account.
+ * Enforces rules:
+ * - Self-deletion is strictly prohibited.
+ * - Only super_admin can delete a super_admin account.
+ * - Rejects deletion if the user has unreturned active book loans.
+ */
+const deleteUser = async (
+    targetUserId: string,
+    deleter: { userId: string; role: Role }
+) => {
+    if (targetUserId === deleter.userId) {
+        throw new AppError(
+            status.BAD_REQUEST,
+            "Self-deletion is strictly prohibited. You cannot delete your own account."
+        );
+    }
+
+    const targetUser = await getUserOrThrow(targetUserId);
+
+    if (targetUser.role === Role.super_admin && deleter.role !== Role.super_admin) {
+        throw new AppError(
+            status.FORBIDDEN,
+            "Only a Super Admin can delete a Super Admin account."
+        );
+    }
+
+    const activeLoans = await prisma.bookLoan.count({
+        where: {
+            userId: targetUserId,
+            status: { in: ["issued", "overdue"] },
+        },
+    });
+
+    if (activeLoans > 0) {
+        throw new AppError(
+            status.BAD_REQUEST,
+            `Cannot delete user with ${activeLoans} active unreturned book loan(s). Please have the books returned or settled first.`
+        );
+    }
+
+    await prisma.user.delete({
+        where: { id: targetUserId },
+    });
+
+    return {
+        id: targetUserId,
+        name: targetUser.name,
+        email: targetUser.email,
+    };
+};
+
 export const UserService = {
     getProfile,
     updateProfile,
@@ -477,6 +737,9 @@ export const UserService = {
     verifyPasswordChange,
     getMyFines,
     listUsers,
+    createUser,
+    updateUser,
+    deleteUser,
     getPendingApprovals,
     approveUser,
     rejectUser,

@@ -14,6 +14,8 @@ export interface INavBadgeCounts {
     unpaidFines: number;
     /** Waiver petitions this faculty member raised and that are still open. */
     myPendingWaivers: number;
+    /** Physical book borrow requests awaiting desk approval. */
+    pendingBorrowRequests: number;
     /** The signed-in user's own outstanding fines. */
     myUnpaidFines: number;
 }

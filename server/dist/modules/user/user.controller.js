@@ -19,19 +19,24 @@ const requireUserId = (req) => {
     return userId;
 };
 const listUsers = (0, CatchAsync_1.default)(async (req, res) => {
+    const isActiveParam = req.query.isActive;
+    const isActive = isActiveParam === "true" ? true : isActiveParam === "false" ? false : undefined;
     const result = await user_service_1.UserService.listUsers({
         page: req.query.page ? Number(req.query.page) : undefined,
         limit: req.query.limit ? Number(req.query.limit) : undefined,
         role: req.query.role,
+        isActive,
         approvalStatus: req.query.approvalStatus,
         searchTerm: req.query.searchTerm,
+        sortBy: req.query.sortBy,
+        sortOrder: req.query.sortOrder === "asc" ? "asc" : "desc",
     });
     (0, SendResponse_1.sendResponse)(res, {
         httpStatusCode: http_status_1.default.OK,
         success: true,
         message: "Users retrieved successfully",
         data: result.users,
-        meta: result.meta,
+        meta: { ...result.meta, stats: result.stats },
     });
 });
 const getPendingApprovals = (0, CatchAsync_1.default)(async (req, res) => {
@@ -136,8 +141,52 @@ const getMyFines = (0, CatchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const createUser = (0, CatchAsync_1.default)(async (req, res) => {
+    const creatorUser = {
+        userId: requireUserId(req),
+        role: req.user.role,
+    };
+    const result = await user_service_1.UserService.createUser(creatorUser, req.body);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.CREATED,
+        success: true,
+        message: "User created successfully",
+        data: result,
+    });
+});
+const updateUser = (0, CatchAsync_1.default)(async (req, res) => {
+    const updaterUser = {
+        userId: requireUserId(req),
+        role: req.user.role,
+    };
+    const targetUserId = requireIdParam(req);
+    const result = await user_service_1.UserService.updateUser(targetUserId, updaterUser, req.body);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "User updated successfully",
+        data: result,
+    });
+});
+const deleteUser = (0, CatchAsync_1.default)(async (req, res) => {
+    const deleterUser = {
+        userId: requireUserId(req),
+        role: req.user.role,
+    };
+    const targetUserId = requireIdParam(req);
+    const result = await user_service_1.UserService.deleteUser(targetUserId, deleterUser);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "User deleted successfully",
+        data: result,
+    });
+});
 exports.UserController = {
     listUsers,
+    createUser,
+    updateUser,
+    deleteUser,
     getPendingApprovals,
     approveUser,
     rejectUser,

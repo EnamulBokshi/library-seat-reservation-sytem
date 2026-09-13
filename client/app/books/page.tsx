@@ -215,30 +215,6 @@ export default function BooksCatalogPage() {
                 Explore available physical volumes with exact block and shelf positioning, read digital PDF copies, and request 10-day borrowings with online renewals.
               </p>
             </div>
-
-            {/* Student Quota Capsule */}
-            {isAuthenticated && studentSummary && (
-              <div className="flex items-center gap-4 bg-slate-50 border border-slate-200/80 rounded-2xl p-4 shadow-2xs shrink-0">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-white font-black text-base shadow-xs">
-                  {studentSummary.quota.currentlyBorrowed}/3
-                </div>
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Your Borrow Quota
-                  </div>
-                  <div className="text-sm font-extrabold text-slate-800">
-                    {studentSummary.quota.availableQuota} Books Available to Borrow
-                  </div>
-                  <Link
-                    href="/dashboard/loans"
-                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 mt-0.5"
-                  >
-                    <span>View My Loans ({studentSummary.activeLoans.length})</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* ── Search Bar ── */}

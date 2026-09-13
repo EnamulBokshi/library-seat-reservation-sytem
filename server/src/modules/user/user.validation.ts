@@ -29,6 +29,31 @@ export const rejectUserSchema = z.object({
         .min(5, "Give the applicant a reason of at least 5 characters"),
 });
 
+export const createUserSchema = z.object({
+    name: z.string({ error: "Name is required" }).min(2, "Name must be at least 2 characters"),
+    email: z.string({ error: "Email is required" }).email("Invalid email address"),
+    password: z.string({ error: "Password is required" }).min(6, "Password must be at least 6 characters"),
+    role: z.enum(["super_admin", "admin", "librarian", "student", "faculty"], {
+        error: "Valid role is required",
+    }),
+    studentId: z.string().optional().nullable(),
+    facultyId: z.string().optional().nullable(),
+    department: z.string().optional().nullable(),
+    designation: z.string().optional().nullable(),
+    isActive: z.boolean().optional(),
+});
+
+export const adminUpdateUserSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters").optional(),
+    role: z.enum(["super_admin", "admin", "librarian", "student", "faculty"]).optional(),
+    isActive: z.boolean().optional(),
+    studentId: z.string().optional().nullable(),
+    facultyId: z.string().optional().nullable(),
+    department: z.string().optional().nullable(),
+    designation: z.string().optional().nullable(),
+    password: z.string().min(6, "Password must be at least 6 characters").optional(),
+});
+
 export const UserValidation = {
     rejectUserSchema,
     updateProfileSchema,
@@ -36,4 +61,6 @@ export const UserValidation = {
     verifyEmailChangeSchema,
     requestPasswordChangeSchema,
     verifyPasswordChangeSchema,
+    createUserSchema,
+    adminUpdateUserSchema,
 };
