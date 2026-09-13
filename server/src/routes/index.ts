@@ -12,6 +12,7 @@ import loanRoute from "../modules/loan/loan.route";
 import userRoute from "../modules/user/user.route";
 import fineRoute from "../modules/fine/fine.route";
 import waiverRoute from "../modules/waiver/waiver.route";
+import dashboardRoute from "../modules/dashboard/dashboard.route";
 
 const indexRoutes: Router = Router();
 
@@ -28,5 +29,6 @@ indexRoutes.use("/loan", loanRoute);
 indexRoutes.use("/user", userRoute);
 indexRoutes.use("/fine", fineRoute);
 indexRoutes.use("/waiver", waiverRoute);
+indexRoutes.use("/dashboard", dashboardRoute);
 
 export default indexRoutes;

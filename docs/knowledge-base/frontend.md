@@ -128,7 +128,20 @@ param interfaces. Keep aligned with `server/prisma/schema.prisma`.
   `navbar`, `home-view`, `book-seat-view` and `zone-detail-view`; `canRequestFineWaiver(role)`.
 - `/dashboard/waivers` → `components/pages/dashboard/faculty-waivers-view.tsx` (faculty-only nav
   tab): student lookup, petitionable fines, own petition history.
-- `/admin/approvals` → `components/pages/admin/approvals-view.tsx` (admin only) and
+- `/admin/approvals` → `components/pages/admin/approvals-view.tsx` (admin only): status tabs with
+  live tallies from `meta.counts`, debounced search, account-type filter, sort field + direction,
+  page size and pager — all server-side through `userService.getPendingApprovals(params)`. And
   `/admin/waivers` → `components/pages/admin/waivers-view.tsx` (admin + librarian view, admin
   decides).
 - `services/waiver-service.ts` and the admin calls added to `services/user-service.ts`.
+
+## Navigation badges
+
+`hooks/use-nav-badges.ts` polls `GET /dashboard/badges` (on mount, every 60s, on route change and
+on window focus) and feeds `dashboard-sidebar.tsx`. A nav item opts in with `badgeKey` on its
+`NavTabItem`, plus `badgeTone: "alert"` for queues that want attention rather than a neutral
+tally. `formatBadgeCount` hides zero and caps at `99+`.
+
+Failures are deliberately silent: a rejected request keeps the previous numbers and never renders
+an error, because a badge must not be able to break the navigation. The badge replaces the
+active-row dot when a count is present.
