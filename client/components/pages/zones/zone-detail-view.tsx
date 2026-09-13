@@ -16,7 +16,9 @@ import {
   SlotType,
   SlotConfig,
   DEFAULT_SLOT_CONFIG,
+  BookingEligibility,
 } from "@/lib/types";
+import { FineLockBanner } from "@/components/shared/fine-lock-banner";
 import {
   MapPin, Plus, Loader2, AlertCircle, Calendar, Clock, Download,
   Trash2, X, ChevronLeft, BookOpen, CheckCircle2, RefreshCw,
@@ -479,6 +481,7 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
 
   // Seat Selection & Booking State
   const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
+  const [eligibility, setEligibility] = useState<BookingEligibility | null>(null);
   const [isReserving, setIsReserving] = useState(false);
   const [reservationError, setReservationError] = useState<string | null>(null);
   const [completedBookingData, setCompletedBookingData] = useState<{
@@ -493,6 +496,8 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
   const [showInactive, setShowInactive] = useState(false);
 
   const canManage = user?.role === "admin" || user?.role === "librarian" || user?.role === "super_admin";
+  // Server is the authority; this only pre-empts a guaranteed 403.
+  const isReservationLocked = eligibility?.isBookingBlocked ?? false;
   const isStudent = user?.role === "student";
 
   // ── 1. Fetch Zone ─────────────────────────────────────────────────────────
@@ -513,10 +518,15 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
   const fetchSchedules = useCallback(async () => {
     setIsLoadingSchedules(true);
     try {
-      const [schedulesRes, configRes] = await Promise.allSettled([
+      const [schedulesRes, configRes, eligibilityRes] = await Promise.allSettled([
         bookingService.getSchedules(),
         settingService.getPublicConfig(),
+        bookingService.getEligibility(),
       ]);
+
+      if (eligibilityRes.status === "fulfilled" && eligibilityRes.value.data) {
+        setEligibility(eligibilityRes.value.data);
+      }
 
       let validSchedules: Schedule[] = [];
       if (schedulesRes.status === "fulfilled") {
@@ -698,6 +708,9 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
   return (
     <div className="min-h-screen bg-[#f4f5f7] text-slate-900 pb-28 md:pb-16">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-6 space-y-6">
+
+        {/* ── Unpaid Dues Reservation Lock ── */}
+        <FineLockBanner eligibility={eligibility} />
 
         {/* ── Header ── */}
         <div>
@@ -1107,9 +1120,14 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
               </button>
               <button
                 type="button"
-                disabled={isReserving}
+                disabled={isReserving || isReservationLocked}
                 onClick={handleReserveSeat}
-                className="pulse-button-primary flex-1 py-2.5 text-xs"
+                className="pulse-button-primary flex-1 py-2.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                title={
+                  isReservationLocked
+                    ? "Reservations are locked until your unpaid dues are settled."
+                    : undefined
+                }
               >
                 {isReserving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

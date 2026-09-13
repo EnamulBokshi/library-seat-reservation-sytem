@@ -23,6 +23,7 @@ import {
   Sunset,
   Sunrise,
   BookOpen,
+  Armchair,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -59,7 +60,15 @@ export function SettingsView() {
   const [isSavingAdvance, setIsSavingAdvance] = useState(false);
   const [isSavingSlots, setIsSavingSlots] = useState(false);
   const [isSavingBorrowPolicy, setIsSavingBorrowPolicy] = useState(false);
+  // Seat Reservation Cancellation & Fine Policy states
+  const [freeCancelMinutes, setFreeCancelMinutes] = useState("5");
+  const [lateCancelFine, setLateCancelFine] = useState("5");
+  const [lateCancelLeadMinutes, setLateCancelLeadMinutes] = useState("120");
+  const [noShowFine, setNoShowFine] = useState("5");
+  const [maxUnpaidFineLimit, setMaxUnpaidFineLimit] = useState("10");
+
   const [isSavingFinePolicy, setIsSavingFinePolicy] = useState(false);
+  const [isSavingCancelPolicy, setIsSavingCancelPolicy] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
@@ -112,6 +121,21 @@ export function SettingsView() {
           // fallback to default
         }
       }
+
+      const freeCancelItem = list.find((s) => s.key === "BOOKING_FREE_CANCEL_MINUTES");
+      if (freeCancelItem) setFreeCancelMinutes(freeCancelItem.value);
+
+      const lateFineItem = list.find((s) => s.key === "BOOKING_LATE_CANCEL_FINE");
+      if (lateFineItem) setLateCancelFine(lateFineItem.value);
+
+      const leadItem = list.find((s) => s.key === "BOOKING_LATE_CANCEL_LEAD_MINUTES");
+      if (leadItem) setLateCancelLeadMinutes(leadItem.value);
+
+      const noShowFineItem = list.find((s) => s.key === "BOOKING_NO_SHOW_FINE");
+      if (noShowFineItem) setNoShowFine(noShowFineItem.value);
+
+      const maxUnpaidItem = list.find((s) => s.key === "BOOKING_MAX_UNPAID_FINE_LIMIT");
+      if (maxUnpaidItem) setMaxUnpaidFineLimit(maxUnpaidItem.value);
 
       const slotItem = list.find((s) => s.key === "SLOT_CONFIG");
       if (slotItem) {
@@ -302,6 +326,78 @@ export function SettingsView() {
       setError(apiErr?.message ?? "Failed to update fine policies.");
     } finally {
       setIsSavingFinePolicy(false);
+    }
+  };
+
+  // ── Save Seat Cancellation & Fine Policy ──────────────────────────────────
+  const handleSaveCancelPolicy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
+    const freeMins = parseInt(freeCancelMinutes, 10);
+    const lateFine = parseFloat(lateCancelFine);
+    const leadMins = parseInt(lateCancelLeadMinutes, 10);
+    const noShow = parseFloat(noShowFine);
+    const maxUnpaid = parseFloat(maxUnpaidFineLimit);
+
+    if (isNaN(freeMins) || freeMins < 0 || freeMins > 180) {
+      setError("Free cancellation window must be between 0 and 180 minutes.");
+      return;
+    }
+    if (isNaN(lateFine) || lateFine < 0 || lateFine > 1000) {
+      setError("Late cancellation fine must be between 0 and 1000 BDT.");
+      return;
+    }
+    if (isNaN(leadMins) || leadMins < 0 || leadMins > 1440) {
+      setError("Fineable lead window must be between 0 and 1440 minutes.");
+      return;
+    }
+    if (isNaN(noShow) || noShow < 0 || noShow > 1000) {
+      setError("No-show fine must be between 0 and 1000 BDT.");
+      return;
+    }
+    if (isNaN(maxUnpaid) || maxUnpaid <= 0 || maxUnpaid > 10000) {
+      setError("Maximum unpaid fine limit must be between 1 and 10000 BDT.");
+      return;
+    }
+
+    setIsSavingCancelPolicy(true);
+    try {
+      await Promise.all([
+        settingService.update(
+          "BOOKING_FREE_CANCEL_MINUTES",
+          freeCancelMinutes.trim(),
+          "Minutes after booking during which a student may cancel free of charge"
+        ),
+        settingService.update(
+          "BOOKING_LATE_CANCEL_FINE",
+          lateCancelFine.trim(),
+          "Fine in BDT charged for cancelling a reservation after the free window"
+        ),
+        settingService.update(
+          "BOOKING_LATE_CANCEL_LEAD_MINUTES",
+          lateCancelLeadMinutes.trim(),
+          "Minutes before the slot starts within which a late cancellation is fineable"
+        ),
+        settingService.update(
+          "BOOKING_NO_SHOW_FINE",
+          noShowFine.trim(),
+          "Fine in BDT charged when a reservation is auto-cancelled as a no-show"
+        ),
+        settingService.update(
+          "BOOKING_MAX_UNPAID_FINE_LIMIT",
+          maxUnpaidFineLimit.trim(),
+          "Total unpaid library dues in BDT at which seat reservations are locked"
+        ),
+      ]);
+      setSuccessMessage("Seat reservation cancellation and fine policy saved successfully!");
+      fetchSettings();
+    } catch (err: unknown) {
+      const apiErr = err as ApiError;
+      setError(apiErr?.message ?? "Failed to update cancellation policy.");
+    } finally {
+      setIsSavingCancelPolicy(false);
     }
   };
 
@@ -831,6 +927,137 @@ export function SettingsView() {
                       <Save className="h-4 w-4" />
                     )}
                     <span>Save Fine & Alert Policy</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* ── CARD 6: Seat Reservation Cancellation & Fine Policy ── */}
+            <div className="pulse-card p-6 shadow-sm space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 border border-amber-100 shrink-0">
+                  <Armchair className="h-6 w-6 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-extrabold text-slate-900">
+                    Seat Reservation Cancellation & Fine Policy
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed font-medium">
+                    Discourage last-minute seat hoarding. Students cancel free inside the grace window, or whenever the
+                    session is still far away. Cancelling close to the session, or failing to scan in at all, is charged
+                    the same way so abandoning a seat is never cheaper than releasing it.
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveCancelPolicy} className="space-y-4 pt-2 border-t border-slate-100">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Free Cancellation Window (Min)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="180"
+                      value={freeCancelMinutes}
+                      onChange={(e) => setFreeCancelMinutes(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      Default: 5 minutes after booking
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Late Cancellation Fine (BDT)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="0.5"
+                      value={lateCancelFine}
+                      onChange={(e) => setLateCancelFine(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      Default: 5 Tk
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Fineable Lead Window (Min)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="1440"
+                      value={lateCancelLeadMinutes}
+                      onChange={(e) => setLateCancelLeadMinutes(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      Default: 120 min before the session
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      No-Show Fine (BDT)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="1000"
+                      step="0.5"
+                      value={noShowFine}
+                      onChange={(e) => setNoShowFine(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      Charged on auto-cancel after {gracePeriod} min
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="kicker-label mb-2 block">
+                      Reservation Lock Limit (BDT)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="10000"
+                      step="0.5"
+                      value={maxUnpaidFineLimit}
+                      onChange={(e) => setMaxUnpaidFineLimit(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 font-mono text-sm text-slate-900 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-bold"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block font-medium">
+                      Default: 10 Tk total unpaid dues
+                    </span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3.5 text-[11px] leading-relaxed text-amber-900 font-medium">
+                  Seat fines and overdue book fines are counted together. Once a student&apos;s total unpaid dues reach the
+                  lock limit, new seat reservations are refused until the balance is settled at the circulation desk.
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isSavingCancelPolicy}
+                    className="pulse-button-primary py-2.5 px-5 text-xs inline-flex items-center gap-2"
+                  >
+                    {isSavingCancelPolicy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span>Save Cancellation Policy</span>
                   </button>
                 </div>
               </form>

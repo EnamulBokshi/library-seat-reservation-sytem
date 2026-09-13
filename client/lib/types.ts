@@ -267,9 +267,19 @@ export interface BulkToggleScheduleResponse {
   isOpen: boolean;
 }
 
+export interface BookingPolicyConfig {
+  freeCancelMinutes: number;
+  lateCancelFine: number;
+  lateCancelLeadMinutes: number;
+  noShowFine: number;
+  maxUnpaidFineLimit: number;
+  checkinGraceMinutes: number;
+}
+
 export interface PublicSystemConfig {
   slotConfig: SlotConfig;
   advanceBookingDays: number;
+  bookingPolicy?: BookingPolicyConfig;
 }
 
 // ─── Booking ──────────────────────────────────────────────────────────────────
@@ -313,6 +323,12 @@ export interface Booking {
   cancelledAt: string | null;
   cancelReason: string | null;
   slotWarningEmailSent?: boolean;
+  fineAmount: number;
+  fineStatus: FineStatus;
+  paymentMethod?: PaymentMethod | null;
+  chalanNumber?: string | null;
+  finePaidAt?: string | null;
+  fineReceivedById?: string | null;
   seat?: BookingSeat;
   bookingSeats?: BookingSeatRelation[];
   schedule?: Schedule;
@@ -330,6 +346,41 @@ export interface CreateBookingPayload {
 export interface CreateBookingResponseData {
   booking: Booking;
   qrCodeImage: string;
+}
+
+export interface UnpaidSeatBookingSummary {
+  bookingId: string;
+  fineAmount: number;
+  reason: string | null;
+  cancelledAt: string | null;
+}
+
+export interface UnpaidLoanSummary {
+  loanId: string;
+  bookTitle: string;
+  fineAmount: number;
+}
+
+export interface BookingEligibility {
+  seatFineTotal: number;
+  loanFineTotal: number;
+  totalUnpaid: number;
+  maxUnpaidFineLimit: number;
+  isBookingBlocked: boolean;
+  remainingBalance: number;
+  unpaidSeatBookings: UnpaidSeatBookingSummary[];
+  unpaidLoans: UnpaidLoanSummary[];
+  policy: BookingPolicyConfig;
+}
+
+export interface PaySeatFinePayload {
+  paymentMethod: PaymentMethod;
+  chalanNumber?: string;
+  notes?: string;
+}
+
+export interface WaiveSeatFinePayload {
+  reason?: string;
 }
 
 export interface BookingQueryParams {

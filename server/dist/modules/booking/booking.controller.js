@@ -109,6 +109,34 @@ const getFCFSQuickAssign = (0, CatchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const getBookingEligibility = (0, CatchAsync_1.default)(async (req, res) => {
+    const userId = req.user.userId;
+    const result = await booking_service_1.BookingService.getBookingEligibility(userId);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Reservation eligibility retrieved successfully",
+        data: result,
+    });
+});
+const paySeatFine = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await booking_service_1.BookingService.paySeatFine(req.params.id, req.body, req.user.userId);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Seat reservation fine settled successfully",
+        data: result,
+    });
+});
+const waiveSeatFine = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await booking_service_1.BookingService.waiveSeatFine(req.params.id, req.body, req.user.userId);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Seat reservation fine waived successfully",
+        data: result,
+    });
+});
 exports.BookingController = {
     createBooking,
     getFCFSQuickAssign,
@@ -116,6 +144,9 @@ exports.BookingController = {
     getAllBookings,
     getBookingById,
     cancelBooking,
+    getBookingEligibility,
+    paySeatFine,
+    waiveSeatFine,
     getSchedules,
     getDashboardStats,
 };

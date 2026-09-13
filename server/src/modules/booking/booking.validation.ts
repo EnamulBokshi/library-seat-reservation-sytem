@@ -19,7 +19,21 @@ export const fcfsQuickAssignSchema = z.object({
     partySize: z.number().int().min(1).max(20).optional(),
 });
 
+export const paySeatFineSchema = z.object({
+    paymentMethod: z.enum(["cash", "chalan", "online"], {
+        error: "Payment method must be cash, chalan, or online",
+    }),
+    chalanNumber: z.string().optional(),
+    notes: z.string().optional(),
+});
+
+export const waiveSeatFineSchema = z.object({
+    reason: z.string().max(500, "Waiver reason must be 500 characters or fewer").optional(),
+});
+
 export const BookingValidation = {
     createBookingSchema,
     fcfsQuickAssignSchema,
+    paySeatFineSchema,
+    waiveSeatFineSchema,
 };

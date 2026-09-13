@@ -126,6 +126,48 @@ const getFCFSQuickAssign = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getBookingEligibility = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user.userId;
+    const result = await BookingService.getBookingEligibility(userId);
+
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: "Reservation eligibility retrieved successfully",
+        data: result,
+    });
+});
+
+const paySeatFine = catchAsync(async (req: Request, res: Response) => {
+    const result = await BookingService.paySeatFine(
+        req.params.id as string,
+        req.body,
+        req.user.userId
+    );
+
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: "Seat reservation fine settled successfully",
+        data: result,
+    });
+});
+
+const waiveSeatFine = catchAsync(async (req: Request, res: Response) => {
+    const result = await BookingService.waiveSeatFine(
+        req.params.id as string,
+        req.body,
+        req.user.userId
+    );
+
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: "Seat reservation fine waived successfully",
+        data: result,
+    });
+});
+
 export const BookingController = {
     createBooking,
     getFCFSQuickAssign,
@@ -133,6 +175,9 @@ export const BookingController = {
     getAllBookings,
     getBookingById,
     cancelBooking,
+    getBookingEligibility,
+    paySeatFine,
+    waiveSeatFine,
     getSchedules,
     getDashboardStats,
 };

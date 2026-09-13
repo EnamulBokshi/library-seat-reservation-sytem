@@ -33,13 +33,27 @@ const login = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const clearAuthCookies = (res: Response) => {
+    res.clearCookie("accessToken", { path: "/" });
+    res.clearCookie("refreshToken", { path: "/" });
+};
+
 const refresh = catchAsync(async (req: Request, res: Response) => {
     const refreshToken = cookieUtils.getCookie(req, "refreshToken");
     if (!refreshToken) {
+        clearAuthCookies(res);
         throw new AppError(status.UNAUTHORIZED, "No refresh token provided");
     }
 
-    const result = await AuthService.refreshAccessToken(refreshToken);
+    // A refresh token that no longer works must not linger in the browser:
+    // the client route guard treats a stale cookie as a live session.
+    let result;
+    try {
+        result = await AuthService.refreshAccessToken(refreshToken);
+    } catch (error) {
+        clearAuthCookies(res);
+        throw error;
+    }
 
     // Set new access token cookie
     tokenUtils.setAccessTokenCookie(res, result.accessToken);
@@ -70,8 +84,7 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 
 const logout = catchAsync(async (req: Request, res: Response) => {
     // Clear both token cookies
-    res.clearCookie("accessToken", { path: "/" });
-    res.clearCookie("refreshToken", { path: "/" });
+    clearAuthCookies(res);
 
     sendResponse(res, {
         httpStatusCode: status.OK,

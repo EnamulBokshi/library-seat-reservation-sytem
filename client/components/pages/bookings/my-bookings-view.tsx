@@ -2,12 +2,47 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { bookingService } from "@/services/booking-service";
-import { Booking, ApiError, BookingStatus } from "@/lib/types";
+import { settingService } from "@/services/setting-service";
+import {
+  Booking,
+  ApiError,
+  BookingStatus,
+  BookingPolicyConfig,
+  SlotConfig,
+  DEFAULT_SLOT_CONFIG,
+} from "@/lib/types";
+import { DEFAULT_BOOKING_POLICY } from "@/lib/booking-policy";
 import { BookingDetailsModal } from "@/components/shared/booking-details-modal";
+import { CancelBookingModal } from "@/components/shared/cancel-booking-modal";
 import {
   BookOpen, QrCode, Calendar, MapPin, Loader2, AlertCircle,
   CheckCircle2, XCircle, Clock, Ban, AlertTriangle, RefreshCw, Eye
 } from "lucide-react";
+
+// ─── Fine Pill ────────────────────────────────────────────────────────────────
+function FinePill({ booking }: { booking: Booking }) {
+  if (!booking.fineAmount || booking.fineAmount <= 0) return null;
+
+  const config = {
+    unpaid: "bg-rose-50 border-rose-200 text-rose-700",
+    paid: "bg-emerald-50 border-emerald-200 text-emerald-700",
+    waived: "bg-slate-100 border-slate-200 text-slate-600",
+    none: "bg-slate-100 border-slate-200 text-slate-600",
+  }[booking.fineStatus];
+
+  const label = {
+    unpaid: "Unpaid",
+    paid: "Paid",
+    waived: "Waived",
+    none: "",
+  }[booking.fineStatus];
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black ${config}`}>
+      {booking.fineAmount} BDT {label}
+    </span>
+  );
+}
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<BookingStatus, { label: string; className: string; Icon: React.ElementType }> = {
@@ -32,7 +67,7 @@ function StatusBadge({ status }: { status: BookingStatus }) {
 // ─── Booking Card ─────────────────────────────────────────────────────────────
 interface BookingCardProps {
   booking: Booking;
-  onCancel: (id: string) => void;
+  onCancel: (booking: Booking) => void;
   onSelectBooking: (booking: Booking) => void;
 }
 
@@ -64,7 +99,10 @@ function BookingCard({ booking, onCancel, onSelectBooking }: BookingCardProps) {
             </p>
           </div>
         </div>
-        <StatusBadge status={booking.status} />
+        <div className="flex flex-col items-end gap-1.5">
+          <StatusBadge status={booking.status} />
+          <FinePill booking={booking} />
+        </div>
       </div>
 
       {booking.schedule && (
@@ -90,7 +128,7 @@ function BookingCard({ booking, onCancel, onSelectBooking }: BookingCardProps) {
         </button>
         {canCancel && (
           <button
-            onClick={() => onCancel(booking.id)}
+            onClick={() => onCancel(booking)}
             className="pulse-button-secondary py-2 px-3 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
             title="Cancel Reservation"
           >
@@ -109,6 +147,14 @@ export function MyBookingsView() {
   const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
+  // Cancellation policy + live confirmation modal
+  const [policy, setPolicy] = useState<BookingPolicyConfig>(DEFAULT_BOOKING_POLICY);
+  const [slotConfig, setSlotConfig] = useState<SlotConfig>(DEFAULT_SLOT_CONFIG);
+  const [unpaidTotal, setUnpaidTotal] = useState(0);
+  const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+
   const fetchBookings = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -123,21 +169,69 @@ export function MyBookingsView() {
     }
   }, []);
 
-  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+  // Cancellation policy and outstanding dues drive the confirmation modal.
+  // Failures here must not block the bookings list, so they degrade to defaults.
+  const fetchPolicy = useCallback(async () => {
+    const [configRes, eligibilityRes] = await Promise.allSettled([
+      settingService.getPublicConfig(),
+      bookingService.getEligibility(),
+    ]);
 
-  const handleCancel = async (id: string) => {
-    if (!confirm("Cancel this booking?")) return;
+    if (configRes.status === "fulfilled") {
+      if (configRes.value.data?.bookingPolicy) {
+        setPolicy(configRes.value.data.bookingPolicy);
+      }
+      if (configRes.value.data?.slotConfig) {
+        setSlotConfig(configRes.value.data.slotConfig);
+      }
+    }
+
+    if (eligibilityRes.status === "fulfilled" && eligibilityRes.value.data) {
+      setUnpaidTotal(eligibilityRes.value.data.totalUnpaid);
+    }
+  }, []);
+
+  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+  useEffect(() => { fetchPolicy(); }, [fetchPolicy]);
+
+  const handleCancel = (booking: Booking) => {
+    setCancelError(null);
+    setCancelTarget(booking);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelTarget) return;
+
+    const id = cancelTarget.id;
+    setIsCancelling(true);
+    setCancelError(null);
     try {
-      await bookingService.cancel(id);
+      const res = await bookingService.cancel(id);
+      const cancelled = res.data;
+
       setBookings((prev) =>
-        prev.map((b) => b.id === id ? { ...b, status: "cancelled" as BookingStatus } : b)
+        prev.map((b) =>
+          b.id === id
+            ? {
+                ...b,
+                status: "cancelled" as BookingStatus,
+                fineAmount: cancelled?.fineAmount ?? b.fineAmount,
+                fineStatus: cancelled?.fineStatus ?? b.fineStatus,
+              }
+            : b
+        )
       );
       if (selectedBooking?.id === id) {
         setSelectedBooking((prev) => prev ? { ...prev, status: "cancelled" as BookingStatus } : null);
       }
+      setCancelTarget(null);
+      // Refresh dues so the next cancellation shows the correct balance
+      fetchPolicy();
     } catch (err: unknown) {
       const apiErr = err as ApiError;
-      alert(apiErr?.message ?? "Failed to cancel booking.");
+      setCancelError(apiErr?.message ?? "Failed to cancel booking.");
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -210,6 +304,22 @@ export function MyBookingsView() {
           booking={selectedBooking}
           onClose={() => setSelectedBooking(null)}
           onCancel={handleCancel}
+        />
+      )}
+
+      {cancelTarget && (
+        <CancelBookingModal
+          booking={cancelTarget}
+          policy={policy}
+          slotConfig={slotConfig}
+          currentUnpaid={unpaidTotal}
+          isCancelling={isCancelling}
+          errorMessage={cancelError}
+          onConfirm={handleConfirmCancel}
+          onClose={() => {
+            setCancelTarget(null);
+            setCancelError(null);
+          }}
         />
       )}
     </div>

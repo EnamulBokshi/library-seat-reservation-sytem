@@ -12,6 +12,7 @@ import {
   ApiError,
 } from "@/lib/types";
 import { BookingDetailsModal } from "@/components/shared/booking-details-modal";
+import { SettleSeatFineModal } from "@/components/shared/settle-seat-fine-modal";
 import {
   ClipboardList,
   Loader2,
@@ -34,6 +35,7 @@ import {
   Calendar,
   Clock,
   User,
+  Wallet,
 } from "lucide-react";
 
 // ─── Status Config ────────────────────────────────────────────────────────────
@@ -87,12 +89,41 @@ function StatusBadge({ status }: { status: BookingStatus }) {
 // ─── Booking Row Component ────────────────────────────────────────────────────
 interface BookingRowProps {
   booking: Booking;
-  onCancel: (id: string) => void;
+  onCancel: (booking: Booking) => void;
   onSelectBooking: (booking: Booking) => void;
+  onSettleFine: (booking: Booking) => void;
 }
 
-function BookingRow({ booking, onCancel, onSelectBooking }: BookingRowProps) {
+// ─── Seat Fine Badge ──────────────────────────────────────────────────────────
+export function FineBadge({ booking }: { booking: Booking }) {
+  if (!booking.fineAmount || booking.fineAmount <= 0) {
+    return <span className="text-[11px] font-semibold text-slate-400">—</span>;
+  }
+
+  const className = {
+    unpaid: "bg-rose-50 border-rose-200 text-rose-700",
+    paid: "bg-emerald-50 border-emerald-200 text-emerald-700",
+    waived: "bg-slate-100 border-slate-200 text-slate-600",
+    none: "bg-slate-100 border-slate-200 text-slate-600",
+  }[booking.fineStatus];
+
+  const label = {
+    unpaid: "Unpaid",
+    paid: "Paid",
+    waived: "Waived",
+    none: "",
+  }[booking.fineStatus];
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black ${className}`}>
+      {booking.fineAmount} BDT {label}
+    </span>
+  );
+}
+
+function BookingRow({ booking, onCancel, onSelectBooking, onSettleFine }: BookingRowProps) {
   const canCancel = booking.status === "confirmed" || booking.status === "pending";
+  const hasUnpaidFine = booking.fineAmount > 0 && booking.fineStatus === "unpaid";
 
   return (
     <tr
@@ -159,6 +190,11 @@ function BookingRow({ booking, onCancel, onSelectBooking }: BookingRowProps) {
         <StatusBadge status={booking.status} />
       </td>
 
+      {/* Seat Fine */}
+      <td className="px-4 py-3.5">
+        <FineBadge booking={booking} />
+      </td>
+
       {/* Booked Timestamp */}
       <td className="px-4 py-3.5 text-xs text-slate-500 font-medium">
         {new Date(booking.bookedAt).toLocaleString(undefined, {
@@ -183,12 +219,23 @@ function BookingRow({ booking, onCancel, onSelectBooking }: BookingRowProps) {
 
           {canCancel && (
             <button
-              onClick={() => onCancel(booking.id)}
+              onClick={() => onCancel(booking)}
               className="pulse-button-secondary py-1 px-2.5 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
               title="Cancel Booking"
             >
               <Ban className="h-3 w-3" />
               <span>Cancel</span>
+            </button>
+          )}
+
+          {hasUnpaidFine && (
+            <button
+              onClick={() => onSettleFine(booking)}
+              className="pulse-button-secondary py-1 px-2.5 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+              title="Settle or waive this seat fine"
+            >
+              <Wallet className="h-3 w-3" />
+              <span>Settle Fine</span>
             </button>
           )}
         </div>
@@ -204,6 +251,7 @@ export function AdminBookingsView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [fineTarget, setFineTarget] = useState<Booking | null>(null);
 
   // ── Server-side Filter States ──
   const [searchQuery, setSearchQuery] = useState("");
@@ -275,8 +323,9 @@ export function AdminBookingsView() {
   }, [fetchBookings]);
 
   // Cancel handler
-  const handleCancel = async (id: string) => {
-    if (!confirm("Are you sure you want to cancel this booking?")) return;
+  const handleCancel = async (booking: Booking) => {
+    const id = booking.id;
+    if (!confirm("Cancel this booking? Staff cancellations never fine the student.")) return;
     try {
       await bookingService.cancel(id);
       fetchBookings();
@@ -497,6 +546,7 @@ export function AdminBookingsView() {
                     <th className="px-4 py-3 kicker-label">Seat / Zone</th>
                     <th className="px-4 py-3 kicker-label">Date / Slot</th>
                     <th className="px-4 py-3 kicker-label">Status</th>
+                    <th className="px-4 py-3 kicker-label">Seat Fine</th>
                     <th className="px-4 py-3 kicker-label">Booked At</th>
                     <th className="px-4 py-3 kicker-label">Actions</th>
                   </tr>
@@ -508,6 +558,7 @@ export function AdminBookingsView() {
                       booking={b}
                       onCancel={handleCancel}
                       onSelectBooking={setSelectedBooking}
+                      onSettleFine={setFineTarget}
                     />
                   ))}
                 </tbody>
@@ -536,7 +587,10 @@ export function AdminBookingsView() {
                         {b.user?.studentId || b.user?.email || "—"}
                       </p>
                     </div>
-                    <StatusBadge status={b.status} />
+                    <div className="flex flex-col items-end gap-1.5">
+                      <StatusBadge status={b.status} />
+                      <FineBadge booking={b} />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100 font-medium">
@@ -572,11 +626,20 @@ export function AdminBookingsView() {
                     </button>
                     {(b.status === "confirmed" || b.status === "pending") && (
                       <button
-                        onClick={() => handleCancel(b.id)}
+                        onClick={() => handleCancel(b)}
                         className="pulse-button-secondary py-1.5 px-3 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
                       >
                         <X className="h-3.5 w-3.5" />
                         <span>Cancel</span>
+                      </button>
+                    )}
+                    {b.fineAmount > 0 && b.fineStatus === "unpaid" && (
+                      <button
+                        onClick={() => setFineTarget(b)}
+                        className="pulse-button-secondary py-1.5 px-3 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                      >
+                        <Wallet className="h-3.5 w-3.5" />
+                        <span>Settle Fine</span>
                       </button>
                     )}
                   </div>
@@ -669,6 +732,16 @@ export function AdminBookingsView() {
           booking={selectedBooking}
           onClose={() => setSelectedBooking(null)}
           onCancel={handleCancel}
+          onSettleFine={setFineTarget}
+        />
+      )}
+
+      {/* ── Seat Fine Settlement Modal ── */}
+      {fineTarget && (
+        <SettleSeatFineModal
+          booking={fineTarget}
+          onClose={() => setFineTarget(null)}
+          onSettled={fetchBookings}
         />
       )}
     </div>

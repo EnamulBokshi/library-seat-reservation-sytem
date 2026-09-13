@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BookingValidation = exports.fcfsQuickAssignSchema = exports.createBookingSchema = void 0;
+exports.BookingValidation = exports.waiveSeatFineSchema = exports.paySeatFineSchema = exports.fcfsQuickAssignSchema = exports.createBookingSchema = void 0;
 const zod_1 = require("zod");
 exports.createBookingSchema = zod_1.z
     .object({
@@ -19,7 +19,19 @@ exports.fcfsQuickAssignSchema = zod_1.z.object({
     scheduleId: zod_1.z.string({ error: "Schedule ID is required" }).uuid("Invalid Schedule ID format"),
     partySize: zod_1.z.number().int().min(1).max(20).optional(),
 });
+exports.paySeatFineSchema = zod_1.z.object({
+    paymentMethod: zod_1.z.enum(["cash", "chalan", "online"], {
+        error: "Payment method must be cash, chalan, or online",
+    }),
+    chalanNumber: zod_1.z.string().optional(),
+    notes: zod_1.z.string().optional(),
+});
+exports.waiveSeatFineSchema = zod_1.z.object({
+    reason: zod_1.z.string().max(500, "Waiver reason must be 500 characters or fewer").optional(),
+});
 exports.BookingValidation = {
     createBookingSchema: exports.createBookingSchema,
     fcfsQuickAssignSchema: exports.fcfsQuickAssignSchema,
+    paySeatFineSchema: exports.paySeatFineSchema,
+    waiveSeatFineSchema: exports.waiveSeatFineSchema,
 };

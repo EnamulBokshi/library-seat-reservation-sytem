@@ -1,13 +1,54 @@
 import cron from "node-cron";
 import prisma from "../lib/prisma";
-import { BookingStatus, SlotType, LoanStatus } from "../generated/enums";
+import { BookingStatus, SlotType, LoanStatus, FineStatus } from "../generated/enums";
 import { BookingService } from "../modules/booking/booking.service";
 import { SettingService } from "../modules/setting/setting.service";
 import { emailService } from "./email.service";
 import { getActiveSlotConfig, getAdvanceBookingDays, parseTimeToMinutes } from "../utils/time";
+import { getUserUnpaidFinesSummary } from "../lib/booking-fines";
 
 // Default grace period in minutes if not configured in DB
 const DEFAULT_GRACE_PERIOD_MINUTES = 15;
+
+/**
+ * Charge the configured no-show fee on bookings that were just auto-cancelled.
+ *
+ * Every automatic no_show path funnels through here, so a student cannot dodge
+ * the late cancellation fee by simply abandoning the reservation — whether the
+ * grace period, the slot expiry worker or the slot boundary cleanup catches it.
+ *
+ * Returns the fine charged per booking (0 when the policy disables it).
+ */
+export const applyNoShowFines = async (bookingIds: string[]): Promise<number> => {
+  if (bookingIds.length === 0) {
+    return 0;
+  }
+
+  const policy = await SettingService.getBookingPolicyConfig();
+  if (policy.noShowFine <= 0) {
+    return 0;
+  }
+
+  // Never overwrite a fine that has already been settled or waived.
+  const result = await prisma.booking.updateMany({
+    where: {
+      id: { in: bookingIds },
+      fineStatus: FineStatus.none,
+    },
+    data: {
+      fineAmount: policy.noShowFine,
+      fineStatus: FineStatus.unpaid,
+    },
+  });
+
+  if (result.count > 0) {
+    console.log(
+      `[Cron Scheduler] No-show fee: charged ${policy.noShowFine} BDT on ${result.count} reservation(s).`
+    );
+  }
+
+  return policy.noShowFine;
+};
 
 /**
  * Read the current check-in grace period setting (in minutes) from the database.
@@ -105,6 +146,9 @@ export const checkGracePeriodCancellations = async () => {
           `[Cron Scheduler] Grace Period Enforcer: Auto-cancelled ${result.count} unverified reservation(s) (Grace: ${graceMinutes}m).`
         );
 
+        // Charge the no-show fee so abandoning a seat is never cheaper than cancelling it
+        const noShowFine = await applyNoShowFines(expiredBookingIds);
+
         // Dispatch cancellation email to each affected student
         for (const b of expiredBookings) {
           if (b.user?.email) {
@@ -116,6 +160,10 @@ export const checkGracePeriodCancellations = async () => {
             const slotInfo = slotConfig[b.schedule.slot as SlotType];
             const timeRange = slotInfo ? `${slotInfo.startTime} – ${slotInfo.endTime}` : "";
 
+            const dues = noShowFine > 0
+              ? await getUserUnpaidFinesSummary(b.userId).catch(() => null)
+              : null;
+
             emailService
               .sendSeatNoShowCancellationEmail({
                 toEmail: b.user.email,
@@ -126,6 +174,9 @@ export const checkGracePeriodCancellations = async () => {
                 slotName: b.schedule.slot,
                 timeRange,
                 graceMinutes,
+                fineAmount: noShowFine,
+                totalUnpaid: dues?.totalUnpaid ?? 0,
+                maxUnpaidFineLimit: dues?.maxUnpaidFineLimit ?? 0,
               })
               .catch((err) =>
                 console.error(`[Cron Scheduler] Error sending no-show email to ${b.user.email}:`, err)
@@ -317,6 +368,9 @@ export const checkSlotExpirationAndRelease = async () => {
           : []),
       ]);
 
+      // Reservations that ran out the clock without a scan are no-shows too
+      await applyNoShowFines(noShowBookingIds);
+
       console.log(
         `[Cron Scheduler] Slot Expiration Enforcer: Released ${seatIdsToFree.length} seat(s) (Completed: ${completedBookingIds.length}, No-show: ${noShowBookingIds.length})`
       );
@@ -352,6 +406,14 @@ const processSlotCleanup = async (slot: SlotType) => {
     }
 
     // Mark remaining confirmed as no_show
+    const pendingNoShows = await prisma.booking.findMany({
+      where: {
+        scheduleId: schedule.id,
+        status: BookingStatus.confirmed,
+      },
+      select: { id: true },
+    });
+
     const noShowResult = await prisma.booking.updateMany({
       where: {
         scheduleId: schedule.id,
@@ -362,6 +424,8 @@ const processSlotCleanup = async (slot: SlotType) => {
         cancelReason: "Auto-cancelled: Time slot expired without check-in",
       },
     });
+
+    await applyNoShowFines(pendingNoShows.map((b) => b.id));
 
     console.log(`[Cron Scheduler] Marked ${noShowResult.count} bookings as no-show.`);
 

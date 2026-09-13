@@ -11,6 +11,7 @@ import {
   Seat,
   Schedule,
   ApiError,
+  BookingEligibility,
   CreateSeatPayload,
   Booking,
   SlotType,
@@ -23,6 +24,7 @@ import { CircleTable } from "@/components/shared/seating/circle-table";
 import { MeetingTable } from "@/components/shared/seating/meeting-table";
 import { CubicleDesk } from "@/components/shared/seating/cubicle-desk";
 import { TableClusterCard } from "@/components/shared/seating/table-cluster-card";
+import { FineLockBanner } from "@/components/shared/fine-lock-banner";
 import {
   MapPin,
   Plus,
@@ -257,6 +259,7 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
   const [fcfsMessage, setFcfsMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [eligibility, setEligibility] = useState<BookingEligibility | null>(null);
   const [isReserving, setIsReserving] = useState(false);
   const [reservationError, setReservationError] = useState<string | null>(null);
   const [completedBookingData, setCompletedBookingData] = useState<{
@@ -273,16 +276,23 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
   const canManage =
     user?.role === "admin" || user?.role === "librarian" || user?.role === "super_admin";
   const isStudent = user?.role === "student";
+  // Server is the authority; this only pre-empts a guaranteed 403.
+  const isReservationLocked = eligibility?.isBookingBlocked ?? false;
 
   // ── 1. Fetch All Zones & Public Config ───────────────────────────────────────
   const fetchInitialData = useCallback(async () => {
     setIsLoadingZones(true);
     setError(null);
     try {
-      const [zonesRes, configRes] = await Promise.allSettled([
+      const [zonesRes, configRes, eligibilityRes] = await Promise.allSettled([
         zoneService.getAll(),
         settingService.getPublicConfig(),
+        bookingService.getEligibility(),
       ]);
+
+      if (eligibilityRes.status === "fulfilled" && eligibilityRes.value.data) {
+        setEligibility(eligibilityRes.value.data);
+      }
 
       let loadedZones: Zone[] = [];
       if (zonesRes.status === "fulfilled") {
@@ -760,6 +770,9 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
           </div>
         </div>
 
+        {/* ── Unpaid Dues Reservation Lock ── */}
+        <FineLockBanner eligibility={eligibility} />
+
         {/* ── Zone Brief ── */}
         <div className="pt-2 pb-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
@@ -1008,10 +1021,18 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
               <button
                 type="button"
                 onClick={handleInstantFCFS}
-                disabled={isSuggestingFCFS || isReserving || availableSeats.length === 0 || isSlotEnded}
+                disabled={
+                  isSuggestingFCFS ||
+                  isReserving ||
+                  availableSeats.length === 0 ||
+                  isSlotEnded ||
+                  isReservationLocked
+                }
                 className="pulse-button-primary py-2 px-4 text-xs inline-flex items-center gap-1.5 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 title={
-                  isSlotEnded
+                  isReservationLocked
+                    ? "Reservations are locked until your unpaid dues are settled."
+                    : isSlotEnded
                     ? "This time slot has already ended."
                     : availableSeats.length === 0
                     ? "No available seats in this zone."
@@ -1341,9 +1362,14 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
                 </button>
                 <button
                   type="button"
-                  disabled={isReserving}
+                  disabled={isReserving || isReservationLocked}
                   onClick={handleReserveSeats}
-                  className="pulse-button-primary py-2.5 px-6 text-xs shadow-md"
+                  className="pulse-button-primary py-2.5 px-6 text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={
+                    isReservationLocked
+                      ? "Reservations are locked until your unpaid dues are settled."
+                      : undefined
+                  }
                 >
                   {isReserving ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

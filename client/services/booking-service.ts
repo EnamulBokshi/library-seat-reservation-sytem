@@ -7,6 +7,9 @@ import {
   BookingQueryParams,
   DashboardStats,
   ApiResponse,
+  BookingEligibility,
+  PaySeatFinePayload,
+  WaiveSeatFinePayload,
 } from "@/lib/types";
 
 export const bookingService = {
@@ -71,6 +74,39 @@ export const bookingService = {
     return apiClient.get("/booking/fcfs-suggest", {
       params: { zoneId, scheduleId, partySize },
     });
+  },
+
+  /**
+   * Get the student's outstanding dues and whether reservations are locked
+   */
+  async getEligibility(): Promise<ApiResponse<BookingEligibility>> {
+    return apiClient.get<unknown, ApiResponse<BookingEligibility>>("/booking/eligibility");
+  },
+
+  /**
+   * Settle an outstanding seat fine at the circulation desk (admin or librarian)
+   */
+  async payFine(
+    bookingId: string,
+    payload: PaySeatFinePayload
+  ): Promise<ApiResponse<Booking>> {
+    return apiClient.post<unknown, ApiResponse<Booking>>(
+      `/booking/${bookingId}/pay-fine`,
+      payload
+    );
+  },
+
+  /**
+   * Waive an outstanding seat fine (admin or librarian)
+   */
+  async waiveFine(
+    bookingId: string,
+    payload: WaiveSeatFinePayload = {}
+  ): Promise<ApiResponse<Booking>> {
+    return apiClient.post<unknown, ApiResponse<Booking>>(
+      `/booking/${bookingId}/waive-fine`,
+      payload
+    );
   },
 
   /**

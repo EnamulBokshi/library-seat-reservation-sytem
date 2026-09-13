@@ -5,13 +5,25 @@ import prisma from "../../lib/prisma";
 import AppError from "../../helpers/AppError";
 import { ICreateBookingPayload, IFCFSQuickAssignPayload } from "./booking.interface";
 import { BookingStatus, Role, SlotType, ZoneType } from "../../generated/enums";
-import { isSlotExpired, getAdvanceBookingDays, getActiveSlotConfig } from "../../utils/time";
+import { isSlotExpired, getAdvanceBookingDays, getActiveSlotConfig, getSlotStartDate } from "../../utils/time";
 import { emailService } from "../../services/email.service";
+import { SettingService } from "../setting/setting.service";
+import {
+    assertSeatBookingEligibility,
+    evaluateCancellationFine,
+    formatMinutes,
+    getUserUnpaidFinesSummary,
+} from "../../lib/booking-fines";
+import { FineStatus, PaymentMethod } from "../../generated/enums";
+import { IPaySeatFinePayload, IWaiveSeatFinePayload } from "./booking.interface";
 
 /**
  * Create a new single or multi-seat (group) booking for a student.
  */
 const createBooking = async (userId: string, payload: ICreateBookingPayload) => {
+    // 0. Block students whose unpaid library dues have reached the configured limit
+    await assertSeatBookingEligibility(userId);
+
     // 1. Gather all requested seat IDs
     const targetSeatIds: string[] = payload.seatIds && payload.seatIds.length > 0
         ? Array.from(new Set(payload.seatIds))
@@ -635,7 +647,7 @@ const cancelBooking = async (
     const defaultReason = isAdminOrLibrarian
         ? "Cancelled by Library Administration"
         : "Cancelled by Student";
-    const finalCancelReason = customCancelReason?.trim() || defaultReason;
+    let finalCancelReason = customCancelReason?.trim() || defaultReason;
 
     // If student, check ownership and restrict cancellation
     if (role === Role.student) {
@@ -662,6 +674,37 @@ const cancelBooking = async (
         }
     }
 
+    // Decide the late cancellation fine. Staff cancellations (maintenance, zone
+    // closure, emergencies) never penalise the student.
+    let fineAmount = 0;
+    let fineDecision: ReturnType<typeof evaluateCancellationFine> | null = null;
+
+    if (role === Role.student) {
+        const policy = await SettingService.getBookingPolicyConfig();
+        const slotConfig = await getActiveSlotConfig();
+        const slotStart = getSlotStartDate(
+            booking.schedule.date,
+            booking.schedule.slot as SlotType,
+            slotConfig
+        );
+
+        fineDecision = evaluateCancellationFine({
+            bookedAt: booking.bookedAt,
+            slotStart,
+            freeCancelMinutes: policy.freeCancelMinutes,
+            lateCancelFine: policy.lateCancelFine,
+            lateCancelLeadMinutes: policy.lateCancelLeadMinutes,
+        });
+
+        fineAmount = fineDecision.fineAmount;
+
+        if (!customCancelReason?.trim()) {
+            finalCancelReason = fineAmount > 0
+                ? `Cancelled by Student (${formatMinutes(fineDecision.minutesSinceBooking)} after booking, ${fineAmount} BDT late cancellation fee applied)`
+                : `Cancelled by Student (${formatMinutes(fineDecision.minutesSinceBooking)} after booking, within free cancellation window)`;
+        }
+    }
+
     // Perform status update and free occupancy for ALL booked seats atomically
     const cancelledBooking = await prisma.$transaction(async (tx) => {
         const updated = await tx.booking.update({
@@ -670,6 +713,9 @@ const cancelBooking = async (
                 status: BookingStatus.cancelled,
                 cancelledAt: new Date(),
                 cancelReason: finalCancelReason,
+                ...(fineAmount > 0
+                    ? { fineAmount, fineStatus: FineStatus.unpaid }
+                    : {}),
             },
         });
 
@@ -719,7 +765,170 @@ const cancelBooking = async (
             );
     }
 
+    // Notify the student when a late cancellation fee has been charged
+    if (fineAmount > 0 && booking.user?.email) {
+        const summary = await getUserUnpaidFinesSummary(booking.userId);
+        const formattedDate = new Date(booking.schedule.date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        });
+
+        const seatNumber = booking.bookingSeats?.length > 0
+            ? booking.bookingSeats.map((bs) => bs.seat.seatNumber).join(", ")
+            : booking.seat?.seatNumber ?? "Seat";
+        const zoneName = booking.bookingSeats?.length > 0
+            ? booking.bookingSeats[0]?.seat?.zone?.name ?? "Library Hall"
+            : booking.seat?.zone?.name ?? "Library Hall";
+
+        emailService
+            .sendSeatLateCancellationEmail({
+                toEmail: booking.user.email,
+                studentName: booking.user.name,
+                seatNumber,
+                zoneName,
+                dateStr: formattedDate,
+                slotName: booking.schedule.slot,
+                fineAmount,
+                totalUnpaid: summary.totalUnpaid,
+                maxUnpaidFineLimit: summary.maxUnpaidFineLimit,
+                minutesSinceBooking: Math.round(fineDecision?.minutesSinceBooking ?? 0),
+            })
+            .catch((err) =>
+                console.error("[Booking Service] Error sending late cancellation email:", err)
+            );
+    }
+
     return cancelledBooking;
+};
+
+/**
+ * Report a student's outstanding dues and whether seat reservations are locked.
+ */
+const getBookingEligibility = async (userId: string) => {
+    const [summary, policy] = await Promise.all([
+        getUserUnpaidFinesSummary(userId),
+        SettingService.getBookingPolicyConfig(),
+    ]);
+
+    return {
+        ...summary,
+        policy,
+    };
+};
+
+/**
+ * Settle an outstanding seat cancellation / no-show fine at the circulation desk.
+ */
+const paySeatFine = async (
+    bookingId: string,
+    payload: IPaySeatFinePayload,
+    receivedById: string
+) => {
+    const booking = await prisma.booking.findUnique({
+        where: { id: bookingId },
+        include: {
+            user: true,
+            seat: { include: { zone: true } },
+            schedule: true,
+        },
+    });
+
+    if (!booking) {
+        throw new AppError(status.NOT_FOUND, "Booking not found");
+    }
+
+    if (booking.fineAmount <= 0 || booking.fineStatus !== FineStatus.unpaid) {
+        throw new AppError(
+            status.BAD_REQUEST,
+            booking.fineStatus === FineStatus.paid
+                ? "This seat fine has already been settled."
+                : booking.fineStatus === FineStatus.waived
+                    ? "This seat fine has already been waived."
+                    : "This reservation has no outstanding fine to settle."
+        );
+    }
+
+    if (payload.paymentMethod === PaymentMethod.chalan && !payload.chalanNumber?.trim()) {
+        throw new AppError(status.BAD_REQUEST, "A bank chalan number is required for chalan payments.");
+    }
+
+    const paidAt = new Date();
+    const updated = await prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+            fineStatus: FineStatus.paid,
+            paymentMethod: payload.paymentMethod as PaymentMethod,
+            chalanNumber: payload.chalanNumber?.trim() || null,
+            finePaidAt: paidAt,
+            fineReceivedById: receivedById,
+        },
+    });
+
+    if (booking.user?.email) {
+        const summary = await getUserUnpaidFinesSummary(booking.userId);
+        emailService
+            .sendSeatFinePaidReceiptEmail({
+                toEmail: booking.user.email,
+                studentName: booking.user.name,
+                seatNumber: booking.seat?.seatNumber ?? "Seat",
+                zoneName: booking.seat?.zone?.name ?? "Library Hall",
+                amountPaid: booking.fineAmount,
+                paymentMethod: payload.paymentMethod,
+                chalanNumber: payload.chalanNumber?.trim() || undefined,
+                paidAtStr: paidAt.toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                }),
+                remainingUnpaid: summary.totalUnpaid,
+            })
+            .catch((err) =>
+                console.error("[Booking Service] Error sending seat fine receipt email:", err)
+            );
+    }
+
+    return updated;
+};
+
+/**
+ * Waive an outstanding seat fine (documented emergencies, staff error).
+ */
+const waiveSeatFine = async (
+    bookingId: string,
+    payload: IWaiveSeatFinePayload,
+    waivedById: string
+) => {
+    const booking = await prisma.booking.findUnique({
+        where: { id: bookingId },
+    });
+
+    if (!booking) {
+        throw new AppError(status.NOT_FOUND, "Booking not found");
+    }
+
+    if (booking.fineAmount <= 0 || booking.fineStatus !== FineStatus.unpaid) {
+        throw new AppError(
+            status.BAD_REQUEST,
+            "This reservation has no outstanding fine to waive."
+        );
+    }
+
+    const waiveReason = payload.reason?.trim();
+
+    return prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+            fineStatus: FineStatus.waived,
+            finePaidAt: new Date(),
+            fineReceivedById: waivedById,
+            cancelReason: waiveReason
+                ? `${booking.cancelReason ?? ""} | Fine waived: ${waiveReason}`.trim()
+                : booking.cancelReason,
+        },
+    });
 };
 
 /**
@@ -942,6 +1151,9 @@ export const BookingService = {
     getAllBookings,
     getBookingById,
     cancelBooking,
+    getBookingEligibility,
+    paySeatFine,
+    waiveSeatFine,
     getSchedules,
     getDashboardStats,
     ensureUpcomingSchedules,

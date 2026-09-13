@@ -11,3 +11,13 @@ export interface IFCFSQuickAssignPayload {
     scheduleId: string;
     partySize?: number;
 }
+
+export interface IPaySeatFinePayload {
+    paymentMethod: "cash" | "chalan" | "online";
+    chalanNumber?: string;
+    notes?: string;
+}
+
+export interface IWaiveSeatFinePayload {
+    reason?: string;
+}

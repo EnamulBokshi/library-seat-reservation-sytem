@@ -48,8 +48,11 @@ Health check: `GET /` (root, outside `/api/v1`).
 | GET | `/booking/fcfs-suggest` | student, admin, librarian | 1-click auto-assign |
 | GET | `/booking/schedules` | auth | open upcoming slots |
 | GET | `/booking/stats` | auth | dashboard analytics |
+| GET | `/booking/eligibility` | student, admin, librarian | unpaid dues + reservation lock state; registered before `/:id` |
 | GET | `/booking/:id` | auth | |
-| DELETE | `/booking/:id` | student, admin, librarian | cancel |
+| DELETE | `/booking/:id` | student, admin, librarian | cancel; student cancels may incur a late fee |
+| POST | `/booking/:id/pay-fine` | admin, librarian | settle a seat fine (cash / chalan / online) |
+| POST | `/booking/:id/waive-fine` | admin, librarian | waive a seat fine |
 
 ## checkin — `modules/checkin/checkin.route.ts`
 

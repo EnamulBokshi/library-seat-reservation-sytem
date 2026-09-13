@@ -155,8 +155,8 @@ export function CheckInView() {
   );
 
   // Stop camera helper
+  // Stop camera helper
   const stopCameraScanner = useCallback(async () => {
-    isStartingCameraRef.current = false;
     if (html5QrCodeRef.current) {
       try {
         const scanner = html5QrCodeRef.current;
@@ -178,15 +178,23 @@ export function CheckInView() {
   // Start camera helper
   const startCameraScanner = useCallback(async () => {
     if (!isMountedRef.current || document.hidden) return;
-    setCameraError(null);
+    if (isStartingCameraRef.current) return;
+
     isStartingCameraRef.current = true;
+    setCameraError(null);
 
     // Make sure previous scanner instance and video tracks are cleared
     await stopCameraScanner();
 
+    if (!isMountedRef.current || document.hidden) {
+      isStartingCameraRef.current = false;
+      return;
+    }
+
     try {
       const qrScannerElement = document.getElementById("qr-reader-container");
-      if (!qrScannerElement || !isMountedRef.current || document.hidden || !isStartingCameraRef.current) {
+      if (!qrScannerElement) {
+        isStartingCameraRef.current = false;
         return;
       }
 
@@ -196,49 +204,72 @@ export function CheckInView() {
       });
       html5QrCodeRef.current = html5QrCode;
 
-      // Query available camera devices if not yet populated
-      const devices = await Html5Qrcode.getCameras();
-      if (!isMountedRef.current || document.hidden || !isStartingCameraRef.current) {
-        stopCameraScanner();
+      let cameraToUse: string | { facingMode: string } = selectedCameraId;
+
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        if (devices && devices.length > 0) {
+          setCameras(devices);
+          if (!cameraToUse) {
+            const backCam = devices.find((d) =>
+              /back|rear|environment/i.test(d.label)
+            );
+            cameraToUse = backCam ? backCam.id : devices[0].id;
+          }
+        }
+      } catch (camErr) {
+        console.warn("Could not enumerate cameras, falling back to facingMode:", camErr);
+      }
+
+      if (!cameraToUse) {
+        cameraToUse = { facingMode: "environment" };
+      }
+
+      if (!isMountedRef.current || document.hidden) {
+        await stopCameraScanner();
         return;
       }
 
-      if (devices && devices.length > 0) {
-        setCameras(devices);
-        const cameraToUse = selectedCameraId || devices[devices.length - 1].id;
-
-        await html5QrCode.start(
-          cameraToUse,
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0,
-          },
-          (decodedText) => {
-            if (isScanningLockedRef.current) return;
-            isScanningLockedRef.current = true;
-            verifyToken(decodedText);
-          },
-          () => {
-            // Frame scan miss, do nothing
-          }
-        );
-
-        if (!isMountedRef.current || document.hidden || !isStartingCameraRef.current) {
-          stopCameraScanner();
-          return;
+      await html5QrCode.start(
+        cameraToUse,
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+        },
+        (decodedText) => {
+          if (isScanningLockedRef.current) return;
+          isScanningLockedRef.current = true;
+          verifyToken(decodedText);
+        },
+        () => {
+          // Frame scan miss, do nothing
         }
+      );
 
-        setIsCameraActive(true);
-      } else {
-        setCameraError("No camera devices detected on this device.");
+      if (!isMountedRef.current || document.hidden) {
+        await stopCameraScanner();
+        return;
+      }
+
+      setIsCameraActive(true);
+      setCameraError(null);
+
+      // Populate camera list once permissions are granted
+      try {
+        const updatedDevices = await Html5Qrcode.getCameras();
+        if (updatedDevices && updatedDevices.length > 0) {
+          setCameras(updatedDevices);
+        }
+      } catch {
+        // ignore
       }
     } catch (err) {
       console.error("Camera scanner initialization error:", err);
       stopAllMediaTracks();
       if (isMountedRef.current) {
         setCameraError(
-          "Could not access camera. Please ensure camera permissions are granted in your browser."
+          "Could not access camera. Please ensure camera permissions are granted in your browser settings."
         );
         setIsCameraActive(false);
       }
@@ -293,7 +324,7 @@ export function CheckInView() {
     };
   }, [mode, startCameraScanner, stopCameraScanner]);
 
-  // Handle mode switches (camera vs manual vs upload)
+  // Handle mode switches (camera vs manual vs upload) & camera changes
   useEffect(() => {
     if (mode === "camera") {
       startCameraScanner();

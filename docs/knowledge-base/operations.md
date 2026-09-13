@@ -67,8 +67,13 @@ Run any of them with `pnpm exec tsx ./src/scripts/<name>.ts` from `server/`.
 ## Migrations
 
 `server/prisma/migrations/` — `20260717152200_init`, `20260826174135_init`.
-Change the schema, then `pnpm db:migrate` (dev) and `pnpm db:generate`; commit the regenerated
-`server/src/generated` output, which the code imports directly.
+
+**The live development database has drifted from this history**: `prisma migrate dev` reports drift
+and demands a `migrate reset`, which drops all data. The database is maintained with `db push`
+instead, so change the schema, then run `pnpm db:push` and `pnpm db:generate`, and commit the
+regenerated `server/src/generated` output, which the code imports directly. Reconciling the
+migration history against the live schema is outstanding work; until then do not run
+`pnpm db:migrate` against a database with real data.
 
 ## Deployment notes
 

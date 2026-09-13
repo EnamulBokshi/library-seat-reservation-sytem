@@ -19,12 +19,15 @@ import {
   Shield,
   Info,
   Users,
+  Wallet,
 } from "lucide-react";
 
 interface BookingDetailsModalProps {
   booking: Booking;
   onClose: () => void;
-  onCancel?: (id: string) => void;
+  onCancel?: (booking: Booking) => void;
+  /** Staff-only: open the fine settlement flow for this booking. */
+  onSettleFine?: (booking: Booking) => void;
 }
 
 const STATUS_CONFIG: Record<
@@ -46,7 +49,7 @@ const SLOT_TIMES: Record<string, string> = {
   evening: "06:00 PM – 09:00 PM",
 };
 
-export function BookingDetailsModal({ booking, onClose, onCancel }: BookingDetailsModalProps) {
+export function BookingDetailsModal({ booking, onClose, onCancel, onSettleFine }: BookingDetailsModalProps) {
   const [copied, setCopied] = useState(false);
 
   const statusInfo = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending;
@@ -54,6 +57,9 @@ export function BookingDetailsModal({ booking, onClose, onCancel }: BookingDetai
 
   const canCancel =
     (booking.status === "confirmed" || booking.status === "pending") && !!onCancel;
+
+  const hasFine = (booking.fineAmount ?? 0) > 0;
+  const canSettleFine = hasFine && booking.fineStatus === "unpaid" && !!onSettleFine;
 
   const handleCopyToken = () => {
     if (!booking.qrToken) return;
@@ -273,11 +279,56 @@ export function BookingDetailsModal({ booking, onClose, onCancel }: BookingDetai
             </div>
           </div>
 
+          {/* Seat Fine */}
+          {hasFine && (
+            <div
+              className={`mt-4 rounded-xl border p-4 ${
+                booking.fineStatus === "unpaid"
+                  ? "border-rose-200 bg-rose-50/70"
+                  : "border-emerald-200 bg-emerald-50/70"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="kicker-label">Seat Reservation Fine</p>
+                  <p
+                    className={`mt-0.5 text-xl font-black ${
+                      booking.fineStatus === "unpaid" ? "text-rose-700" : "text-emerald-700"
+                    }`}
+                  >
+                    {booking.fineAmount} BDT
+                    <span className="ml-2 text-[11px] font-bold uppercase tracking-wide">
+                      {booking.fineStatus}
+                    </span>
+                  </p>
+                  {booking.fineStatus === "paid" && booking.paymentMethod && (
+                    <p className="mt-1 text-[11px] font-semibold text-emerald-900/70">
+                      Settled by {booking.paymentMethod}
+                      {booking.chalanNumber ? ` · Chalan ${booking.chalanNumber}` : ""}
+                      {booking.finePaidAt
+                        ? ` · ${new Date(booking.finePaidAt).toLocaleDateString()}`
+                        : ""}
+                    </p>
+                  )}
+                </div>
+                {canSettleFine && (
+                  <button
+                    onClick={() => onSettleFine(booking)}
+                    className="pulse-button-secondary py-1.5 px-3 text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50 shrink-0"
+                  >
+                    <Wallet className="h-3.5 w-3.5" />
+                    <span>Settle</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Modal Actions Footer */}
           <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
             {canCancel && (
               <button
-                onClick={() => onCancel(booking.id)}
+                onClick={() => onCancel(booking)}
                 className="pulse-button-secondary text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
               >
                 <Ban className="h-3.5 w-3.5" />

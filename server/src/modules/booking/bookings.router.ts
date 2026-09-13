@@ -29,8 +29,31 @@ bookingRoute.get("/schedules", authCheck(), BookingController.getSchedules);
 // Get real-time dashboard analytics (all authenticated roles)
 bookingRoute.get("/stats", authCheck(), BookingController.getDashboardStats);
 
+// Student fine standing & reservation lock status — must precede "/:id"
+bookingRoute.get(
+    "/eligibility",
+    authCheck("student", "admin", "librarian"),
+    BookingController.getBookingEligibility
+);
+
 // Get booking details by ID (authenticated users)
 bookingRoute.get("/:id", authCheck(), BookingController.getBookingById);
+
+// Settle an outstanding seat fine at the circulation desk (Librarians & Admins)
+bookingRoute.post(
+    "/:id/pay-fine",
+    authCheck("admin", "librarian"),
+    requestValidator(BookingValidation.paySeatFineSchema),
+    BookingController.paySeatFine
+);
+
+// Waive an outstanding seat fine (Librarians & Admins)
+bookingRoute.post(
+    "/:id/waive-fine",
+    authCheck("admin", "librarian"),
+    requestValidator(BookingValidation.waiveSeatFineSchema),
+    BookingController.waiveSeatFine
+);
 
 // Cancel booking (Student, Librarian, Admin)
 bookingRoute.delete("/:id", authCheck("student", "admin", "librarian"), BookingController.cancelBooking);

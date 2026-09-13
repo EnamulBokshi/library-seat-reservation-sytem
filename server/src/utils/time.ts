@@ -164,3 +164,23 @@ export const isSlotExpired = (
   const endMinutes = parseTimeToMinutes(slotInfo.endTime);
   return currentMinutes >= endMinutes;
 };
+
+/**
+ * Resolve the absolute start time of a schedule slot on its own date.
+ */
+export const getSlotStartDate = (
+  scheduleDate: Date,
+  slot: SlotType,
+  customConfig?: SlotConfig
+): Date => {
+  const config = customConfig ?? DEFAULT_SLOT_CONFIG;
+  const slotInfo = config[slot] ?? DEFAULT_SLOT_CONFIG[slot];
+  const startMinutes = parseTimeToMinutes(slotInfo?.startTime ?? "00:00");
+
+  // Schedule dates are stored as @db.Date (UTC midnight), so read the calendar
+  // day in UTC and rebuild it in local time, where the slot clock times apply.
+  const sDate = new Date(scheduleDate);
+  const start = new Date(sDate.getUTCFullYear(), sDate.getUTCMonth(), sDate.getUTCDate());
+  start.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
+  return start;
+};

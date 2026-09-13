@@ -22,6 +22,15 @@ const createBook = async (payload) => {
             throw new AppError_1.default(http_status_1.default.CONFLICT, `A book with ISBN ${payload.isbn} already exists.`);
         }
     }
+    // If Barcode is provided, check uniqueness
+    if (payload.barcode) {
+        const existingBarcode = await prisma_1.default.book.findFirst({
+            where: { barcode: payload.barcode, isActive: true },
+        });
+        if (existingBarcode) {
+            throw new AppError_1.default(http_status_1.default.CONFLICT, `A book with Barcode ${payload.barcode} already exists.`);
+        }
+    }
     const book = await prisma_1.default.book.create({
         data: {
             ...payload,
@@ -47,6 +56,7 @@ const getAllBooks = async (options) => {
                 { title: { contains: searchTerm, mode: "insensitive" } },
                 { author: { contains: searchTerm, mode: "insensitive" } },
                 { isbn: { contains: searchTerm, mode: "insensitive" } },
+                { barcode: { contains: searchTerm, mode: "insensitive" } },
                 { category: { contains: searchTerm, mode: "insensitive" } },
                 { callNumber: { contains: searchTerm, mode: "insensitive" } },
                 { publisher: { contains: searchTerm, mode: "insensitive" } },

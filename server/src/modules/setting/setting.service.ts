@@ -94,6 +94,61 @@ const getSettingByKey = async (key: string) => {
         updatedAt: new Date(),
       };
     }
+    if (key === "CHECKIN_GRACE_PERIOD_MINUTES") {
+      return {
+        id: "default-checkin-grace",
+        key: "CHECKIN_GRACE_PERIOD_MINUTES",
+        value: "15",
+        description: "Minutes a student has to scan in before the reservation is auto-cancelled",
+        updatedAt: new Date(),
+      };
+    }
+    if (key === "BOOKING_FREE_CANCEL_MINUTES") {
+      return {
+        id: "default-free-cancel-minutes",
+        key: "BOOKING_FREE_CANCEL_MINUTES",
+        value: "5",
+        description: "Minutes after booking during which a student may cancel free of charge",
+        updatedAt: new Date(),
+      };
+    }
+    if (key === "BOOKING_LATE_CANCEL_FINE") {
+      return {
+        id: "default-late-cancel-fine",
+        key: "BOOKING_LATE_CANCEL_FINE",
+        value: "5",
+        description: "Fine in BDT charged for cancelling a reservation after the free window",
+        updatedAt: new Date(),
+      };
+    }
+    if (key === "BOOKING_LATE_CANCEL_LEAD_MINUTES") {
+      return {
+        id: "default-late-cancel-lead",
+        key: "BOOKING_LATE_CANCEL_LEAD_MINUTES",
+        value: "120",
+        description:
+          "Minutes before the slot starts within which a late cancellation is fineable. Cancelling a reservation further ahead than this frees the seat in good time and stays free.",
+        updatedAt: new Date(),
+      };
+    }
+    if (key === "BOOKING_NO_SHOW_FINE") {
+      return {
+        id: "default-no-show-fine",
+        key: "BOOKING_NO_SHOW_FINE",
+        value: "5",
+        description: "Fine in BDT charged when a reservation is auto-cancelled as a no-show",
+        updatedAt: new Date(),
+      };
+    }
+    if (key === "BOOKING_MAX_UNPAID_FINE_LIMIT") {
+      return {
+        id: "default-max-unpaid-fine",
+        key: "BOOKING_MAX_UNPAID_FINE_LIMIT",
+        value: "10",
+        description: "Total unpaid library dues in BDT at which seat reservations are locked",
+        updatedAt: new Date(),
+      };
+    }
   }
 
   return setting;
@@ -181,15 +236,70 @@ const getBorrowConfig = async () => {
   };
 };
 
+export interface IBookingPolicyConfig {
+  freeCancelMinutes: number;
+  lateCancelFine: number;
+  lateCancelLeadMinutes: number;
+  noShowFine: number;
+  maxUnpaidFineLimit: number;
+  checkinGraceMinutes: number;
+}
+
 /**
- * Get public system configuration (slot timings and advance days).
+ * Read a numeric setting, falling back to the supplied default when the stored
+ * value is missing or unparsable. Negative values are rejected so a bad entry
+ * can never turn into a negative fine.
+ */
+const readNumericSetting = async (key: string, fallback: number): Promise<number> => {
+  const setting = await getSettingByKey(key);
+  const parsed = parseFloat(setting?.value ?? "");
+  if (isNaN(parsed) || parsed < 0) {
+    return fallback;
+  }
+  return parsed;
+};
+
+/**
+ * Helper to get the seat reservation cancellation & fine policy.
+ */
+const getBookingPolicyConfig = async (): Promise<IBookingPolicyConfig> => {
+  const [
+    freeCancelMinutes,
+    lateCancelFine,
+    lateCancelLeadMinutes,
+    noShowFine,
+    maxUnpaidFineLimit,
+    checkinGraceMinutes,
+  ] = await Promise.all([
+    readNumericSetting("BOOKING_FREE_CANCEL_MINUTES", 5),
+    readNumericSetting("BOOKING_LATE_CANCEL_FINE", 5),
+    readNumericSetting("BOOKING_LATE_CANCEL_LEAD_MINUTES", 120),
+    readNumericSetting("BOOKING_NO_SHOW_FINE", 5),
+    readNumericSetting("BOOKING_MAX_UNPAID_FINE_LIMIT", 10),
+    readNumericSetting("CHECKIN_GRACE_PERIOD_MINUTES", 15),
+  ]);
+
+  return {
+    freeCancelMinutes,
+    lateCancelFine,
+    lateCancelLeadMinutes,
+    noShowFine,
+    maxUnpaidFineLimit,
+    checkinGraceMinutes,
+  };
+};
+
+/**
+ * Get public system configuration (slot timings, advance days and booking policy).
  */
 const getPublicConfig = async () => {
   const slotConfig = await getActiveSlotConfig();
   const advanceBookingDays = await getAdvanceBookingDays();
+  const bookingPolicy = await getBookingPolicyConfig();
   return {
     slotConfig,
     advanceBookingDays,
+    bookingPolicy,
   };
 };
 
@@ -217,6 +327,7 @@ export const SettingService = {
   getPublicConfig,
   getBorrowConfig,
   getFineConfig,
+  getBookingPolicyConfig,
   calculateLoanFine,
   updateSetting,
 };

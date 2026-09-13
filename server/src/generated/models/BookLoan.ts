@@ -787,22 +787,6 @@ export type EnumLoanStatusFieldUpdateOperationsInput = {
   set?: $Enums.LoanStatus
 }
 
-export type FloatFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
-export type EnumFineStatusFieldUpdateOperationsInput = {
-  set?: $Enums.FineStatus
-}
-
-export type NullableEnumPaymentMethodFieldUpdateOperationsInput = {
-  set?: $Enums.PaymentMethod | null
-}
-
 export type BookLoanCreateWithoutUserInput = {
   id?: string
   borrowDate?: Date | string

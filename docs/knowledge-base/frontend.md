@@ -48,7 +48,17 @@ presence only — `/auth/*` away when logged in, `/admin/*` to login with a `red
 
 `components/shared/seating/` — `circle-table.tsx`, `cubicle-desk.tsx`, `meeting-table.tsx`,
 `table-cluster-card.tsx`. They render seat clusters grouped by `tableNumber` and map `TableType`
-to a layout. `booking-details-modal.tsx` shows QR + booking details.
+to a layout. `booking-details-modal.tsx` shows QR + booking details and, for staff, the seat fine.
+
+## Cancellation & fine UI
+
+- `lib/booking-policy.ts` mirrors the server's fine rule so the UI can warn before the request.
+- `shared/cancel-booking-modal.tsx` — live countdown inside the free window, explicit fee warning
+  and resulting balance once it closes.
+- `shared/settle-seat-fine-modal.tsx` — staff collect (cash / chalan / online) or waive.
+- `shared/fine-lock-banner.tsx` — shown on `/book` and `/zones/[id]` when dues reach the limit;
+  the reserve buttons are disabled alongside it.
+- `pages/admin/settings-view.tsx` — "Seat Reservation Cancellation & Fine Policy" card.
 
 ## Types
 

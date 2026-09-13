@@ -8,6 +8,24 @@ const http_status_1 = __importDefault(require("http-status"));
 const CatchAsync_1 = __importDefault(require("../../helpers/CatchAsync"));
 const SendResponse_1 = require("../../helpers/SendResponse");
 const loan_service_1 = require("./loan.service");
+const lookupBook = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await loan_service_1.LoanService.lookupBook(req.params.identifier);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Book found successfully.",
+        data: result,
+    });
+});
+const lookupStudent = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await loan_service_1.LoanService.lookupStudent(req.params.identifier);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Student eligibility verified.",
+        data: result,
+    });
+});
 const requestLoan = (0, CatchAsync_1.default)(async (req, res) => {
     const userId = req.user.userId;
     const result = await loan_service_1.LoanService.requestLoan(userId, req.body);
@@ -30,7 +48,7 @@ const directIssueLoan = (0, CatchAsync_1.default)(async (req, res) => {
 });
 const updateLoanStatus = (0, CatchAsync_1.default)(async (req, res) => {
     const adminId = req.user.userId;
-    const result = await loan_service_1.LoanService.updateLoanStatus(adminId, req.params.id, req.body);
+    const result = await loan_service_1.LoanService.updateLoanStatus(req.params.id, req.body, adminId);
     (0, SendResponse_1.sendResponse)(res, {
         httpStatusCode: http_status_1.default.OK,
         success: true,
@@ -40,17 +58,29 @@ const updateLoanStatus = (0, CatchAsync_1.default)(async (req, res) => {
 });
 const returnBook = (0, CatchAsync_1.default)(async (req, res) => {
     const adminId = req.user.userId;
-    const result = await loan_service_1.LoanService.returnBook(adminId, req.params.id);
+    const result = await loan_service_1.LoanService.returnLoan(req.params.id, adminId);
     (0, SendResponse_1.sendResponse)(res, {
         httpStatusCode: http_status_1.default.OK,
         success: true,
-        message: "Book successfully marked as returned and inventory updated.",
+        message: result.fineAmount > 0
+            ? `Book returned with ${result.daysOverdue} days overdue. Fine of ${result.fineAmount} BDT recorded.`
+            : "Book successfully marked as returned and physical inventory restored.",
+        data: result,
+    });
+});
+const payLoanFine = (0, CatchAsync_1.default)(async (req, res) => {
+    const librarianId = req.user.userId;
+    const result = await loan_service_1.LoanService.payLoanFine(req.params.id, req.body, librarianId);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: `Fine payment of ${result.fineAmount} BDT recorded via ${result.paymentMethod}. Student borrowing access restored.`,
         data: result,
     });
 });
 const renewLoan = (0, CatchAsync_1.default)(async (req, res) => {
     const userId = req.user.userId;
-    const result = await loan_service_1.LoanService.renewLoan(userId, req.params.id);
+    const result = await loan_service_1.LoanService.renewLoan(req.params.id, userId);
     (0, SendResponse_1.sendResponse)(res, {
         httpStatusCode: http_status_1.default.OK,
         success: true,
@@ -59,8 +89,7 @@ const renewLoan = (0, CatchAsync_1.default)(async (req, res) => {
     });
 });
 const adminRenewLoan = (0, CatchAsync_1.default)(async (req, res) => {
-    const adminId = req.user.userId;
-    const result = await loan_service_1.LoanService.adminRenewLoan(adminId, req.params.id, req.body);
+    const result = await loan_service_1.LoanService.adminRenewLoan(req.params.id, req.body);
     (0, SendResponse_1.sendResponse)(res, {
         httpStatusCode: http_status_1.default.OK,
         success: true,
@@ -81,6 +110,7 @@ const getMyLoans = (0, CatchAsync_1.default)(async (req, res) => {
 const getAllLoans = (0, CatchAsync_1.default)(async (req, res) => {
     const options = {
         status: req.query.status,
+        fineStatus: req.query.fineStatus,
         userId: req.query.userId,
         bookId: req.query.bookId,
         searchTerm: req.query.searchTerm,
@@ -108,10 +138,13 @@ const getCirculationStats = (0, CatchAsync_1.default)(async (req, res) => {
     });
 });
 exports.LoanController = {
+    lookupBook,
+    lookupStudent,
     requestLoan,
     directIssueLoan,
     updateLoanStatus,
     returnBook,
+    payLoanFine,
     renewLoan,
     adminRenewLoan,
     getMyLoans,

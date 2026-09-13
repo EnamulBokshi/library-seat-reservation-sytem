@@ -7,6 +7,11 @@
 | `SLOT_CONFIG` | 4 slots below | `utils/time.ts` |
 | `ADVANCE_BOOKING_DAYS` | 7 | booking window, schedule generation |
 | `CHECKIN_GRACE_PERIOD_MINUTES` | 15 | grace-period cron |
+| `BOOKING_FREE_CANCEL_MINUTES` | 5 | free student cancellation window |
+| `BOOKING_LATE_CANCEL_FINE` | 5 (BDT) | late cancellation fee |
+| `BOOKING_LATE_CANCEL_LEAD_MINUTES` | 120 | how close to the slot a cancel becomes fineable |
+| `BOOKING_NO_SHOW_FINE` | 5 (BDT) | auto-cancel no-show fee |
+| `BOOKING_MAX_UNPAID_FINE_LIMIT` | 10 (BDT) | total dues at which seat booking locks |
 | `MAX_BORROW_LIMIT` | 3 | loan quota |
 | `BORROW_PERIOD_DAYS` | 10 | due date |
 | `MAX_RENEWAL_LIMIT` | 3 | renewals |
@@ -31,6 +36,45 @@ A stored `SLOT_CONFIG` is merged over the defaults.
 7. On success: booking created with a `qrToken`, QR PNG generated (`qrcode`), confirmation email
    dispatched.
 
+## Seat cancellation fines (`lib/booking-fines.ts`, `booking.service.ts: cancelBooking`)
+
+Staff cancellations never fine the student — only `role === student` is evaluated.
+
+A student cancellation is fineable only when **both** hold:
+
+1. `now - bookedAt` exceeds `BOOKING_FREE_CANCEL_MINUTES`, and
+2. the slot is already running, or starts within `BOOKING_LATE_CANCEL_LEAD_MINUTES`.
+
+The second condition exists because dropping a reservation days ahead of its slot leaves ample
+time for another student to take the seat, so it causes none of the harm the fee exists to deter.
+A fineable cancellation sets `fineAmount = BOOKING_LATE_CANCEL_FINE`, `fineStatus = unpaid`, writes
+the elapsed time into `cancelReason`, and emails the student.
+
+`evaluateCancellationFine()` is pure and mirrored on the client in `client/lib/booking-policy.ts`
+so the confirmation modal can warn before the request; the server remains the authority.
+
+## Seat booking eligibility (`assertSeatBookingEligibility`)
+
+`createBooking` first sums the student's unpaid seat fines and unpaid loan fines. When the total
+reaches `BOOKING_MAX_UNPAID_FINE_LIMIT` (`>=`, so two 5 BDT offences lock at the default 10), the
+booking is refused with 403. `GET /booking/eligibility` returns the same summary for the UI banner.
+Book borrowing keeps its own separate rule (any unpaid loan fine blocks) and ignores seat fines.
+
+## No-show fines (`cron.service.ts: applyNoShowFines`)
+
+Three workers can mark a booking `no_show`, and **all three** charge `BOOKING_NO_SHOW_FINE`
+through the shared helper: the grace-period worker, the slot-expiry worker, and the slot boundary
+cleanup. Fining only the first would let a student book a slot near its end, never show, and pay
+nothing — cheaper than cancelling. The helper only touches rows with `fineStatus = none`, so a
+settled or waived fine is never overwritten.
+
+## Seat fine settlement
+
+`paySeatFine` records `paymentMethod`, `chalanNumber` (required for `chalan`), `finePaidAt` and
+`fineReceivedById`, sets `fineStatus = paid`, and emails a receipt. `waiveSeatFine` sets
+`waived` and appends the reason to `cancelReason`. Both refuse anything that is not currently
+`unpaid` with a positive amount.
+
 ## FCFS quick assign (`getFCFSQuickAssign`)
 
 Loads active zone seats ordered by `tableNumber`, `seatPosition`, `seatNumber`; subtracts seats
@@ -51,7 +95,7 @@ the first N free seats. Errors: 409 when free seats < party size; 400 on zone-ca
 
 | Schedule | Job |
 |---|---|
-| `* * * * *` | grace-period no-show cancel; 10-minute slot-ending warning mail; slot-expiry seat release |
+| `* * * * *` | grace-period no-show cancel (+ fine); 10-minute slot-ending warning mail; slot-expiry seat release (+ fine) |
 | `*/15 * * * *` | circulation: pre-due reminders, overdue detection, fine accrual, overdue mail |
 | `0 12/14/18/21 * * *` | per-slot boundary cleanup (no-show + force checkout + seat release) |
 | `0 0 * * *` | roll schedules forward `ADVANCE_BOOKING_DAYS` |
@@ -88,6 +132,7 @@ sending to guarantee a single dispatch.
 ## Emails (`services/email.service.ts`)
 
 `sendBookingConfirmationEmail`, `sendLoanConfirmationEmail`, `sendLoanDueDateWarningEmail`,
-`sendLoanOverdueAlertEmail`, `sendFinePaidReceiptEmail`, `sendSeatNoShowCancellationEmail`,
-`sendBookingCancelledByAdminEmail`, `sendSeatSlotEndingWarningEmail` — all inline-HTML templates
-sent through `sendHtmlEmail` (SMTP config in `envVars.SMTP`).
+`sendLoanOverdueAlertEmail`, `sendFinePaidReceiptEmail`, `sendSeatNoShowCancellationEmail`
+(carries the no-show fee and running dues), `sendBookingCancelledByAdminEmail`,
+`sendSeatSlotEndingWarningEmail`, `sendSeatLateCancellationEmail`, `sendSeatFinePaidReceiptEmail`
+— all inline-HTML templates sent through `sendHtmlEmail` (SMTP config in `envVars.SMTP`).

@@ -28,10 +28,12 @@ export type AggregateBooking = {
 
 export type BookingAvgAggregateOutputType = {
   guestCount: number | null
+  fineAmount: number | null
 }
 
 export type BookingSumAggregateOutputType = {
   guestCount: number | null
+  fineAmount: number | null
 }
 
 export type BookingMinAggregateOutputType = {
@@ -48,6 +50,12 @@ export type BookingMinAggregateOutputType = {
   cancelledAt: Date | null
   cancelReason: string | null
   slotWarningEmailSent: boolean | null
+  fineAmount: number | null
+  fineStatus: $Enums.FineStatus | null
+  paymentMethod: $Enums.PaymentMethod | null
+  chalanNumber: string | null
+  finePaidAt: Date | null
+  fineReceivedById: string | null
 }
 
 export type BookingMaxAggregateOutputType = {
@@ -64,6 +72,12 @@ export type BookingMaxAggregateOutputType = {
   cancelledAt: Date | null
   cancelReason: string | null
   slotWarningEmailSent: boolean | null
+  fineAmount: number | null
+  fineStatus: $Enums.FineStatus | null
+  paymentMethod: $Enums.PaymentMethod | null
+  chalanNumber: string | null
+  finePaidAt: Date | null
+  fineReceivedById: string | null
 }
 
 export type BookingCountAggregateOutputType = {
@@ -80,16 +94,24 @@ export type BookingCountAggregateOutputType = {
   cancelledAt: number
   cancelReason: number
   slotWarningEmailSent: number
+  fineAmount: number
+  fineStatus: number
+  paymentMethod: number
+  chalanNumber: number
+  finePaidAt: number
+  fineReceivedById: number
   _all: number
 }
 
 
 export type BookingAvgAggregateInputType = {
   guestCount?: true
+  fineAmount?: true
 }
 
 export type BookingSumAggregateInputType = {
   guestCount?: true
+  fineAmount?: true
 }
 
 export type BookingMinAggregateInputType = {
@@ -106,6 +128,12 @@ export type BookingMinAggregateInputType = {
   cancelledAt?: true
   cancelReason?: true
   slotWarningEmailSent?: true
+  fineAmount?: true
+  fineStatus?: true
+  paymentMethod?: true
+  chalanNumber?: true
+  finePaidAt?: true
+  fineReceivedById?: true
 }
 
 export type BookingMaxAggregateInputType = {
@@ -122,6 +150,12 @@ export type BookingMaxAggregateInputType = {
   cancelledAt?: true
   cancelReason?: true
   slotWarningEmailSent?: true
+  fineAmount?: true
+  fineStatus?: true
+  paymentMethod?: true
+  chalanNumber?: true
+  finePaidAt?: true
+  fineReceivedById?: true
 }
 
 export type BookingCountAggregateInputType = {
@@ -138,6 +172,12 @@ export type BookingCountAggregateInputType = {
   cancelledAt?: true
   cancelReason?: true
   slotWarningEmailSent?: true
+  fineAmount?: true
+  fineStatus?: true
+  paymentMethod?: true
+  chalanNumber?: true
+  finePaidAt?: true
+  fineReceivedById?: true
   _all?: true
 }
 
@@ -241,6 +281,12 @@ export type BookingGroupByOutputType = {
   cancelledAt: Date | null
   cancelReason: string | null
   slotWarningEmailSent: boolean
+  fineAmount: number
+  fineStatus: $Enums.FineStatus
+  paymentMethod: $Enums.PaymentMethod | null
+  chalanNumber: string | null
+  finePaidAt: Date | null
+  fineReceivedById: string | null
   _count: BookingCountAggregateOutputType | null
   _avg: BookingAvgAggregateOutputType | null
   _sum: BookingSumAggregateOutputType | null
@@ -280,6 +326,12 @@ export type BookingWhereInput = {
   cancelledAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   cancelReason?: Prisma.StringNullableFilter<"Booking"> | string | null
   slotWarningEmailSent?: Prisma.BoolFilter<"Booking"> | boolean
+  fineAmount?: Prisma.FloatFilter<"Booking"> | number
+  fineStatus?: Prisma.EnumFineStatusFilter<"Booking"> | $Enums.FineStatus
+  paymentMethod?: Prisma.EnumPaymentMethodNullableFilter<"Booking"> | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.StringNullableFilter<"Booking"> | string | null
+  finePaidAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
+  fineReceivedById?: Prisma.StringNullableFilter<"Booking"> | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   seat?: Prisma.XOR<Prisma.SeatNullableScalarRelationFilter, Prisma.SeatWhereInput> | null
   schedule?: Prisma.XOR<Prisma.ScheduleScalarRelationFilter, Prisma.ScheduleWhereInput>
@@ -300,6 +352,12 @@ export type BookingOrderByWithRelationInput = {
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
   slotWarningEmailSent?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
+  fineStatus?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
+  chalanNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  finePaidAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  fineReceivedById?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   seat?: Prisma.SeatOrderByWithRelationInput
   schedule?: Prisma.ScheduleOrderByWithRelationInput
@@ -323,6 +381,12 @@ export type BookingWhereUniqueInput = Prisma.AtLeast<{
   cancelledAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   cancelReason?: Prisma.StringNullableFilter<"Booking"> | string | null
   slotWarningEmailSent?: Prisma.BoolFilter<"Booking"> | boolean
+  fineAmount?: Prisma.FloatFilter<"Booking"> | number
+  fineStatus?: Prisma.EnumFineStatusFilter<"Booking"> | $Enums.FineStatus
+  paymentMethod?: Prisma.EnumPaymentMethodNullableFilter<"Booking"> | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.StringNullableFilter<"Booking"> | string | null
+  finePaidAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
+  fineReceivedById?: Prisma.StringNullableFilter<"Booking"> | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   seat?: Prisma.XOR<Prisma.SeatNullableScalarRelationFilter, Prisma.SeatWhereInput> | null
   schedule?: Prisma.XOR<Prisma.ScheduleScalarRelationFilter, Prisma.ScheduleWhereInput>
@@ -343,6 +407,12 @@ export type BookingOrderByWithAggregationInput = {
   cancelledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
   slotWarningEmailSent?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
+  fineStatus?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
+  chalanNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  finePaidAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  fineReceivedById?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.BookingCountOrderByAggregateInput
   _avg?: Prisma.BookingAvgOrderByAggregateInput
   _max?: Prisma.BookingMaxOrderByAggregateInput
@@ -367,6 +437,12 @@ export type BookingScalarWhereWithAggregatesInput = {
   cancelledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
   cancelReason?: Prisma.StringNullableWithAggregatesFilter<"Booking"> | string | null
   slotWarningEmailSent?: Prisma.BoolWithAggregatesFilter<"Booking"> | boolean
+  fineAmount?: Prisma.FloatWithAggregatesFilter<"Booking"> | number
+  fineStatus?: Prisma.EnumFineStatusWithAggregatesFilter<"Booking"> | $Enums.FineStatus
+  paymentMethod?: Prisma.EnumPaymentMethodNullableWithAggregatesFilter<"Booking"> | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.StringNullableWithAggregatesFilter<"Booking"> | string | null
+  finePaidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
+  fineReceivedById?: Prisma.StringNullableWithAggregatesFilter<"Booking"> | string | null
 }
 
 export type BookingCreateInput = {
@@ -380,6 +456,12 @@ export type BookingCreateInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
   user: Prisma.UserCreateNestedOneWithoutBookingsInput
   seat?: Prisma.SeatCreateNestedOneWithoutBookingsInput
   schedule: Prisma.ScheduleCreateNestedOneWithoutBookingsInput
@@ -400,6 +482,12 @@ export type BookingUncheckedCreateInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
   bookingSeats?: Prisma.BookingSeatUncheckedCreateNestedManyWithoutBookingInput
 }
 
@@ -414,6 +502,12 @@ export type BookingUpdateInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutBookingsNestedInput
   seat?: Prisma.SeatUpdateOneWithoutBookingsNestedInput
   schedule?: Prisma.ScheduleUpdateOneRequiredWithoutBookingsNestedInput
@@ -434,6 +528,12 @@ export type BookingUncheckedUpdateInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bookingSeats?: Prisma.BookingSeatUncheckedUpdateManyWithoutBookingNestedInput
 }
 
@@ -451,6 +551,12 @@ export type BookingCreateManyInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
 }
 
 export type BookingUpdateManyMutationInput = {
@@ -464,6 +570,12 @@ export type BookingUpdateManyMutationInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type BookingUncheckedUpdateManyInput = {
@@ -480,6 +592,12 @@ export type BookingUncheckedUpdateManyInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type BookingListRelationFilter = {
@@ -511,10 +629,17 @@ export type BookingCountOrderByAggregateInput = {
   cancelledAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
   slotWarningEmailSent?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
+  fineStatus?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrder
+  chalanNumber?: Prisma.SortOrder
+  finePaidAt?: Prisma.SortOrder
+  fineReceivedById?: Prisma.SortOrder
 }
 
 export type BookingAvgOrderByAggregateInput = {
   guestCount?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
 }
 
 export type BookingMaxOrderByAggregateInput = {
@@ -531,6 +656,12 @@ export type BookingMaxOrderByAggregateInput = {
   cancelledAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
   slotWarningEmailSent?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
+  fineStatus?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrder
+  chalanNumber?: Prisma.SortOrder
+  finePaidAt?: Prisma.SortOrder
+  fineReceivedById?: Prisma.SortOrder
 }
 
 export type BookingMinOrderByAggregateInput = {
@@ -547,10 +678,17 @@ export type BookingMinOrderByAggregateInput = {
   cancelledAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
   slotWarningEmailSent?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
+  fineStatus?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrder
+  chalanNumber?: Prisma.SortOrder
+  finePaidAt?: Prisma.SortOrder
+  fineReceivedById?: Prisma.SortOrder
 }
 
 export type BookingSumOrderByAggregateInput = {
   guestCount?: Prisma.SortOrder
+  fineAmount?: Prisma.SortOrder
 }
 
 export type BookingCreateNestedManyWithoutUserInput = {
@@ -701,6 +839,22 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
+export type FloatFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type EnumFineStatusFieldUpdateOperationsInput = {
+  set?: $Enums.FineStatus
+}
+
+export type NullableEnumPaymentMethodFieldUpdateOperationsInput = {
+  set?: $Enums.PaymentMethod | null
+}
+
 export type BookingCreateWithoutUserInput = {
   id?: string
   guestCount?: number
@@ -712,6 +866,12 @@ export type BookingCreateWithoutUserInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
   seat?: Prisma.SeatCreateNestedOneWithoutBookingsInput
   schedule: Prisma.ScheduleCreateNestedOneWithoutBookingsInput
   bookingSeats?: Prisma.BookingSeatCreateNestedManyWithoutBookingInput
@@ -730,6 +890,12 @@ export type BookingUncheckedCreateWithoutUserInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
   bookingSeats?: Prisma.BookingSeatUncheckedCreateNestedManyWithoutBookingInput
 }
 
@@ -776,6 +942,12 @@ export type BookingScalarWhereInput = {
   cancelledAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
   cancelReason?: Prisma.StringNullableFilter<"Booking"> | string | null
   slotWarningEmailSent?: Prisma.BoolFilter<"Booking"> | boolean
+  fineAmount?: Prisma.FloatFilter<"Booking"> | number
+  fineStatus?: Prisma.EnumFineStatusFilter<"Booking"> | $Enums.FineStatus
+  paymentMethod?: Prisma.EnumPaymentMethodNullableFilter<"Booking"> | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.StringNullableFilter<"Booking"> | string | null
+  finePaidAt?: Prisma.DateTimeNullableFilter<"Booking"> | Date | string | null
+  fineReceivedById?: Prisma.StringNullableFilter<"Booking"> | string | null
 }
 
 export type BookingCreateWithoutSeatInput = {
@@ -789,6 +961,12 @@ export type BookingCreateWithoutSeatInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
   user: Prisma.UserCreateNestedOneWithoutBookingsInput
   schedule: Prisma.ScheduleCreateNestedOneWithoutBookingsInput
   bookingSeats?: Prisma.BookingSeatCreateNestedManyWithoutBookingInput
@@ -807,6 +985,12 @@ export type BookingUncheckedCreateWithoutSeatInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
   bookingSeats?: Prisma.BookingSeatUncheckedCreateNestedManyWithoutBookingInput
 }
 
@@ -847,6 +1031,12 @@ export type BookingCreateWithoutScheduleInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
   user: Prisma.UserCreateNestedOneWithoutBookingsInput
   seat?: Prisma.SeatCreateNestedOneWithoutBookingsInput
   bookingSeats?: Prisma.BookingSeatCreateNestedManyWithoutBookingInput
@@ -865,6 +1055,12 @@ export type BookingUncheckedCreateWithoutScheduleInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
   bookingSeats?: Prisma.BookingSeatUncheckedCreateNestedManyWithoutBookingInput
 }
 
@@ -905,6 +1101,12 @@ export type BookingCreateWithoutBookingSeatsInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
   user: Prisma.UserCreateNestedOneWithoutBookingsInput
   seat?: Prisma.SeatCreateNestedOneWithoutBookingsInput
   schedule: Prisma.ScheduleCreateNestedOneWithoutBookingsInput
@@ -924,6 +1126,12 @@ export type BookingUncheckedCreateWithoutBookingSeatsInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
 }
 
 export type BookingCreateOrConnectWithoutBookingSeatsInput = {
@@ -953,6 +1161,12 @@ export type BookingUpdateWithoutBookingSeatsInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutBookingsNestedInput
   seat?: Prisma.SeatUpdateOneWithoutBookingsNestedInput
   schedule?: Prisma.ScheduleUpdateOneRequiredWithoutBookingsNestedInput
@@ -972,6 +1186,12 @@ export type BookingUncheckedUpdateWithoutBookingSeatsInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type BookingCreateManyUserInput = {
@@ -987,6 +1207,12 @@ export type BookingCreateManyUserInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
 }
 
 export type BookingUpdateWithoutUserInput = {
@@ -1000,6 +1226,12 @@ export type BookingUpdateWithoutUserInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   seat?: Prisma.SeatUpdateOneWithoutBookingsNestedInput
   schedule?: Prisma.ScheduleUpdateOneRequiredWithoutBookingsNestedInput
   bookingSeats?: Prisma.BookingSeatUpdateManyWithoutBookingNestedInput
@@ -1018,6 +1250,12 @@ export type BookingUncheckedUpdateWithoutUserInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bookingSeats?: Prisma.BookingSeatUncheckedUpdateManyWithoutBookingNestedInput
 }
 
@@ -1034,6 +1272,12 @@ export type BookingUncheckedUpdateManyWithoutUserInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type BookingCreateManySeatInput = {
@@ -1049,6 +1293,12 @@ export type BookingCreateManySeatInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
 }
 
 export type BookingUpdateWithoutSeatInput = {
@@ -1062,6 +1312,12 @@ export type BookingUpdateWithoutSeatInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutBookingsNestedInput
   schedule?: Prisma.ScheduleUpdateOneRequiredWithoutBookingsNestedInput
   bookingSeats?: Prisma.BookingSeatUpdateManyWithoutBookingNestedInput
@@ -1080,6 +1336,12 @@ export type BookingUncheckedUpdateWithoutSeatInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bookingSeats?: Prisma.BookingSeatUncheckedUpdateManyWithoutBookingNestedInput
 }
 
@@ -1096,6 +1358,12 @@ export type BookingUncheckedUpdateManyWithoutSeatInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type BookingCreateManyScheduleInput = {
@@ -1111,6 +1379,12 @@ export type BookingCreateManyScheduleInput = {
   cancelledAt?: Date | string | null
   cancelReason?: string | null
   slotWarningEmailSent?: boolean
+  fineAmount?: number
+  fineStatus?: $Enums.FineStatus
+  paymentMethod?: $Enums.PaymentMethod | null
+  chalanNumber?: string | null
+  finePaidAt?: Date | string | null
+  fineReceivedById?: string | null
 }
 
 export type BookingUpdateWithoutScheduleInput = {
@@ -1124,6 +1398,12 @@ export type BookingUpdateWithoutScheduleInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutBookingsNestedInput
   seat?: Prisma.SeatUpdateOneWithoutBookingsNestedInput
   bookingSeats?: Prisma.BookingSeatUpdateManyWithoutBookingNestedInput
@@ -1142,6 +1422,12 @@ export type BookingUncheckedUpdateWithoutScheduleInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bookingSeats?: Prisma.BookingSeatUncheckedUpdateManyWithoutBookingNestedInput
 }
 
@@ -1158,6 +1444,12 @@ export type BookingUncheckedUpdateManyWithoutScheduleInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   slotWarningEmailSent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  fineAmount?: Prisma.FloatFieldUpdateOperationsInput | number
+  fineStatus?: Prisma.EnumFineStatusFieldUpdateOperationsInput | $Enums.FineStatus
+  paymentMethod?: Prisma.NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+  chalanNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  finePaidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  fineReceivedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -1205,6 +1497,12 @@ export type BookingSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   cancelledAt?: boolean
   cancelReason?: boolean
   slotWarningEmailSent?: boolean
+  fineAmount?: boolean
+  fineStatus?: boolean
+  paymentMethod?: boolean
+  chalanNumber?: boolean
+  finePaidAt?: boolean
+  fineReceivedById?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   seat?: boolean | Prisma.Booking$seatArgs<ExtArgs>
   schedule?: boolean | Prisma.ScheduleDefaultArgs<ExtArgs>
@@ -1226,6 +1524,12 @@ export type BookingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   cancelledAt?: boolean
   cancelReason?: boolean
   slotWarningEmailSent?: boolean
+  fineAmount?: boolean
+  fineStatus?: boolean
+  paymentMethod?: boolean
+  chalanNumber?: boolean
+  finePaidAt?: boolean
+  fineReceivedById?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   seat?: boolean | Prisma.Booking$seatArgs<ExtArgs>
   schedule?: boolean | Prisma.ScheduleDefaultArgs<ExtArgs>
@@ -1245,6 +1549,12 @@ export type BookingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   cancelledAt?: boolean
   cancelReason?: boolean
   slotWarningEmailSent?: boolean
+  fineAmount?: boolean
+  fineStatus?: boolean
+  paymentMethod?: boolean
+  chalanNumber?: boolean
+  finePaidAt?: boolean
+  fineReceivedById?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   seat?: boolean | Prisma.Booking$seatArgs<ExtArgs>
   schedule?: boolean | Prisma.ScheduleDefaultArgs<ExtArgs>
@@ -1264,9 +1574,15 @@ export type BookingSelectScalar = {
   cancelledAt?: boolean
   cancelReason?: boolean
   slotWarningEmailSent?: boolean
+  fineAmount?: boolean
+  fineStatus?: boolean
+  paymentMethod?: boolean
+  chalanNumber?: boolean
+  finePaidAt?: boolean
+  fineReceivedById?: boolean
 }
 
-export type BookingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "seatId" | "scheduleId" | "guestCount" | "status" | "qrToken" | "bookedAt" | "checkedInAt" | "checkedOutAt" | "cancelledAt" | "cancelReason" | "slotWarningEmailSent", ExtArgs["result"]["booking"]>
+export type BookingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "seatId" | "scheduleId" | "guestCount" | "status" | "qrToken" | "bookedAt" | "checkedInAt" | "checkedOutAt" | "cancelledAt" | "cancelReason" | "slotWarningEmailSent" | "fineAmount" | "fineStatus" | "paymentMethod" | "chalanNumber" | "finePaidAt" | "fineReceivedById", ExtArgs["result"]["booking"]>
 export type BookingInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   seat?: boolean | Prisma.Booking$seatArgs<ExtArgs>
@@ -1307,6 +1623,12 @@ export type $BookingPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     cancelledAt: Date | null
     cancelReason: string | null
     slotWarningEmailSent: boolean
+    fineAmount: number
+    fineStatus: $Enums.FineStatus
+    paymentMethod: $Enums.PaymentMethod | null
+    chalanNumber: string | null
+    finePaidAt: Date | null
+    fineReceivedById: string | null
   }, ExtArgs["result"]["booking"]>
   composites: {}
 }
@@ -1747,6 +2069,12 @@ export interface BookingFieldRefs {
   readonly cancelledAt: Prisma.FieldRef<"Booking", 'DateTime'>
   readonly cancelReason: Prisma.FieldRef<"Booking", 'String'>
   readonly slotWarningEmailSent: Prisma.FieldRef<"Booking", 'Boolean'>
+  readonly fineAmount: Prisma.FieldRef<"Booking", 'Float'>
+  readonly fineStatus: Prisma.FieldRef<"Booking", 'FineStatus'>
+  readonly paymentMethod: Prisma.FieldRef<"Booking", 'PaymentMethod'>
+  readonly chalanNumber: Prisma.FieldRef<"Booking", 'String'>
+  readonly finePaidAt: Prisma.FieldRef<"Booking", 'DateTime'>
+  readonly fineReceivedById: Prisma.FieldRef<"Booking", 'String'>
 }
     
 

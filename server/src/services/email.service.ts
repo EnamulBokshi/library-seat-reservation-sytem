@@ -725,6 +725,9 @@ export interface SendSeatNoShowCancellationOptions {
   slotName: string;
   timeRange?: string;
   graceMinutes?: number;
+  fineAmount?: number;
+  totalUnpaid?: number;
+  maxUnpaidFineLimit?: number;
 }
 
 export const sendSeatNoShowCancellationEmail = async (opts: SendSeatNoShowCancellationOptions) => {
@@ -737,6 +740,9 @@ export const sendSeatNoShowCancellationEmail = async (opts: SendSeatNoShowCancel
     slotName,
     timeRange = "",
     graceMinutes = 15,
+    fineAmount = 0,
+    totalUnpaid = 0,
+    maxUnpaidFineLimit = 0,
   } = opts;
 
   const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
@@ -800,6 +806,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <div class="notice">
       ℹ️ <strong>Why did this happen?</strong> To ensure fair seat availability for all university students, unclaimed seats are automatically released after ${graceMinutes} minutes. If you still need a workspace, you can browse available seats and make a new reservation.
     </div>
+    ${fineAmount > 0 ? `
+    <div class="notice">
+      💰 <strong>No-show fee: ${fineAmount} BDT.</strong> Because the seat was held and left unused, a no-show charge has been added to your library account.
+      ${maxUnpaidFineLimit > 0 ? `Your unpaid dues now total <strong>${totalUnpaid} BDT</strong> of the ${maxUnpaidFineLimit} BDT limit${totalUnpaid >= maxUnpaidFineLimit ? ", so new seat reservations are locked until you settle them" : ""}.` : ""}
+      Settle at the library circulation desk (Cash / Bank Chalan).
+    </div>
+    ` : ""}
 
     <a href="${frontendUrl}/zones" class="btn">Reserve Another Seat</a>
   </div>
@@ -1021,6 +1034,245 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
+// ─── 9. Seat Late Cancellation Fee Email ─────────────────────────────────────
+
+export interface SendSeatLateCancellationOptions {
+  toEmail: string;
+  studentName: string;
+  seatNumber: string;
+  zoneName: string;
+  dateStr: string;
+  slotName: string;
+  fineAmount: number;
+  totalUnpaid: number;
+  maxUnpaidFineLimit: number;
+  minutesSinceBooking: number;
+}
+
+export const sendSeatLateCancellationEmail = async (opts: SendSeatLateCancellationOptions) => {
+  const {
+    toEmail,
+    studentName,
+    seatNumber,
+    zoneName,
+    dateStr,
+    slotName,
+    fineAmount,
+    totalUnpaid,
+    maxUnpaidFineLimit,
+    minutesSinceBooking,
+  } = opts;
+
+  const slotDisplay = slotName.charAt(0).toUpperCase() + slotName.slice(1).toLowerCase();
+  const subject = `Late Cancellation Fee: ${fineAmount} BDT — Seat ${seatNumber} (${zoneName})`;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const isLocked = maxUnpaidFineLimit > 0 && totalUnpaid >= maxUnpaidFineLimit;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/><style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
+.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #fed7aa; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.header { background: #ea580c; color: #ffffff; padding: 26px; text-align: center; }
+.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.header p { margin: 6px 0 0 0; font-size: 12px; color: #ffedd5; }
+.body { padding: 28px; }
+.box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+.grid { display: table; width: 100%; margin-bottom: 16px; }
+.col { display: table-cell; width: 50%; padding: 6px; }
+.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
+.meta-val { font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px; }
+.amount { text-align: center; font-size: 30px; font-weight: 900; color: #ea580c; margin: 4px 0 18px 0; }
+.notice { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 14px; font-size: 12px; color: #991b1b; line-height: 1.5; margin-bottom: 20px; }
+.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
+.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>Late Cancellation Fee Applied</h1>
+    <p>Cancelled ${minutesSinceBooking} minute(s) after booking</p>
+  </div>
+  <div class="body">
+    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
+    <p style="font-size:13px;color:#475569;line-height:1.5;">
+      Your reservation was cancelled after the free cancellation window had closed and close to the start of the session, so a late cancellation fee has been charged to your library account.
+    </p>
+
+    <div class="amount">${fineAmount} BDT</div>
+
+    <div class="box">
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Seat Number</div>
+          <div class="meta-val">${seatNumber}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Study Zone</div>
+          <div class="meta-val">${zoneName}</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Date</div>
+          <div class="meta-val">${dateStr}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Time Slot</div>
+          <div class="meta-val">${slotDisplay}</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Total Unpaid Dues</div>
+          <div class="meta-val">${totalUnpaid} BDT</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Reservation Limit</div>
+          <div class="meta-val">${maxUnpaidFineLimit} BDT</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notice">
+      ${isLocked
+        ? "🔒 <strong>Seat reservations are now locked.</strong> Your unpaid dues have reached the limit. Settle them at the library circulation desk (Cash / Bank Chalan) to restore your reservation privileges."
+        : "ℹ️ Cancel within the free window, or well ahead of your session, to avoid this charge. Settle dues at the library circulation desk (Cash / Bank Chalan)."}
+    </div>
+
+    <a href="${frontendUrl}/bookings" class="btn">View My Bookings</a>
+  </div>
+  <div class="footer">Smart Library Management System • Automated Policy Enforcer</div>
+</div>
+</body></html>
+  `;
+
+  return sendHtmlEmail(toEmail, subject, htmlContent);
+};
+
+// ─── 10. Seat Fine Paid Receipt Email ────────────────────────────────────────
+
+export interface SendSeatFinePaidReceiptOptions {
+  toEmail: string;
+  studentName: string;
+  seatNumber: string;
+  zoneName: string;
+  amountPaid: number;
+  paymentMethod: string;
+  chalanNumber?: string;
+  paidAtStr: string;
+  remainingUnpaid: number;
+}
+
+export const sendSeatFinePaidReceiptEmail = async (opts: SendSeatFinePaidReceiptOptions) => {
+  const {
+    toEmail,
+    studentName,
+    seatNumber,
+    zoneName,
+    amountPaid,
+    paymentMethod,
+    chalanNumber,
+    paidAtStr,
+    remainingUnpaid,
+  } = opts;
+
+  const methodDisplay = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1).toLowerCase();
+  const subject = `Payment Receipt: ${amountPaid} BDT Seat Reservation Fine Settled`;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/><style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
+.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #bbf7d0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.header { background: #16a34a; color: #ffffff; padding: 26px; text-align: center; }
+.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.header p { margin: 6px 0 0 0; font-size: 12px; color: #dcfce7; }
+.body { padding: 28px; }
+.box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+.grid { display: table; width: 100%; margin-bottom: 16px; }
+.col { display: table-cell; width: 50%; padding: 6px; }
+.meta-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
+.meta-val { font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px; }
+.amount { text-align: center; font-size: 30px; font-weight: 900; color: #16a34a; margin: 4px 0 18px 0; }
+.notice { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 14px; font-size: 12px; color: #075985; line-height: 1.5; margin-bottom: 20px; }
+.btn { display: block; text-align: center; background: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; }
+.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>Payment Received</h1>
+    <p>Seat Reservation Fine Settled</p>
+  </div>
+  <div class="body">
+    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
+    <p style="font-size:13px;color:#475569;line-height:1.5;">
+      This is your official receipt for the seat reservation fine settled at the library circulation desk.
+    </p>
+
+    <div class="amount">${amountPaid} BDT</div>
+
+    <div class="box">
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Seat Number</div>
+          <div class="meta-val">${seatNumber}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Study Zone</div>
+          <div class="meta-val">${zoneName}</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Payment Method</div>
+          <div class="meta-val">${methodDisplay}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Settled At</div>
+          <div class="meta-val">${paidAtStr}</div>
+        </div>
+      </div>
+      ${chalanNumber ? `
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Chalan Number</div>
+          <div class="meta-val">${chalanNumber}</div>
+        </div>
+        <div class="col">
+          <div class="meta-label">Remaining Dues</div>
+          <div class="meta-val">${remainingUnpaid} BDT</div>
+        </div>
+      </div>` : `
+      <div class="grid">
+        <div class="col">
+          <div class="meta-label">Remaining Dues</div>
+          <div class="meta-val">${remainingUnpaid} BDT</div>
+        </div>
+        <div class="col"></div>
+      </div>`}
+    </div>
+
+    <div class="notice">
+      ${remainingUnpaid > 0
+        ? `ℹ️ You still have <strong>${remainingUnpaid} BDT</strong> in unpaid library dues. Clear the balance to keep full borrowing and reservation privileges.`
+        : "✅ Your library account is fully clear. Seat reservations and book borrowing are available again."}
+    </div>
+
+    <a href="${frontendUrl}/bookings" class="btn">View My Bookings</a>
+  </div>
+  <div class="footer">Smart Library Management System • Circulation Desk Receipt</div>
+</div>
+</body></html>
+  `;
+
+  return sendHtmlEmail(toEmail, subject, htmlContent);
+};
+
 export const emailService = {
   sendBookingConfirmationEmail,
   sendLoanConfirmationEmail,
@@ -1030,5 +1282,7 @@ export const emailService = {
   sendSeatNoShowCancellationEmail,
   sendBookingCancelledByAdminEmail,
   sendSeatSlotEndingWarningEmail,
+  sendSeatLateCancellationEmail,
+  sendSeatFinePaidReceiptEmail,
 };
 

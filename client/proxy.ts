@@ -7,7 +7,7 @@ const ADMIN_ROUTES_PREFIX = "/admin";
  * Next.js Centralized Request Proxy & Auth Access Control
  */
 export function proxy(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
+  const { pathname, search, searchParams } = request.nextUrl;
   const accessToken = request.cookies.get("accessToken")?.value;
   const refreshToken = request.cookies.get("refreshToken")?.value;
   const hasAuthToken = Boolean(accessToken || refreshToken);
@@ -15,8 +15,13 @@ export function proxy(request: NextRequest) {
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
   const isAdminRoute = pathname.startsWith(ADMIN_ROUTES_PREFIX);
 
-  // 1. Redirect authenticated users away from public auth pages to home or dashboard
-  if (hasAuthToken && isPublicRoute) {
+  // 1. Redirect signed-in users away from public auth pages to home.
+  //    Only a live access token counts here. A lone refreshToken cookie may be
+  //    stale or revoked, and bouncing on it locks the user out of the login and
+  //    register pages entirely. `?redirect=` means the app itself sent the user
+  //    here after a 401, so never bounce that back.
+  const cameFromAuthFailure = searchParams.has("redirect");
+  if (accessToken && isPublicRoute && !cameFromAuthFailure) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

@@ -163,7 +163,13 @@ export const BookingScalarFieldEnum = {
   checkedOutAt: 'checkedOutAt',
   cancelledAt: 'cancelledAt',
   cancelReason: 'cancelReason',
-  slotWarningEmailSent: 'slotWarningEmailSent'
+  slotWarningEmailSent: 'slotWarningEmailSent',
+  fineAmount: 'fineAmount',
+  fineStatus: 'fineStatus',
+  paymentMethod: 'paymentMethod',
+  chalanNumber: 'chalanNumber',
+  finePaidAt: 'finePaidAt',
+  fineReceivedById: 'fineReceivedById'
 } as const
 
 export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeof BookingScalarFieldEnum]

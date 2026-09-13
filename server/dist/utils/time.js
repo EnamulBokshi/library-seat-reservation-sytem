@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isSlotExpired = exports.isSlotActive = exports.getAdvanceBookingDays = exports.getActiveSlotConfig = exports.parseTimeToMinutes = exports.DEFAULT_SLOT_CONFIG = void 0;
+exports.getSlotStartDate = exports.isSlotExpired = exports.isSlotActive = exports.getAdvanceBookingDays = exports.getActiveSlotConfig = exports.parseTimeToMinutes = exports.DEFAULT_SLOT_CONFIG = void 0;
 const enums_1 = require("../generated/enums");
 const prisma_1 = __importDefault(require("../lib/prisma"));
 exports.DEFAULT_SLOT_CONFIG = {
@@ -141,3 +141,18 @@ const isSlotExpired = (scheduleDate, slot, customConfig) => {
     return currentMinutes >= endMinutes;
 };
 exports.isSlotExpired = isSlotExpired;
+/**
+ * Resolve the absolute start time of a schedule slot on its own date.
+ */
+const getSlotStartDate = (scheduleDate, slot, customConfig) => {
+    const config = customConfig ?? exports.DEFAULT_SLOT_CONFIG;
+    const slotInfo = config[slot] ?? exports.DEFAULT_SLOT_CONFIG[slot];
+    const startMinutes = (0, exports.parseTimeToMinutes)(slotInfo?.startTime ?? "00:00");
+    // Schedule dates are stored as @db.Date (UTC midnight), so read the calendar
+    // day in UTC and rebuild it in local time, where the slot clock times apply.
+    const sDate = new Date(scheduleDate);
+    const start = new Date(sDate.getUTCFullYear(), sDate.getUTCMonth(), sDate.getUTCDate());
+    start.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
+    return start;
+};
+exports.getSlotStartDate = getSlotStartDate;

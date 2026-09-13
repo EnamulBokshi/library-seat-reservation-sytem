@@ -179,6 +179,14 @@ model Booking {
   cancelReason String?
   slotWarningEmailSent Boolean @default(false)
 
+  // Cancellation / No-show Fine & Payment Settlement
+  fineAmount       Float          @default(0)
+  fineStatus       FineStatus     @default(none)
+  paymentMethod    PaymentMethod?
+  chalanNumber     String?
+  finePaidAt       DateTime?
+  fineReceivedById String?
+
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   seat         Seat?         @relation(fields: [seatId], references: [id], onDelete: SetNull)
   schedule     Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
@@ -188,6 +196,8 @@ model Booking {
   @@index([userId, status])
   // Fast QR verification
   @@index([qrToken])
+  // Fast unpaid-dues lookup per student
+  @@index([userId, fineStatus])
   @@map("bookings")
 }
 

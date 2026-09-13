@@ -35,7 +35,9 @@ Generated ahead by `BookingService.ensureUpcomingSchedules(advanceDays)`.
 
 **Booking** (`bookings`) — userId, seatId (nullable, `SetNull`), scheduleId, guestCount, status,
 `qrToken` (unique uuid), bookedAt, checkedInAt, checkedOutAt, cancelledAt, cancelReason,
-`slotWarningEmailSent`. Indexes `[userId, status]`, `[qrToken]`.
+`slotWarningEmailSent`; fine block mirroring `BookLoan`: fineAmount, fineStatus, paymentMethod,
+chalanNumber, finePaidAt, fineReceivedById. Indexes `[userId, status]`, `[qrToken]`,
+`[userId, fineStatus]`.
 
 **BookingSeat** (`booking_seats`) — join table for multi-seat/group bookings. Unique
 `[bookingId, seatId]`. Note: a booking may carry both `seatId` (primary seat) and `bookingSeats`
@@ -58,5 +60,7 @@ Indexes `[userId, status]`, `[bookId, status]`, `[fineStatus]`.
 - One active booking per student (`pending | confirmed | checked_in`).
 - All seats in one booking belong to the same zone.
 - `availableCopies` decrements on issue and increments on return; never below 0.
-- A student with any `fineStatus = unpaid` and `fineAmount > 0` cannot borrow or renew.
+- A student with any `fineStatus = unpaid` and `fineAmount > 0` on a **loan** cannot borrow or renew.
+- Seat reservations are refused once unpaid seat fines **plus** unpaid loan fines reach
+  `BOOKING_MAX_UNPAID_FINE_LIMIT`. Loan borrowing does not count seat fines.
 - `datasource db` has no inline `url`; it comes from `DATABASE_URL`.

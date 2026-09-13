@@ -9,7 +9,7 @@
 * 🟢 You can import this file directly.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LoanStatus = exports.BookingStatus = exports.SlotType = exports.Role = exports.TableType = exports.ZoneType = void 0;
+exports.PaymentMethod = exports.FineStatus = exports.LoanStatus = exports.BookingStatus = exports.SlotType = exports.Role = exports.TableType = exports.ZoneType = void 0;
 exports.ZoneType = {
     silent_desk: 'silent_desk',
     group_study: 'group_study',
@@ -50,4 +50,15 @@ exports.LoanStatus = {
     overdue: 'overdue',
     cancelled: 'cancelled',
     rejected: 'rejected'
+};
+exports.FineStatus = {
+    none: 'none',
+    unpaid: 'unpaid',
+    paid: 'paid',
+    waived: 'waived'
+};
+exports.PaymentMethod = {
+    cash: 'cash',
+    chalan: 'chalan',
+    online: 'online'
 };

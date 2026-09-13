@@ -13,11 +13,15 @@ const loanRoute = (0, express_1.Router)();
 loanRoute.post("/request", (0, authCheck_1.default)("student", "admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.createLoanRequestSchema), loan_controller_1.LoanController.requestLoan);
 loanRoute.get("/my-loans", (0, authCheck_1.default)("student", "admin", "librarian"), loan_controller_1.LoanController.getMyLoans);
 loanRoute.post("/:id/renew", (0, authCheck_1.default)("student", "admin", "librarian"), loan_controller_1.LoanController.renewLoan);
+// Admin / Librarian Fast Scanning & Lookup Endpoints
+loanRoute.get("/lookup-book/:identifier", (0, authCheck_1.default)("admin", "librarian"), loan_controller_1.LoanController.lookupBook);
+loanRoute.get("/lookup-student/:identifier", (0, authCheck_1.default)("admin", "librarian"), loan_controller_1.LoanController.lookupStudent);
 // Admin / Librarian Circulation Desk Endpoints
 loanRoute.get("/stats", (0, authCheck_1.default)("admin", "librarian"), loan_controller_1.LoanController.getCirculationStats);
 loanRoute.get("/", (0, authCheck_1.default)("admin", "librarian"), loan_controller_1.LoanController.getAllLoans);
 loanRoute.post("/direct-issue", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.directIssueSchema), loan_controller_1.LoanController.directIssueLoan);
 loanRoute.patch("/:id/status", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.updateLoanStatusSchema), loan_controller_1.LoanController.updateLoanStatus);
 loanRoute.post("/:id/return", (0, authCheck_1.default)("admin", "librarian"), loan_controller_1.LoanController.returnBook);
+loanRoute.post("/:id/pay-fine", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.payFineSchema), loan_controller_1.LoanController.payLoanFine);
 loanRoute.post("/:id/admin-renew", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.adminRenewSchema), loan_controller_1.LoanController.adminRenewLoan);
 exports.default = loanRoute;
