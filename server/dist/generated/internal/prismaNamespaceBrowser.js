@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.BookLoanScalarFieldEnum = exports.BookScalarFieldEnum = exports.SettingScalarFieldEnum = exports.BookingScalarFieldEnum = exports.BookingSeatScalarFieldEnum = exports.ScheduleScalarFieldEnum = exports.SeatScalarFieldEnum = exports.ZoneScalarFieldEnum = exports.OtpVerificationScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
+exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.FineWaiverRequestScalarFieldEnum = exports.BookLoanScalarFieldEnum = exports.BookScalarFieldEnum = exports.SettingScalarFieldEnum = exports.BookingScalarFieldEnum = exports.BookingSeatScalarFieldEnum = exports.ScheduleScalarFieldEnum = exports.SeatScalarFieldEnum = exports.ZoneScalarFieldEnum = exports.OtpVerificationScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/index-browser"));
 exports.Decimal = runtime.Decimal;
 exports.NullTypes = {
@@ -84,7 +84,8 @@ exports.ModelName = {
     Booking: 'Booking',
     Setting: 'Setting',
     Book: 'Book',
-    BookLoan: 'BookLoan'
+    BookLoan: 'BookLoan',
+    FineWaiverRequest: 'FineWaiverRequest'
 };
 /*
  * Enums
@@ -103,6 +104,14 @@ exports.UserScalarFieldEnum = {
     passwordHash: 'passwordHash',
     role: 'role',
     isActive: 'isActive',
+    facultyId: 'facultyId',
+    department: 'department',
+    designation: 'designation',
+    emailVerifiedAt: 'emailVerifiedAt',
+    approvalStatus: 'approvalStatus',
+    approvedById: 'approvedById',
+    approvedAt: 'approvedAt',
+    rejectionReason: 'rejectionReason',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };
@@ -228,6 +237,21 @@ exports.BookLoanScalarFieldEnum = {
     fineReceivedById: 'fineReceivedById',
     warningEmailSent: 'warningEmailSent',
     overdueEmailSent: 'overdueEmailSent',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.FineWaiverRequestScalarFieldEnum = {
+    id: 'id',
+    requestedById: 'requestedById',
+    targetUserId: 'targetUserId',
+    bookingId: 'bookingId',
+    loanId: 'loanId',
+    amount: 'amount',
+    reason: 'reason',
+    status: 'status',
+    decidedById: 'decidedById',
+    decidedAt: 'decidedAt',
+    decisionNote: 'decisionNote',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

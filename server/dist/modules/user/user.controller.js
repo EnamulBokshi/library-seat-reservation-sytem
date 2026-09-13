@@ -9,6 +9,8 @@ const CatchAsync_1 = __importDefault(require("../../helpers/CatchAsync"));
 const SendResponse_1 = require("../../helpers/SendResponse");
 const AppError_1 = __importDefault(require("../../helpers/AppError"));
 const user_service_1 = require("./user.service");
+/** Express 5 types a wildcard param as string | string[]; routes here pass one id. */
+const requireIdParam = (req) => String(req.params.id);
 const requireUserId = (req) => {
     const userId = req.user?.userId;
     if (!userId) {
@@ -16,6 +18,49 @@ const requireUserId = (req) => {
     }
     return userId;
 };
+const listUsers = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await user_service_1.UserService.listUsers({
+        page: req.query.page ? Number(req.query.page) : undefined,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        role: req.query.role,
+        approvalStatus: req.query.approvalStatus,
+        searchTerm: req.query.searchTerm,
+    });
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Users retrieved successfully",
+        data: result.users,
+        meta: result.meta,
+    });
+});
+const getPendingApprovals = (0, CatchAsync_1.default)(async (_req, res) => {
+    const result = await user_service_1.UserService.getPendingApprovals();
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Pending account approvals retrieved successfully",
+        data: result,
+    });
+});
+const approveUser = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await user_service_1.UserService.approveUser(requireIdParam(req), requireUserId(req));
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Account approved successfully",
+        data: result,
+    });
+});
+const rejectUser = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await user_service_1.UserService.rejectUser(requireIdParam(req), requireUserId(req), req.body);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: "Account request rejected",
+        data: result,
+    });
+});
 const getProfile = (0, CatchAsync_1.default)(async (req, res) => {
     const result = await user_service_1.UserService.getProfile(requireUserId(req));
     (0, SendResponse_1.sendResponse)(res, {
@@ -80,6 +125,10 @@ const getMyFines = (0, CatchAsync_1.default)(async (req, res) => {
     });
 });
 exports.UserController = {
+    listUsers,
+    getPendingApprovals,
+    approveUser,
+    rejectUser,
     getProfile,
     updateProfile,
     requestEmailChange,

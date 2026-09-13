@@ -34,10 +34,29 @@ export type TableType = (typeof TableType)[keyof typeof TableType]
 export const Role = {
   admin: 'admin',
   librarian: 'librarian',
-  student: 'student'
+  student: 'student',
+  faculty: 'faculty'
 } as const
 
 export type Role = (typeof Role)[keyof typeof Role]
+
+
+export const ApprovalStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected'
+} as const
+
+export type ApprovalStatus = (typeof ApprovalStatus)[keyof typeof ApprovalStatus]
+
+
+export const WaiverRequestStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected'
+} as const
+
+export type WaiverRequestStatus = (typeof WaiverRequestStatus)[keyof typeof WaiverRequestStatus]
 
 
 export const SlotType = {
@@ -95,7 +114,8 @@ export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
 
 export const OtpPurpose = {
   email_change: 'email_change',
-  password_change: 'password_change'
+  password_change: 'password_change',
+  registration: 'registration'
 } as const
 
 export type OtpPurpose = (typeof OtpPurpose)[keyof typeof OtpPurpose]

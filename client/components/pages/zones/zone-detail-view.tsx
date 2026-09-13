@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { isSelfServiceRole } from "@/lib/roles";
 
 // ─── Slot Meta Config ─────────────────────────────────────────────────────────
 const SLOT_META: Record<SlotType, { label: string; time: string; icon: string }> = {
@@ -498,7 +499,7 @@ export function ZoneDetailView({ zoneId }: ZoneDetailViewProps) {
   const canManage = user?.role === "admin" || user?.role === "librarian" || user?.role === "super_admin";
   // Server is the authority; this only pre-empts a guaranteed 403.
   const isReservationLocked = eligibility?.isBookingBlocked ?? false;
-  const isStudent = user?.role === "student";
+  const isStudent = isSelfServiceRole(user?.role);
 
   // ── 1. Fetch Zone ─────────────────────────────────────────────────────────
   const fetchZone = useCallback(async () => {

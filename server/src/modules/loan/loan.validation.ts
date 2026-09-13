@@ -38,10 +38,15 @@ const payFineSchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
+const waiveFineSchema = z.object({
+  reason: z.string().optional().nullable(),
+});
+
 export const LoanValidation = {
   createLoanRequestSchema,
   directIssueSchema,
   updateLoanStatusSchema,
   adminRenewSchema,
   payFineSchema,
+  waiveFineSchema,
 };

@@ -9,7 +9,15 @@ import React, {
   useRef,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { User, LoginPayload, RegisterPayload, AuthContextType } from "@/lib/types";
+import {
+  User,
+  LoginPayload,
+  RegisterPayload,
+  RegisterResult,
+  VerifyEmailPayload,
+  VerifyEmailResult,
+  AuthContextType,
+} from "@/lib/types";
 import { authService } from "@/services/auth-service";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,7 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (
         typeof window !== "undefined" &&
         !pathname.startsWith("/auth/login") &&
-        !pathname.startsWith("/auth/register")
+        !pathname.startsWith("/auth/register") &&
+        !pathname.startsWith("/auth/verify-email")
       ) {
         const redirectUrl =
           pathname && pathname !== "/"
@@ -88,14 +97,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // ── register ──────────────────────────────────────────────────────────────
-  const register = useCallback(
-    async (payload: RegisterPayload): Promise<void> => {
-      const res = await authService.register(payload);
-      if (!res.success) throw new Error(res.message ?? "Registration failed.");
-      // Auto-login after successful registration
-      await login({ email: payload.email, password: payload.password });
+  // No session is issued here: the account must verify its email first, and a
+  // faculty account additionally waits for an admin decision.
+  const register = useCallback(async (payload: RegisterPayload): Promise<RegisterResult> => {
+    const res = await authService.register(payload);
+    if (!res.success || !res.data) throw new Error(res.message ?? "Registration failed.");
+    return res.data;
+  }, []);
+
+  // ── verifyEmail ───────────────────────────────────────────────────────────
+  // A student is signed in by the cookies this call sets; faculty are not.
+  const verifyEmail = useCallback(
+    async (payload: VerifyEmailPayload): Promise<VerifyEmailResult> => {
+      const res = await authService.verifyEmail(payload);
+      if (!res.success || !res.data) throw new Error(res.message ?? "Verification failed.");
+
+      if (!res.data.requiresAdminApproval) {
+        setUser(res.data.user);
+      }
+
+      return res.data;
     },
-    [login]
+    []
   );
 
   // ── logout ────────────────────────────────────────────────────────────────
@@ -132,6 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         login,
         register,
+        verifyEmail,
         logout,
         refreshSession,
       }}

@@ -108,3 +108,21 @@ param interfaces. Keep aligned with `server/prisma/schema.prisma`.
   `node_modules/next/dist/docs/` before using unfamiliar APIs.
 - `client/build-state.md` is a historical phase checklist, not current truth.
 - Verify UI changes with `pnpm typecheck` then `pnpm build`.
+
+## Faculty, verification and approvals
+
+- `app/auth/verify-email/page.tsx` → `components/pages/auth/verify-email-form.tsx`: step two of
+  signup. Students land on `/dashboard`; faculty get the "awaiting approval" panel because no
+  session is issued. The route is in `proxy.ts` `PUBLIC_ROUTES`.
+- `register-form.tsx` has a Student / Faculty account-type switch; faculty fields are
+  `facultyId`, `department`, `designation`. `AuthContext.register` no longer auto-logs in —
+  it returns `RegisterResult` and the form routes to `/auth/verify-email?email=`.
+  `AuthContext.verifyEmail` sets the user only when no approval is pending.
+- `lib/roles.ts` — `isSelfServiceRole(role)` (student or faculty) gates the seat-picking UI in
+  `navbar`, `home-view`, `book-seat-view` and `zone-detail-view`; `canRequestFineWaiver(role)`.
+- `/dashboard/waivers` → `components/pages/dashboard/faculty-waivers-view.tsx` (faculty-only nav
+  tab): student lookup, petitionable fines, own petition history.
+- `/admin/approvals` → `components/pages/admin/approvals-view.tsx` (admin only) and
+  `/admin/waivers` → `components/pages/admin/waivers-view.tsx` (admin + librarian view, admin
+  decides).
+- `services/waiver-service.ts` and the admin calls added to `services/user-service.ts`.

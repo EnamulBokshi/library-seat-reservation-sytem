@@ -83,43 +83,19 @@ export function DashboardOverviewView() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* ── Welcome Hero Banner ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <p className="kicker-label">ADMINISTRATION &rsaquo; EXECUTIVE DASHBOARD</p>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 mt-1">
-            System Overview
-          </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-slate-500 font-medium">
-            Live telemetry, real-time library occupancy, and active seat reservations
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 shrink-0">
-          <Link
-            href="/admin/checkin"
-            className="pulse-button-primary py-2 px-3.5 text-xs"
-          >
-            <ScanLine className="h-4 w-4" />
-            <span>Open QR Scanner</span>
-          </Link>
-
+      {error && (
+        <div className="flex items-center justify-between gap-2.5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-medium text-rose-700">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <span>{error}</span>
+          </div>
           <button
             onClick={fetchDashboardData}
-            disabled={isLoading}
-            className="pulse-button-secondary py-2 px-3 text-xs"
-            title="Refresh Metrics"
+            className="flex items-center gap-1.5 font-bold text-rose-700 hover:text-rose-900 underline shrink-0 cursor-pointer"
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">Refresh</span>
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span>Retry</span>
           </button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="flex items-center gap-2.5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-medium text-rose-700">
-          <AlertTriangle className="h-5 w-5 shrink-0" />
-          <span>{error}</span>
         </div>
       )}
 

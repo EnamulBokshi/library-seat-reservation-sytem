@@ -1,3 +1,15 @@
+export interface IListUsersOptions {
+    page?: number;
+    limit?: number;
+    role?: string;
+    approvalStatus?: string;
+    searchTerm?: string;
+}
+
+export interface IRejectUserPayload {
+    reason: string;
+}
+
 export interface IUpdateProfilePayload {
     name: string;
 }

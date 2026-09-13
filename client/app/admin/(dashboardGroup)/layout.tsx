@@ -28,6 +28,21 @@ const ROUTE_TITLES: Record<string, RouteMeta> = {
     subtitle: "Comprehensive ledger of student seat reservations and attendance records",
     kicker: "RESERVATION LEDGER",
   },
+  "/admin/fines": {
+    title: "Fines & Revenue Ledger",
+    subtitle: "Manage, collect, and waive student penalties across seat bookings and overdue loans",
+    kicker: "FINES & REVENUE",
+  },
+  "/admin/waivers": {
+    title: "Fine Waiver Requests",
+    subtitle: "Faculty petitions to clear a student's outstanding fine",
+    kicker: "WAIVER QUEUE",
+  },
+  "/admin/approvals": {
+    title: "Account Approvals",
+    subtitle: "Faculty signups waiting for a decision",
+    kicker: "ACCESS CONTROL",
+  },
   "/admin/checkin": {
     title: "QR Code Check-In Scanner",
     subtitle: "Live entrance camera verification and manual pass validation terminal",

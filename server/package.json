@@ -13,7 +13,8 @@
     "db:pull": "prisma db pull",
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx ./src/scripts/seed-admin.ts"
+    "db:seed": "tsx ./src/scripts/seed-admin.ts",
+    "db:seed:faculty": "tsx ./src/scripts/seed-faculty.ts"
   },
   "keywords": [],
   "author": "",

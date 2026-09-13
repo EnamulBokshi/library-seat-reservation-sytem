@@ -151,6 +151,51 @@ const getSettingByKey = async (key) => {
                 updatedAt: new Date(),
             };
         }
+        if (key === "FACULTY_LOAN_PERIOD_DAYS") {
+            return {
+                id: "default-faculty-loan-period",
+                key: "FACULTY_LOAN_PERIOD_DAYS",
+                value: "365",
+                description: "Borrow period in days granted to faculty members",
+                updatedAt: new Date(),
+            };
+        }
+        if (key === "FACULTY_MAX_BORROW_LIMIT") {
+            return {
+                id: "default-faculty-max-borrow",
+                key: "FACULTY_MAX_BORROW_LIMIT",
+                value: "50",
+                description: "Maximum active books a faculty member can borrow concurrently",
+                updatedAt: new Date(),
+            };
+        }
+        if (key === "FACULTY_EXEMPT_SEAT_FINES") {
+            return {
+                id: "default-faculty-exempt-seat-fines",
+                key: "FACULTY_EXEMPT_SEAT_FINES",
+                value: "true",
+                description: "When true, faculty reservations never incur late-cancellation or no-show fines and unpaid dues never lock their booking",
+                updatedAt: new Date(),
+            };
+        }
+        if (key === "FACULTY_EXEMPT_NO_SHOW_CANCEL") {
+            return {
+                id: "default-faculty-exempt-no-show-cancel",
+                key: "FACULTY_EXEMPT_NO_SHOW_CANCEL",
+                value: "true",
+                description: "When true, the grace-period cron never auto-cancels a faculty reservation for a missed check-in",
+                updatedAt: new Date(),
+            };
+        }
+        if (key === "FACULTY_EXEMPT_LOAN_FINES") {
+            return {
+                id: "default-faculty-exempt-loan-fines",
+                key: "FACULTY_EXEMPT_LOAN_FINES",
+                value: "true",
+                description: "When true, faculty book loans never accrue an overdue fine",
+                updatedAt: new Date(),
+            };
+        }
     }
     return setting;
 };
@@ -254,6 +299,38 @@ const getBookingPolicyConfig = async () => {
     };
 };
 /**
+ * Read a boolean setting. Anything other than the literal string "false"
+ * (case-insensitive) counts as true so a blank entry keeps the privilege on.
+ */
+const readBooleanSetting = async (key, fallback) => {
+    const setting = await getSettingByKey(key);
+    const raw = setting?.value?.trim().toLowerCase();
+    if (raw === undefined || raw === "") {
+        return fallback;
+    }
+    return raw !== "false";
+};
+/**
+ * Helper to get the faculty privilege policy — the exemptions and the extended
+ * limits that separate a faculty account from a student account.
+ */
+const getFacultyPolicyConfig = async () => {
+    const [loanPeriodDays, maxBorrowLimit, exemptSeatFines, exemptNoShowCancel, exemptLoanFines,] = await Promise.all([
+        readNumericSetting("FACULTY_LOAN_PERIOD_DAYS", 365),
+        readNumericSetting("FACULTY_MAX_BORROW_LIMIT", 50),
+        readBooleanSetting("FACULTY_EXEMPT_SEAT_FINES", true),
+        readBooleanSetting("FACULTY_EXEMPT_NO_SHOW_CANCEL", true),
+        readBooleanSetting("FACULTY_EXEMPT_LOAN_FINES", true),
+    ]);
+    return {
+        loanPeriodDays: Math.max(1, Math.round(loanPeriodDays)),
+        maxBorrowLimit: Math.max(1, Math.round(maxBorrowLimit)),
+        exemptSeatFines,
+        exemptNoShowCancel,
+        exemptLoanFines,
+    };
+};
+/**
  * Get public system configuration (slot timings, advance days and booking policy).
  */
 const getPublicConfig = async () => {
@@ -290,6 +367,7 @@ exports.SettingService = {
     getBorrowConfig,
     getFineConfig,
     getBookingPolicyConfig,
+    getFacultyPolicyConfig,
     calculateLoanFine,
     updateSetting,
 };

@@ -8,17 +8,25 @@ import {
   IUpdateLoanStatusPayload,
   IAdminRenewPayload,
   IPayFinePayload,
+  IWaiveLoanFinePayload,
 } from "./loan.interface";
 import { SettingService } from "../setting/setting.service";
 import { emailService } from "../../services/email.service";
 import { Prisma } from "../../generated/client";
-import { LoanStatus, FineStatus, PaymentMethod } from "../../generated/enums";
+import { LoanStatus, FineStatus, PaymentMethod, Role } from "../../generated/enums";
+import { getUserPrivileges, getPrivilegesForRole } from "../../lib/privileges";
 
 /**
- * Checks if a student has any unpaid library fines.
+ * Checks if a borrower has any unpaid library fines.
  * If unpaid dues exist, throws 403 Forbidden to lock borrowing.
+ * Fine-exempt accounts (faculty) always pass.
  */
 const checkStudentBorrowEligibility = async (userId: string) => {
+  const privileges = await getUserPrivileges(userId);
+  if (privileges.exemptLoanFines) {
+    return;
+  }
+
   const unpaidLoans = await prisma.bookLoan.findMany({
     where: {
       userId,
@@ -102,7 +110,8 @@ const lookupStudent = async (identifier: string) => {
     throw new AppError(status.NOT_FOUND, `No registered student found matching "${identifier}".`);
   }
 
-  const { maxBorrowLimit } = await SettingService.getBorrowConfig();
+  const privileges = await getPrivilegesForRole(student.role as Role);
+  const maxBorrowLimit = privileges.maxBorrowLimit;
 
   const activeLoans = student.loans.filter((l) => l.status === LoanStatus.issued || l.status === LoanStatus.overdue);
   const pendingRequests = student.loans.filter((l) => l.status === LoanStatus.requested);
@@ -111,7 +120,9 @@ const lookupStudent = async (identifier: string) => {
 
   const currentlyBorrowed = activeLoans.length + pendingRequests.length;
   const availableQuota = Math.max(0, maxBorrowLimit - currentlyBorrowed);
-  const isEligible = unpaidFines.length === 0 && availableQuota > 0;
+  // A fine-exempt borrower is never blocked by dues, only by quota.
+  const blockingFines = privileges.exemptLoanFines ? [] : unpaidFines;
+  const isEligible = blockingFines.length === 0 && availableQuota > 0;
 
   return {
     student: {
@@ -124,6 +135,7 @@ const lookupStudent = async (identifier: string) => {
     activeLoans,
     pendingRequests,
     unpaidFines,
+    blockingFines,
     stats: {
       maxBorrowLimit,
       currentlyBorrowed,
@@ -131,7 +143,7 @@ const lookupStudent = async (identifier: string) => {
       totalUnpaidFineBDT,
       isEligible,
       ineligibilityReason:
-        unpaidFines.length > 0
+        blockingFines.length > 0
           ? `Outstanding fine of ${totalUnpaidFineBDT} BDT must be cleared.`
           : availableQuota <= 0
           ? `Max borrow quota (${maxBorrowLimit} books) reached.`
@@ -177,7 +189,9 @@ const requestLoan = async (userId: string, payload: ICreateLoanRequestPayload) =
     );
   }
 
-  const { maxBorrowLimit, borrowPeriodDays } = await SettingService.getBorrowConfig();
+  const privileges = await getUserPrivileges(userId);
+  const maxBorrowLimit = privileges.maxBorrowLimit;
+  const borrowPeriodDays = privileges.loanPeriodDays;
 
   const activeCount = await prisma.bookLoan.count({
     where: {
@@ -233,9 +247,9 @@ const directIssueLoan = async (adminId: string, payload: IDirectIssueLoanPayload
   }
 
   // 2. Resolve Student
-  const { student, unpaidFines, stats } = await lookupStudent(studentIdentifier);
+  const { student, blockingFines, stats } = await lookupStudent(studentIdentifier);
 
-  if (unpaidFines.length > 0) {
+  if (blockingFines.length > 0) {
     throw new AppError(
       status.FORBIDDEN,
       `Cannot issue book: Student ${student.name} (${student.studentId || student.email}) has ${stats.totalUnpaidFineBDT} BDT in unpaid overdue fines. Please collect payment before issuing.`
@@ -265,7 +279,8 @@ const directIssueLoan = async (adminId: string, payload: IDirectIssueLoanPayload
     );
   }
 
-  const { borrowPeriodDays } = await SettingService.getBorrowConfig();
+  const borrowerPrivileges = await getPrivilegesForRole(student.role as Role);
+  const borrowPeriodDays = borrowerPrivileges.loanPeriodDays;
   const fineConfig = await SettingService.getFineConfig();
 
   const borrowDate = new Date();
@@ -346,7 +361,8 @@ const updateLoanStatus = async (
       );
     }
 
-    const { borrowPeriodDays } = await SettingService.getBorrowConfig();
+    const borrowerPrivileges = await getUserPrivileges(loan.userId);
+    const borrowPeriodDays = borrowerPrivileges.loanPeriodDays;
     const fineConfig = await SettingService.getFineConfig();
 
     const borrowDate = new Date();
@@ -429,7 +445,11 @@ const returnLoan = async (loanId: string, adminId?: string) => {
   }
 
   const returnDate = new Date();
-  const { daysOverdue, fineAmount } = await SettingService.calculateLoanFine(loan.dueDate, returnDate);
+  const borrowerPrivileges = await getUserPrivileges(loan.userId);
+  const computed = await SettingService.calculateLoanFine(loan.dueDate, returnDate);
+  const daysOverdue = computed.daysOverdue;
+  // Fine-exempt borrowers (faculty) never accrue a late fee.
+  const fineAmount = borrowerPrivileges.exemptLoanFines ? 0 : computed.fineAmount;
 
   // If overdue fine is incurred, set fineStatus to unpaid unless previously cleared
   const fineStatus = fineAmount > 0
@@ -525,6 +545,52 @@ const payLoanFine = async (
 };
 
 /**
+ * Admin waives an overdue book loan fine (e.g. medical, staff error)
+ */
+const waiveLoanFine = async (
+  loanId: string,
+  payload: IWaiveLoanFinePayload,
+  waivedById?: string
+) => {
+  const { reason } = payload;
+
+  const loan = await prisma.bookLoan.findUnique({
+    where: { id: loanId },
+    include: { book: true, user: true },
+  });
+
+  if (!loan) {
+    throw new AppError(status.NOT_FOUND, "Loan record not found.");
+  }
+
+  if (loan.fineAmount <= 0 || loan.fineStatus !== FineStatus.unpaid) {
+    throw new AppError(status.BAD_REQUEST, "This loan record has no outstanding fine to waive.");
+  }
+
+  const waiveReason = reason?.trim();
+
+  const updatedLoan = await prisma.bookLoan.update({
+    where: { id: loanId },
+    data: {
+      fineStatus: FineStatus.waived,
+      finePaidAt: new Date(),
+      fineReceivedById: waivedById || null,
+      notes: waiveReason
+        ? `${loan.notes ? loan.notes + " | " : ""}Fine waived: ${waiveReason}`
+        : loan.notes,
+    },
+    include: {
+      book: true,
+      user: {
+        select: { id: true, name: true, email: true, studentId: true },
+      },
+    },
+  });
+
+  return updatedLoan;
+};
+
+/**
  * Student self-service online loan renewal
  */
 const renewLoan = async (loanId: string, userId: string) => {
@@ -559,7 +625,9 @@ const renewLoan = async (loanId: string, userId: string) => {
     );
   }
 
-  const { maxRenewalLimit, borrowPeriodDays } = await SettingService.getBorrowConfig();
+  const { maxRenewalLimit } = await SettingService.getBorrowConfig();
+  const borrowerPrivileges = await getUserPrivileges(userId);
+  const borrowPeriodDays = borrowerPrivileges.loanPeriodDays;
 
   if (loan.renewCount >= maxRenewalLimit) {
     throw new AppError(
@@ -808,6 +876,7 @@ export const LoanService = {
   updateLoanStatus,
   returnLoan,
   payLoanFine,
+  waiveLoanFine,
   renewLoan,
   adminRenewLoan,
   getMyLoans,

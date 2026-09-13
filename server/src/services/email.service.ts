@@ -1328,6 +1328,186 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
+// ─── 12. Faculty Account Lifecycle ───────────────────────────────────────────
+
+const facultyEmailShell = (heading: string, subheading: string, inner: string) => `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/><style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
+.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.header { background: #0f172a; color: #ffffff; padding: 26px; text-align: center; }
+.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.header p { margin: 6px 0 0 0; font-size: 12px; color: #cbd5e1; }
+.body { padding: 28px; font-size: 13px; color: #475569; line-height: 1.6; }
+.body p { margin: 0 0 12px 0; }
+.detail { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; font-size: 12px; color: #0f172a; }
+.detail div { margin: 3px 0; }
+.notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; font-size: 12px; color: #92400e; }
+.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>${heading}</h1>
+    <p>${subheading}</p>
+  </div>
+  <div class="body">${inner}</div>
+  <div class="footer">Smart Library Management &middot; Automated message, do not reply</div>
+</div>
+</body>
+</html>`;
+
+export interface SendFacultyPendingApprovalOptions {
+  /** Library staff addresses that review faculty signups. */
+  toEmails: string[];
+  facultyName: string;
+  facultyEmail: string;
+  facultyId?: string | null;
+  department?: string | null;
+  designation?: string | null;
+}
+
+/** Tells the admins that a verified faculty signup is waiting for a decision. */
+export const sendFacultyPendingApprovalEmail = async (opts: SendFacultyPendingApprovalOptions) => {
+  const { toEmails, facultyName, facultyEmail, facultyId, department, designation } = opts;
+  if (toEmails.length === 0) return;
+
+  const htmlContent = facultyEmailShell(
+    "Faculty Approval Pending",
+    "Smart Library Management",
+    `
+    <p>A faculty account has verified its email address and is waiting for approval.</p>
+    <div class="detail">
+      <div><strong>Name:</strong> ${facultyName}</div>
+      <div><strong>Email:</strong> ${facultyEmail}</div>
+      <div><strong>Faculty ID:</strong> ${facultyId || "—"}</div>
+      <div><strong>Department:</strong> ${department || "—"}</div>
+      <div><strong>Designation:</strong> ${designation || "—"}</div>
+    </div>
+    <p style="margin-top:14px;">Review the request under Admin &rsaquo; Approvals to approve or reject it.</p>
+  `
+  );
+
+  return Promise.all(
+    toEmails.map((toEmail) =>
+      sendHtmlEmail(toEmail, `Faculty approval pending: ${facultyName}`, htmlContent)
+    )
+  );
+};
+
+export interface SendFacultyDecisionOptions {
+  toEmail: string;
+  facultyName: string;
+  /** Only set on a rejection. */
+  reason?: string | null;
+}
+
+/** Confirms to the applicant that the faculty account is now usable. */
+export const sendFacultyApprovedEmail = async (opts: SendFacultyDecisionOptions) => {
+  const htmlContent = facultyEmailShell(
+    "Faculty Account Approved",
+    "Smart Library Management",
+    `
+    <p>Hello <strong>${opts.facultyName}</strong>,</p>
+    <p>Your faculty account is approved. You can sign in now.</p>
+    <div class="detail">
+      <div>Seat reservations are never auto-cancelled for a missed check-in.</div>
+      <div>Reservation and overdue fines do not apply to your account.</div>
+      <div>Extended borrowing period and borrow limit are active.</div>
+      <div>You can petition an admin to waive a student's fine.</div>
+    </div>
+  `
+  );
+
+  return sendHtmlEmail(opts.toEmail, "Your faculty account is approved", htmlContent);
+};
+
+/** Tells the applicant the faculty request was declined, with the stated reason. */
+export const sendFacultyRejectedEmail = async (opts: SendFacultyDecisionOptions) => {
+  const htmlContent = facultyEmailShell(
+    "Faculty Request Declined",
+    "Smart Library Management",
+    `
+    <p>Hello <strong>${opts.facultyName}</strong>,</p>
+    <p>Your faculty account request was not approved.</p>
+    <div class="notice">${opts.reason || "No reason was recorded. Contact the library office for details."}</div>
+  `
+  );
+
+  return sendHtmlEmail(opts.toEmail, "Your faculty account request was declined", htmlContent);
+};
+
+// ─── 13. Fine Waiver Petitions ───────────────────────────────────────────────
+
+export interface SendWaiverRequestedOptions {
+  toEmails: string[];
+  facultyName: string;
+  targetName: string;
+  amount: number;
+  reason: string;
+  fineType: "seat reservation" | "book loan";
+}
+
+/** Notifies admins that a faculty member petitioned to clear a fine. */
+export const sendWaiverRequestedEmail = async (opts: SendWaiverRequestedOptions) => {
+  const { toEmails, facultyName, targetName, amount, reason, fineType } = opts;
+  if (toEmails.length === 0) return;
+
+  const htmlContent = facultyEmailShell(
+    "Fine Waiver Requested",
+    "Smart Library Management",
+    `
+    <p><strong>${facultyName}</strong> requested a waiver of a ${fineType} fine.</p>
+    <div class="detail">
+      <div><strong>Student:</strong> ${targetName}</div>
+      <div><strong>Amount:</strong> ${amount} BDT</div>
+      <div><strong>Reason:</strong> ${reason}</div>
+    </div>
+    <p style="margin-top:14px;">Decide the request under Admin &rsaquo; Waivers.</p>
+  `
+  );
+
+  return Promise.all(
+    toEmails.map((toEmail) =>
+      sendHtmlEmail(toEmail, `Fine waiver requested for ${targetName}`, htmlContent)
+    )
+  );
+};
+
+export interface SendWaiverDecisionOptions {
+  toEmail: string;
+  recipientName: string;
+  targetName: string;
+  amount: number;
+  approved: boolean;
+  decisionNote?: string | null;
+}
+
+/** Reports the admin's decision back to the requesting faculty member. */
+export const sendWaiverDecisionEmail = async (opts: SendWaiverDecisionOptions) => {
+  const { toEmail, recipientName, targetName, amount, approved, decisionNote } = opts;
+
+  const htmlContent = facultyEmailShell(
+    approved ? "Fine Waiver Approved" : "Fine Waiver Declined",
+    "Smart Library Management",
+    `
+    <p>Hello <strong>${recipientName}</strong>,</p>
+    <p>
+      The ${amount} BDT fine waiver you requested for <strong>${targetName}</strong> was
+      ${approved ? "approved. The fine is cleared." : "declined. The fine still stands."}
+    </p>
+    ${decisionNote ? `<div class="notice">${decisionNote}</div>` : ""}
+  `
+  );
+
+  return sendHtmlEmail(
+    toEmail,
+    approved ? `Fine waiver approved for ${targetName}` : `Fine waiver declined for ${targetName}`,
+    htmlContent
+  );
+};
+
 export const emailService = {
   sendBookingConfirmationEmail,
   sendLoanConfirmationEmail,
@@ -1340,5 +1520,10 @@ export const emailService = {
   sendSeatLateCancellationEmail,
   sendSeatFinePaidReceiptEmail,
   sendProfileOtpEmail,
+  sendFacultyPendingApprovalEmail,
+  sendFacultyApprovedEmail,
+  sendFacultyRejectedEmail,
+  sendWaiverRequestedEmail,
+  sendWaiverDecisionEmail,
 };
 

@@ -393,7 +393,8 @@ export const ModelName = {
   Booking: 'Booking',
   Setting: 'Setting',
   Book: 'Book',
-  BookLoan: 'BookLoan'
+  BookLoan: 'BookLoan',
+  FineWaiverRequest: 'FineWaiverRequest'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -409,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "otpVerification" | "zone" | "seat" | "schedule" | "bookingSeat" | "booking" | "setting" | "book" | "bookLoan"
+    modelProps: "user" | "otpVerification" | "zone" | "seat" | "schedule" | "bookingSeat" | "booking" | "setting" | "book" | "bookLoan" | "fineWaiverRequest"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1153,6 +1154,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FineWaiverRequest: {
+      payload: Prisma.$FineWaiverRequestPayload<ExtArgs>
+      fields: Prisma.FineWaiverRequestFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FineWaiverRequestFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FineWaiverRequestFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload>
+        }
+        findFirst: {
+          args: Prisma.FineWaiverRequestFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FineWaiverRequestFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload>
+        }
+        findMany: {
+          args: Prisma.FineWaiverRequestFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload>[]
+        }
+        create: {
+          args: Prisma.FineWaiverRequestCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload>
+        }
+        createMany: {
+          args: Prisma.FineWaiverRequestCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FineWaiverRequestCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload>[]
+        }
+        delete: {
+          args: Prisma.FineWaiverRequestDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload>
+        }
+        update: {
+          args: Prisma.FineWaiverRequestUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload>
+        }
+        deleteMany: {
+          args: Prisma.FineWaiverRequestDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FineWaiverRequestUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FineWaiverRequestUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload>[]
+        }
+        upsert: {
+          args: Prisma.FineWaiverRequestUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FineWaiverRequestPayload>
+        }
+        aggregate: {
+          args: Prisma.FineWaiverRequestAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFineWaiverRequest>
+        }
+        groupBy: {
+          args: Prisma.FineWaiverRequestGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FineWaiverRequestGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FineWaiverRequestCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FineWaiverRequestCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1200,6 +1275,14 @@ export const UserScalarFieldEnum = {
   passwordHash: 'passwordHash',
   role: 'role',
   isActive: 'isActive',
+  facultyId: 'facultyId',
+  department: 'department',
+  designation: 'designation',
+  emailVerifiedAt: 'emailVerifiedAt',
+  approvalStatus: 'approvalStatus',
+  approvedById: 'approvedById',
+  approvedAt: 'approvedAt',
+  rejectionReason: 'rejectionReason',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1368,6 +1451,25 @@ export const BookLoanScalarFieldEnum = {
 export type BookLoanScalarFieldEnum = (typeof BookLoanScalarFieldEnum)[keyof typeof BookLoanScalarFieldEnum]
 
 
+export const FineWaiverRequestScalarFieldEnum = {
+  id: 'id',
+  requestedById: 'requestedById',
+  targetUserId: 'targetUserId',
+  bookingId: 'bookingId',
+  loanId: 'loanId',
+  amount: 'amount',
+  reason: 'reason',
+  status: 'status',
+  decidedById: 'decidedById',
+  decidedAt: 'decidedAt',
+  decisionNote: 'decisionNote',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FineWaiverRequestScalarFieldEnum = (typeof FineWaiverRequestScalarFieldEnum)[keyof typeof FineWaiverRequestScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1444,6 +1546,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ApprovalStatus'
+ */
+export type EnumApprovalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApprovalStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ApprovalStatus[]'
+ */
+export type ListEnumApprovalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApprovalStatus[]'>
     
 
 
@@ -1586,6 +1702,20 @@ export type EnumLoanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Prism
 export type ListEnumLoanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LoanStatus[]'>
     
 
+
+/**
+ * Reference to a field of type 'WaiverRequestStatus'
+ */
+export type EnumWaiverRequestStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WaiverRequestStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'WaiverRequestStatus[]'
+ */
+export type ListEnumWaiverRequestStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WaiverRequestStatus[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -1706,6 +1836,7 @@ export type GlobalOmitConfig = {
   setting?: Prisma.SettingOmit
   book?: Prisma.BookOmit
   bookLoan?: Prisma.BookLoanOmit
+  fineWaiverRequest?: Prisma.FineWaiverRequestOmit
 }
 
 /* Types for Logging */

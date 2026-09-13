@@ -15,6 +15,9 @@ const email_service_1 = require("../../services/email.service");
 const setting_service_1 = require("../setting/setting.service");
 const booking_fines_1 = require("../../lib/booking-fines");
 const enums_2 = require("../../generated/enums");
+const privileges_1 = require("../../lib/privileges");
+/** Roles that book seats for themselves rather than administering the library. */
+const isSelfServiceRole = (role) => role === enums_1.Role.student || role === enums_1.Role.faculty;
 /**
  * Create a new single or multi-seat (group) booking for a student.
  */
@@ -488,7 +491,7 @@ const getBookingById = async (id, userId, role) => {
     if (!booking) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Booking not found");
     }
-    if (role === enums_1.Role.student && booking.userId !== userId) {
+    if (isSelfServiceRole(role) && booking.userId !== userId) {
         throw new AppError_1.default(http_status_1.default.FORBIDDEN, "Access denied");
     }
     let qrCodeImage = null;
@@ -534,10 +537,12 @@ const cancelBooking = async (id, userId, role, customCancelReason) => {
     const isAdminOrLibrarian = role === enums_1.Role.admin || role === enums_1.Role.librarian;
     const defaultReason = isAdminOrLibrarian
         ? "Cancelled by Library Administration"
-        : "Cancelled by Student";
+        : role === enums_1.Role.faculty
+            ? "Cancelled by Faculty Member"
+            : "Cancelled by Student";
     let finalCancelReason = customCancelReason?.trim() || defaultReason;
-    // If student, check ownership and restrict cancellation
-    if (role === enums_1.Role.student) {
+    // Self-service cancellation (student or faculty): ownership + status limits
+    if (isSelfServiceRole(role)) {
         if (booking.userId !== userId) {
             throw new AppError_1.default(http_status_1.default.FORBIDDEN, "Forbidden: You can only cancel your own bookings");
         }
@@ -557,7 +562,8 @@ const cancelBooking = async (id, userId, role, customCancelReason) => {
     // closure, emergencies) never penalise the student.
     let fineAmount = 0;
     let fineDecision = null;
-    if (role === enums_1.Role.student) {
+    if (isSelfServiceRole(role)) {
+        const privileges = await (0, privileges_1.getPrivilegesForRole)(role);
         const policy = await setting_service_1.SettingService.getBookingPolicyConfig();
         const slotConfig = await (0, time_1.getActiveSlotConfig)();
         const slotStart = (0, time_1.getSlotStartDate)(booking.schedule.date, booking.schedule.slot, slotConfig);
@@ -568,11 +574,12 @@ const cancelBooking = async (id, userId, role, customCancelReason) => {
             lateCancelFine: policy.lateCancelFine,
             lateCancelLeadMinutes: policy.lateCancelLeadMinutes,
         });
-        fineAmount = fineDecision.fineAmount;
+        // Fine-exempt accounts (faculty) cancel free of charge, however late.
+        fineAmount = privileges.exemptSeatFines ? 0 : fineDecision.fineAmount;
         if (!customCancelReason?.trim()) {
             finalCancelReason = fineAmount > 0
-                ? `Cancelled by Student (${(0, booking_fines_1.formatMinutes)(fineDecision.minutesSinceBooking)} after booking, ${fineAmount} BDT late cancellation fee applied)`
-                : `Cancelled by Student (${(0, booking_fines_1.formatMinutes)(fineDecision.minutesSinceBooking)} after booking, within free cancellation window)`;
+                ? `${defaultReason} (${(0, booking_fines_1.formatMinutes)(fineDecision.minutesSinceBooking)} after booking, ${fineAmount} BDT late cancellation fee applied)`
+                : `${defaultReason} (${(0, booking_fines_1.formatMinutes)(fineDecision.minutesSinceBooking)} after booking, within free cancellation window)`;
         }
     }
     // Perform status update and free occupancy for ALL booked seats atomically
@@ -913,7 +920,7 @@ const getDashboardStats = async (userId, role) => {
         };
     });
     let studentStats = null;
-    if (role === "student") {
+    if (isSelfServiceRole(role)) {
         const myActivePasses = await prisma_1.default.booking.count({
             where: {
                 userId,

@@ -9,6 +9,20 @@ const authRoute: Router = Router();
 // POST /api/v1/auth/register — public
 authRoute.post("/register", requestValidator(AuthValidation.registerSchema), AuthController.register);
 
+// POST /api/v1/auth/verify-email — public, consumes the registration code
+authRoute.post(
+    "/verify-email",
+    requestValidator(AuthValidation.verifyRegistrationSchema),
+    AuthController.verifyRegistration
+);
+
+// POST /api/v1/auth/resend-otp — public, mails a fresh registration code
+authRoute.post(
+    "/resend-otp",
+    requestValidator(AuthValidation.resendRegistrationOtpSchema),
+    AuthController.resendRegistrationOtp
+);
+
 // POST /api/v1/auth/login — public
 authRoute.post("/login", requestValidator(AuthValidation.loginSchema), AuthController.login);
 

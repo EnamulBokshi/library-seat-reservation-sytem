@@ -9,7 +9,9 @@ import {
   Receipt,
   ScanLine,
   Settings,
+  ShieldCheck,
   UserRound,
+  UserRoundCheck,
 } from "lucide-react";
 import { Role } from "@/lib/types";
 
@@ -51,6 +53,10 @@ const ADMIN_WORKSPACE: DashboardWorkspace = {
     { href: "/admin/books", label: "Book Inventory", icon: BookOpen },
     { href: "/admin/loans", label: "Circulation Desk", icon: BookMarked },
     { href: "/admin/bookings", label: "Seat Bookings", icon: ClipboardList },
+    { href: "/admin/fines", label: "Fines Ledger", icon: Receipt },
+    { href: "/admin/waivers", label: "Waiver Requests", icon: ShieldCheck },
+    // Only full admins decide who joins the faculty roster.
+    { href: "/admin/approvals", label: "Account Approvals", icon: UserRoundCheck, roles: ["admin", "super_admin"] },
     { href: "/admin/checkin", label: "Check-In Scanner", icon: ScanLine },
     { href: "/admin/schedules", label: "Schedules & Slots", icon: Calendar },
     { href: "/admin/zones", label: "Zones & Capacity", icon: MapPin },
@@ -69,6 +75,8 @@ const STUDENT_WORKSPACE: DashboardWorkspace = {
     { href: "/dashboard/bookings", label: "My Bookings", icon: Armchair },
     { href: "/dashboard/loans", label: "My Loans", icon: BookOpen },
     { href: "/dashboard/fines", label: "Fines", icon: Receipt },
+    // Faculty privilege: petition an admin to clear a student's fine.
+    { href: "/dashboard/waivers", label: "Fine Waivers", icon: ShieldCheck, roles: ["faculty"] },
     { href: "/dashboard/profile", label: "Profile", icon: UserRound },
   ],
 };

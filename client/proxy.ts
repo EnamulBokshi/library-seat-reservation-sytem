@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/auth/login", "/auth/register"];
+const PUBLIC_ROUTES = ["/auth/login", "/auth/register", "/auth/verify-email"];
 /// Signed-in-only areas. Cookie presence only — real authorization is server-side.
 const PROTECTED_ROUTE_PREFIXES = ["/admin", "/dashboard"];
 

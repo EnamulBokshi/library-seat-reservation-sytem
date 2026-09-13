@@ -60,7 +60,8 @@ export const ModelName = {
   Booking: 'Booking',
   Setting: 'Setting',
   Book: 'Book',
-  BookLoan: 'BookLoan'
+  BookLoan: 'BookLoan',
+  FineWaiverRequest: 'FineWaiverRequest'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -87,6 +88,14 @@ export const UserScalarFieldEnum = {
   passwordHash: 'passwordHash',
   role: 'role',
   isActive: 'isActive',
+  facultyId: 'facultyId',
+  department: 'department',
+  designation: 'designation',
+  emailVerifiedAt: 'emailVerifiedAt',
+  approvalStatus: 'approvalStatus',
+  approvedById: 'approvedById',
+  approvedAt: 'approvedAt',
+  rejectionReason: 'rejectionReason',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -253,6 +262,25 @@ export const BookLoanScalarFieldEnum = {
 } as const
 
 export type BookLoanScalarFieldEnum = (typeof BookLoanScalarFieldEnum)[keyof typeof BookLoanScalarFieldEnum]
+
+
+export const FineWaiverRequestScalarFieldEnum = {
+  id: 'id',
+  requestedById: 'requestedById',
+  targetUserId: 'targetUserId',
+  bookingId: 'bookingId',
+  loanId: 'loanId',
+  amount: 'amount',
+  reason: 'reason',
+  status: 'status',
+  decidedById: 'decidedById',
+  decidedAt: 'decidedAt',
+  decisionNote: 'decisionNote',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FineWaiverRequestScalarFieldEnum = (typeof FineWaiverRequestScalarFieldEnum)[keyof typeof FineWaiverRequestScalarFieldEnum]
 
 
 export const SortOrder = {

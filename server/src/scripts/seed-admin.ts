@@ -24,6 +24,9 @@ async function seedAdmin() {
             email: adminEmail,
             passwordHash,
             role: "admin",
+            // Seeded staff skip the signup verification round-trip.
+            emailVerifiedAt: new Date(),
+            approvalStatus: "approved",
         },
     });
 

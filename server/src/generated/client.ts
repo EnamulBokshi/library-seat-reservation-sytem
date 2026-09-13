@@ -90,3 +90,9 @@ export type Book = Prisma.BookModel
  * 
  */
 export type BookLoan = Prisma.BookLoanModel
+/**
+ * Model FineWaiverRequest
+ * A faculty member's petition to clear one outstanding fine on a student's
+ * behalf. An admin decides it; approval waives the underlying fine record.
+ */
+export type FineWaiverRequest = Prisma.FineWaiverRequestModel

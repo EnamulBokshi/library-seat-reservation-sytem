@@ -6,6 +6,23 @@ import { UserValidation } from "./user.validation";
 
 const userRoute: Router = Router();
 
+// GET /api/v1/user — admin user directory
+userRoute.get("/", authCheck("admin"), UserController.listUsers);
+
+// GET /api/v1/user/pending-approvals — faculty signups awaiting a decision
+userRoute.get("/pending-approvals", authCheck("admin"), UserController.getPendingApprovals);
+
+// PATCH /api/v1/user/:id/approve — activate a pending account
+userRoute.patch("/:id/approve", authCheck("admin"), UserController.approveUser);
+
+// PATCH /api/v1/user/:id/reject — decline a pending account with a reason
+userRoute.patch(
+    "/:id/reject",
+    authCheck("admin"),
+    requestValidator(UserValidation.rejectUserSchema),
+    UserController.rejectUser
+);
+
 // GET /api/v1/user/me — own profile
 userRoute.get("/me", authCheck(), UserController.getProfile);
 

@@ -5,6 +5,7 @@ import { useAuth } from "@/context/auth-context";
 import { bookingService } from "@/services/booking-service";
 import { zoneService } from "@/services/zone-service";
 import { DashboardStats, Zone, ApiError } from "@/lib/types";
+import { isSelfServiceRole } from "@/lib/roles";
 import {
   HomeHero,
   TelemetryStats,
@@ -23,7 +24,7 @@ export function HomeView() {
 
   const isAdmin = user?.role === "admin";
   const isLibrarian = user?.role === "librarian";
-  const isStudent = user?.role === "student";
+  const isStudent = isSelfServiceRole(user?.role);
   const canManage = isAdmin || isLibrarian;
 
   const fetchHomeData = useCallback(async () => {

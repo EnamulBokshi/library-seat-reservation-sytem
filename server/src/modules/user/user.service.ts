@@ -1,11 +1,14 @@
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import status from "http-status";
 import prisma from "../../lib/prisma";
 import AppError from "../../helpers/AppError";
 import { envVars } from "../../config/envVars";
 import { FineStatus, OtpPurpose } from "../../generated/enums";
 import { emailService } from "../../services/email.service";
+import { consumeOtp, issueOtp } from "../../lib/otp";
+import { getUserPrivileges } from "../../lib/privileges";
+import { ApprovalStatus, Role } from "../../generated/enums";
+import { IListUsersOptions, IRejectUserPayload } from "./user.interface";
 import { SettingService } from "../../modules/setting/setting.service";
 import {
     IFineEntry,
@@ -17,28 +20,23 @@ import {
     IVerifyPasswordChangePayload,
 } from "./user.interface";
 
-/** How long a verification code stays valid. */
-const OTP_TTL_MINUTES = 10;
-/** Wrong-code submissions allowed before the code is burned. */
-const OTP_MAX_ATTEMPTS = 5;
-
 const PROFILE_SELECT = {
     id: true,
     name: true,
     email: true,
     studentId: true,
+    facultyId: true,
+    department: true,
+    designation: true,
     role: true,
     isActive: true,
+    approvalStatus: true,
+    emailVerifiedAt: true,
+    rejectionReason: true,
     createdAt: true,
 } as const;
 
 const roundBDT = (amount: number): number => Math.round(amount * 100) / 100;
-
-/**
- * Six-digit code from a cryptographic source, so codes are not guessable from
- * timing or sequence the way Math.random() values are.
- */
-const generateOtpCode = (): string => String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
 
 const assertPassword = async (passwordHash: string, candidate: string) => {
     const isValid = await bcrypt.compare(candidate, passwordHash);
@@ -53,88 +51,6 @@ const getUserOrThrow = async (userId: string) => {
         throw new AppError(status.NOT_FOUND, "User account not found");
     }
     return user;
-};
-
-/**
- * Issue a fresh OTP for one purpose. Any earlier unconsumed code for the same
- * purpose is deleted first, so only the newest code in the user's inbox works.
- */
-const issueOtp = async (params: {
-    userId: string;
-    purpose: OtpPurpose;
-    newEmail?: string;
-    deliverToEmail: string;
-    userName: string;
-    purposeLabel: string;
-}) => {
-    await prisma.otpVerification.deleteMany({
-        where: { userId: params.userId, purpose: params.purpose },
-    });
-
-    const code = generateOtpCode();
-    const codeHash = await bcrypt.hash(code, envVars.BCRYPT_SALT_ROUNDS);
-    const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
-
-    await prisma.otpVerification.create({
-        data: {
-            userId: params.userId,
-            purpose: params.purpose,
-            codeHash,
-            newEmail: params.newEmail ?? null,
-            expiresAt,
-        },
-    });
-
-    await emailService.sendProfileOtpEmail({
-        toEmail: params.deliverToEmail,
-        studentName: params.userName,
-        code,
-        purposeLabel: params.purposeLabel,
-        expiresInMinutes: OTP_TTL_MINUTES,
-    });
-
-    return { expiresAt, expiresInMinutes: OTP_TTL_MINUTES, sentTo: params.deliverToEmail };
-};
-
-/**
- * Consume an OTP: it must exist, be unexpired, and match. A wrong code counts
- * an attempt and burns the record once the attempt ceiling is reached, so a
- * leaked address cannot be brute-forced through six-digit space.
- */
-const consumeOtp = async (userId: string, purpose: OtpPurpose, code: string) => {
-    const record = await prisma.otpVerification.findFirst({
-        where: { userId, purpose, consumedAt: null },
-        orderBy: { createdAt: "desc" },
-    });
-
-    if (!record) {
-        throw new AppError(status.BAD_REQUEST, "No pending verification code. Request a new one.");
-    }
-
-    if (record.expiresAt.getTime() < Date.now()) {
-        await prisma.otpVerification.delete({ where: { id: record.id } });
-        throw new AppError(status.BAD_REQUEST, "This verification code has expired. Request a new one.");
-    }
-
-    const isMatch = await bcrypt.compare(code, record.codeHash);
-    if (!isMatch) {
-        const attempts = record.attempts + 1;
-        if (attempts >= OTP_MAX_ATTEMPTS) {
-            await prisma.otpVerification.delete({ where: { id: record.id } });
-            throw new AppError(
-                status.TOO_MANY_REQUESTS,
-                "Too many incorrect attempts. Request a new verification code."
-            );
-        }
-        await prisma.otpVerification.update({ where: { id: record.id }, data: { attempts } });
-        throw new AppError(
-            status.BAD_REQUEST,
-            `Incorrect verification code. ${OTP_MAX_ATTEMPTS - attempts} attempt(s) remaining.`
-        );
-    }
-
-    await prisma.otpVerification.delete({ where: { id: record.id } });
-    return record;
 };
 
 const getProfile = async (userId: string) => {
@@ -242,7 +158,10 @@ const verifyPasswordChange = async (userId: string, payload: IVerifyPasswordChan
  * dashboard shows a statement, not just what is owed.
  */
 const getMyFines = async (userId: string): Promise<IMyFinesResult> => {
-    const policy = await SettingService.getBookingPolicyConfig();
+    const [policy, privileges] = await Promise.all([
+        SettingService.getBookingPolicyConfig(),
+        getUserPrivileges(userId),
+    ]);
 
     const [bookings, loans] = await Promise.all([
         prisma.booking.findMany({
@@ -335,10 +254,145 @@ const getMyFines = async (userId: string): Promise<IMyFinesResult> => {
             loanUnpaidTotal,
             totalUnpaid,
             maxUnpaidFineLimit: policy.maxUnpaidFineLimit,
-            isBookingBlocked: totalUnpaid >= policy.maxUnpaidFineLimit,
+            isBookingBlocked: privileges.exemptSeatFines
+                ? false
+                : totalUnpaid >= policy.maxUnpaidFineLimit,
             remainingBalance: roundBDT(Math.max(0, policy.maxUnpaidFineLimit - totalUnpaid)),
         },
     };
+};
+
+/**
+ * Admin user directory with role, approval and free-text filters.
+ */
+const listUsers = async (options: IListUsersOptions) => {
+    const page = Math.max(1, options.page ?? 1);
+    const limit = Math.min(100, Math.max(1, options.limit ?? 20));
+
+    const where: Record<string, unknown> = {};
+    if (options.role) where.role = options.role;
+    if (options.approvalStatus) where.approvalStatus = options.approvalStatus;
+    if (options.searchTerm?.trim()) {
+        const term = options.searchTerm.trim();
+        where.OR = [
+            { name: { contains: term, mode: "insensitive" } },
+            { email: { contains: term, mode: "insensitive" } },
+            { studentId: { contains: term, mode: "insensitive" } },
+            { facultyId: { contains: term, mode: "insensitive" } },
+        ];
+    }
+
+    const [users, total] = await Promise.all([
+        prisma.user.findMany({
+            where,
+            select: PROFILE_SELECT,
+            orderBy: { createdAt: "desc" },
+            skip: (page - 1) * limit,
+            take: limit,
+        }),
+        prisma.user.count({ where }),
+    ]);
+
+    return {
+        users,
+        meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+};
+
+/**
+ * Faculty signups that verified their email and still await a decision.
+ */
+const getPendingApprovals = async () => {
+    return prisma.user.findMany({
+        where: {
+            approvalStatus: ApprovalStatus.pending,
+            emailVerifiedAt: { not: null },
+        },
+        select: PROFILE_SELECT,
+        orderBy: { createdAt: "asc" },
+    });
+};
+
+const getApprovableUserOrThrow = async (userId: string) => {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+        throw new AppError(status.NOT_FOUND, "User account not found");
+    }
+
+    if (user.approvalStatus !== ApprovalStatus.pending) {
+        throw new AppError(
+            status.BAD_REQUEST,
+            `This account is already ${user.approvalStatus}. Only a pending account can be decided.`
+        );
+    }
+
+    return user;
+};
+
+/**
+ * Approve a pending account. The account becomes usable immediately.
+ */
+const approveUser = async (userId: string, adminId: string) => {
+    const user = await getApprovableUserOrThrow(userId);
+
+    if (!user.emailVerifiedAt) {
+        throw new AppError(
+            status.BAD_REQUEST,
+            "This applicant has not verified their email address yet."
+        );
+    }
+
+    const approved = await prisma.user.update({
+        where: { id: userId },
+        data: {
+            approvalStatus: ApprovalStatus.approved,
+            isActive: true,
+            approvedById: adminId,
+            approvedAt: new Date(),
+            rejectionReason: null,
+        },
+        select: PROFILE_SELECT,
+    });
+
+    if (approved.role === Role.faculty) {
+        await emailService
+            .sendFacultyApprovedEmail({ toEmail: approved.email, facultyName: approved.name })
+            .catch((err) => console.error("Failed to send faculty approval email:", err));
+    }
+
+    return approved;
+};
+
+/**
+ * Reject a pending account. The reason is shown to the applicant on login.
+ */
+const rejectUser = async (userId: string, adminId: string, payload: IRejectUserPayload) => {
+    const user = await getApprovableUserOrThrow(userId);
+
+    const rejected = await prisma.user.update({
+        where: { id: userId },
+        data: {
+            approvalStatus: ApprovalStatus.rejected,
+            isActive: false,
+            approvedById: adminId,
+            approvedAt: new Date(),
+            rejectionReason: payload.reason,
+        },
+        select: PROFILE_SELECT,
+    });
+
+    if (user.role === Role.faculty) {
+        await emailService
+            .sendFacultyRejectedEmail({
+                toEmail: rejected.email,
+                facultyName: rejected.name,
+                reason: payload.reason,
+            })
+            .catch((err) => console.error("Failed to send faculty rejection email:", err));
+    }
+
+    return rejected;
 };
 
 export const UserService = {
@@ -349,4 +403,8 @@ export const UserService = {
     requestPasswordChange,
     verifyPasswordChange,
     getMyFines,
+    listUsers,
+    getPendingApprovals,
+    approveUser,
+    rejectUser,
 };

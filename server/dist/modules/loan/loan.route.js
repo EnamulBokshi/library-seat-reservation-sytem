@@ -10,9 +10,9 @@ const requestValidator_1 = __importDefault(require("../../middleware/requestVali
 const loan_validation_1 = require("./loan.validation");
 const loanRoute = (0, express_1.Router)();
 // Student Endpoints
-loanRoute.post("/request", (0, authCheck_1.default)("student", "admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.createLoanRequestSchema), loan_controller_1.LoanController.requestLoan);
-loanRoute.get("/my-loans", (0, authCheck_1.default)("student", "admin", "librarian"), loan_controller_1.LoanController.getMyLoans);
-loanRoute.post("/:id/renew", (0, authCheck_1.default)("student", "admin", "librarian"), loan_controller_1.LoanController.renewLoan);
+loanRoute.post("/request", (0, authCheck_1.default)("student", "faculty", "admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.createLoanRequestSchema), loan_controller_1.LoanController.requestLoan);
+loanRoute.get("/my-loans", (0, authCheck_1.default)("student", "faculty", "admin", "librarian"), loan_controller_1.LoanController.getMyLoans);
+loanRoute.post("/:id/renew", (0, authCheck_1.default)("student", "faculty", "admin", "librarian"), loan_controller_1.LoanController.renewLoan);
 // Admin / Librarian Fast Scanning & Lookup Endpoints
 loanRoute.get("/lookup-book/:identifier", (0, authCheck_1.default)("admin", "librarian"), loan_controller_1.LoanController.lookupBook);
 loanRoute.get("/lookup-student/:identifier", (0, authCheck_1.default)("admin", "librarian"), loan_controller_1.LoanController.lookupStudent);
@@ -23,5 +23,6 @@ loanRoute.post("/direct-issue", (0, authCheck_1.default)("admin", "librarian"), 
 loanRoute.patch("/:id/status", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.updateLoanStatusSchema), loan_controller_1.LoanController.updateLoanStatus);
 loanRoute.post("/:id/return", (0, authCheck_1.default)("admin", "librarian"), loan_controller_1.LoanController.returnBook);
 loanRoute.post("/:id/pay-fine", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.payFineSchema), loan_controller_1.LoanController.payLoanFine);
+loanRoute.post("/:id/waive-fine", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.waiveFineSchema), loan_controller_1.LoanController.waiveLoanFine);
 loanRoute.post("/:id/admin-renew", (0, authCheck_1.default)("admin", "librarian"), (0, requestValidator_1.default)(loan_validation_1.LoanValidation.adminRenewSchema), loan_controller_1.LoanController.adminRenewLoan);
 exports.default = loanRoute;

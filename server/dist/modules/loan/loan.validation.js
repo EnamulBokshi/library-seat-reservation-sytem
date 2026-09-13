@@ -35,10 +35,14 @@ const payFineSchema = zod_1.z.object({
     chalanNumber: zod_1.z.string().optional().nullable(),
     notes: zod_1.z.string().optional().nullable(),
 });
+const waiveFineSchema = zod_1.z.object({
+    reason: zod_1.z.string().optional().nullable(),
+});
 exports.LoanValidation = {
     createLoanRequestSchema,
     directIssueSchema,
     updateLoanStatusSchema,
     adminRenewSchema,
     payFineSchema,
+    waiveFineSchema,
 };

@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function BookPage() {
   return (
-    <AuthGuard allowedRoles={["student", "admin", "librarian", "super_admin"]}>
+    <AuthGuard allowedRoles={["student", "faculty", "admin", "librarian", "super_admin"]}>
       <Suspense
         fallback={
           <div className="flex min-h-[60vh] items-center justify-center">

@@ -51,6 +51,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { isSelfServiceRole } from "@/lib/roles";
 
 // ─── Default Zone Visual Images ───────────────────────────────────────────────
 const ZONE_IMAGES: Record<string, string> = {
@@ -275,7 +276,7 @@ export function BookSeatView({ initialZoneId }: BookSeatViewProps) {
 
   const canManage =
     user?.role === "admin" || user?.role === "librarian" || user?.role === "super_admin";
-  const isStudent = user?.role === "student";
+  const isStudent = isSelfServiceRole(user?.role);
   // Server is the authority; this only pre-empts a guaranteed 403.
   const isReservationLocked = eligibility?.isBookingBlocked ?? false;
 

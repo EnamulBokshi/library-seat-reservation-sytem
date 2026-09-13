@@ -9,6 +9,14 @@ const requestValidator_1 = __importDefault(require("../../middleware/requestVali
 const authCheck_1 = __importDefault(require("../../middleware/authCheck"));
 const user_validation_1 = require("./user.validation");
 const userRoute = (0, express_1.Router)();
+// GET /api/v1/user — admin user directory
+userRoute.get("/", (0, authCheck_1.default)("admin"), user_controller_1.UserController.listUsers);
+// GET /api/v1/user/pending-approvals — faculty signups awaiting a decision
+userRoute.get("/pending-approvals", (0, authCheck_1.default)("admin"), user_controller_1.UserController.getPendingApprovals);
+// PATCH /api/v1/user/:id/approve — activate a pending account
+userRoute.patch("/:id/approve", (0, authCheck_1.default)("admin"), user_controller_1.UserController.approveUser);
+// PATCH /api/v1/user/:id/reject — decline a pending account with a reason
+userRoute.patch("/:id/reject", (0, authCheck_1.default)("admin"), (0, requestValidator_1.default)(user_validation_1.UserValidation.rejectUserSchema), user_controller_1.UserController.rejectUser);
 // GET /api/v1/user/me — own profile
 userRoute.get("/me", (0, authCheck_1.default)(), user_controller_1.UserController.getProfile);
 // PATCH /api/v1/user/me — change display name (no verification needed)

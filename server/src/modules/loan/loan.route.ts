@@ -9,20 +9,20 @@ const loanRoute: Router = Router();
 // Student Endpoints
 loanRoute.post(
   "/request",
-  authCheck("student", "admin", "librarian"),
+  authCheck("student", "faculty", "admin", "librarian"),
   requestValidator(LoanValidation.createLoanRequestSchema),
   LoanController.requestLoan
 );
 
 loanRoute.get(
   "/my-loans",
-  authCheck("student", "admin", "librarian"),
+  authCheck("student", "faculty", "admin", "librarian"),
   LoanController.getMyLoans
 );
 
 loanRoute.post(
   "/:id/renew",
-  authCheck("student", "admin", "librarian"),
+  authCheck("student", "faculty", "admin", "librarian"),
   LoanController.renewLoan
 );
 
@@ -77,6 +77,13 @@ loanRoute.post(
   authCheck("admin", "librarian"),
   requestValidator(LoanValidation.payFineSchema),
   LoanController.payLoanFine
+);
+
+loanRoute.post(
+  "/:id/waive-fine",
+  authCheck("admin", "librarian"),
+  requestValidator(LoanValidation.waiveFineSchema),
+  LoanController.waiveLoanFine
 );
 
 loanRoute.post(

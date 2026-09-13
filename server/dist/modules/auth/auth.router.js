@@ -11,6 +11,10 @@ const auth_validation_1 = require("./auth.validation");
 const authRoute = (0, express_1.Router)();
 // POST /api/v1/auth/register — public
 authRoute.post("/register", (0, requestValidator_1.default)(auth_validation_1.AuthValidation.registerSchema), auth_controller_1.AuthController.register);
+// POST /api/v1/auth/verify-email — public, consumes the registration code
+authRoute.post("/verify-email", (0, requestValidator_1.default)(auth_validation_1.AuthValidation.verifyRegistrationSchema), auth_controller_1.AuthController.verifyRegistration);
+// POST /api/v1/auth/resend-otp — public, mails a fresh registration code
+authRoute.post("/resend-otp", (0, requestValidator_1.default)(auth_validation_1.AuthValidation.resendRegistrationOtpSchema), auth_controller_1.AuthController.resendRegistrationOtp);
 // POST /api/v1/auth/login — public
 authRoute.post("/login", (0, requestValidator_1.default)(auth_validation_1.AuthValidation.loginSchema), auth_controller_1.AuthController.login);
 // POST /api/v1/auth/refresh — public (uses refresh token from cookie)

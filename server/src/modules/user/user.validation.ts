@@ -23,7 +23,14 @@ export const verifyPasswordChangeSchema = z.object({
     code: z.string({ error: "Verification code is required" }).regex(/^\d{6}$/, "Verification code must be 6 digits"),
 });
 
+export const rejectUserSchema = z.object({
+    reason: z
+        .string({ error: "A rejection reason is required" })
+        .min(5, "Give the applicant a reason of at least 5 characters"),
+});
+
 export const UserValidation = {
+    rejectUserSchema,
     updateProfileSchema,
     requestEmailChangeSchema,
     verifyEmailChangeSchema,

@@ -10,7 +10,43 @@ import {
   VerifyPasswordChangePayload,
 } from "@/lib/types";
 
+export interface ListUsersParams {
+  page?: number;
+  limit?: number;
+  role?: string;
+  approvalStatus?: string;
+  searchTerm?: string;
+}
+
 export const userService = {
+  /**
+   * Admin: the user directory, filterable by role and approval state.
+   */
+  async listUsers(params?: ListUsersParams): Promise<ApiResponse<UserProfile[]>> {
+    return apiClient.get<unknown, ApiResponse<UserProfile[]>>("/user", { params });
+  },
+
+  /**
+   * Admin: faculty signups that verified their email and await a decision.
+   */
+  async getPendingApprovals(): Promise<ApiResponse<UserProfile[]>> {
+    return apiClient.get<unknown, ApiResponse<UserProfile[]>>("/user/pending-approvals");
+  },
+
+  /**
+   * Admin: approve a pending account so it can sign in.
+   */
+  async approveUser(userId: string): Promise<ApiResponse<UserProfile>> {
+    return apiClient.patch<unknown, ApiResponse<UserProfile>>(`/user/${userId}/approve`);
+  },
+
+  /**
+   * Admin: decline a pending account. The reason reaches the applicant.
+   */
+  async rejectUser(userId: string, reason: string): Promise<ApiResponse<UserProfile>> {
+    return apiClient.patch<unknown, ApiResponse<UserProfile>>(`/user/${userId}/reject`, { reason });
+  },
+
   /**
    * Own profile record (richer than /auth/me — includes isActive).
    */

@@ -34,6 +34,19 @@ enum Role {
   admin
   librarian
   student
+  faculty
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+}
+
+enum WaiverRequestStatus {
+  pending
+  approved
+  rejected
 }
 
 enum SlotType {
@@ -77,6 +90,7 @@ enum PaymentMethod {
 enum OtpPurpose {
   email_change
   password_change
+  registration
 }
 
 // ─── Models ──────────────────────────────────────────────
@@ -89,12 +103,31 @@ model User {
   passwordHash String
   role         Role      @default(student)
   isActive     Boolean   @default(true)
+
+  /// Faculty-only identity fields. Null for students, librarians and admins.
+  facultyId   String? @unique
+  department  String?
+  designation String?
+
+  /// Registration email ownership proof. Null until the signup OTP is consumed.
+  emailVerifiedAt DateTime?
+
+  /// Accounts that need a human gate (faculty) start as pending.
+  /// Self-serve student accounts and admin-created staff are approved on creation.
+  approvalStatus  ApprovalStatus @default(approved)
+  approvedById    String?
+  approvedAt      DateTime?
+  rejectionReason String?
+
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   bookings Booking[]
   loans    BookLoan[]
   otps     OtpVerification[]
+
+  waiverRequestsMade     FineWaiverRequest[] @relation("WaiverRequester")
+  waiverRequestsReceived FineWaiverRequest[] @relation("WaiverTarget")
 
   @@map("users")
 }
@@ -308,3 +341,33 @@ model BookLoan {
   @@map("book_loans")
 }
 
+
+/// A faculty member's petition to clear one outstanding fine on a student's
+/// behalf. An admin decides it; approval waives the underlying fine record.
+model FineWaiverRequest {
+  id            String              @id @default(uuid())
+  requestedById String
+  targetUserId  String
+  /// Exactly one of bookingId / loanId identifies the fine being petitioned.
+  bookingId     String?
+  loanId        String?
+  /// Fine amount at request time, kept for the audit trail.
+  amount        Float
+  reason        String
+  status        WaiverRequestStatus @default(pending)
+  decidedById   String?
+  decidedAt     DateTime?
+  decisionNote  String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  requestedBy User @relation("WaiverRequester", fields: [requestedById], references: [id], onDelete: Cascade)
+  targetUser  User @relation("WaiverTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([requestedById])
+  @@index([targetUserId])
+  @@index([bookingId])
+  @@index([loanId])
+  @@map("fine_waiver_requests")
+}

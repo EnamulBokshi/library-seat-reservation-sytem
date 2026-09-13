@@ -4,8 +4,22 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
-import { ApiError } from "@/lib/types";
-import { Activity, Mail, Lock, User, IdCard, ArrowRight, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
+import { ApiError, SelfRegisterRole } from "@/lib/types";
+import {
+  Activity,
+  Mail,
+  Lock,
+  User,
+  IdCard,
+  ArrowRight,
+  AlertCircle,
+  Loader2,
+  Eye,
+  EyeOff,
+  GraduationCap,
+  Building2,
+  BriefcaseBusiness,
+} from "lucide-react";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -15,6 +29,10 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [studentId, setStudentId] = useState("");
+  const [accountType, setAccountType] = useState<SelfRegisterRole>("student");
+  const [facultyId, setFacultyId] = useState("");
+  const [department, setDepartment] = useState("");
+  const [designation, setDesignation] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,15 +58,27 @@ export function RegisterForm() {
       return;
     }
 
+    const isFaculty = accountType === "faculty";
+
+    if (isFaculty && (!facultyId.trim() || !department.trim())) {
+      setError("Faculty accounts need a faculty ID and a department.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await register({
         name,
         email,
         password,
-        studentId: studentId.trim() || undefined,
+        role: accountType,
+        studentId: isFaculty ? undefined : studentId.trim() || undefined,
+        facultyId: isFaculty ? facultyId.trim() : undefined,
+        department: isFaculty ? department.trim() : undefined,
+        designation: isFaculty && designation.trim() ? designation.trim() : undefined,
       });
-      router.push("/");
+      // Every signup verifies its email before the account does anything.
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err: unknown) {
       const apiErr = err as ApiError;
       setError(apiErr?.message || "Failed to register account. Please try again.");
@@ -94,6 +124,41 @@ export function RegisterForm() {
         {/* Registration Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <label className="kicker-label block mb-1.5">Account Type *</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { value: "student", label: "Student", icon: GraduationCap },
+                  { value: "faculty", label: "Faculty", icon: BriefcaseBusiness },
+                ] as const
+              ).map((option) => {
+                const Icon = option.icon;
+                const isSelected = accountType === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setAccountType(option.value)}
+                    className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold transition-all ${
+                      isSelected
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-200 bg-slate-50/50 text-slate-600 hover:border-slate-300"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+            {accountType === "faculty" && (
+              <p className="mt-2 text-[11px] font-medium text-slate-500">
+                Faculty accounts need admin approval after email verification.
+              </p>
+            )}
+          </div>
+
+          <div>
             <label className="kicker-label block mb-1.5">
               Full Name *
             </label>
@@ -131,23 +196,79 @@ export function RegisterForm() {
             </div>
           </div>
 
-          <div>
-            <label className="kicker-label block mb-1.5">
-              Student ID <span className="normal-case text-slate-400">(Optional)</span>
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                <IdCard className="h-4 w-4" />
+          {accountType === "student" ? (
+            <div>
+              <label className="kicker-label block mb-1.5">
+                Student ID <span className="normal-case text-slate-400">(Optional)</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                  <IdCard className="h-4 w-4" />
+                </div>
+                <input
+                  type="text"
+                  value={studentId}
+                  onChange={(e) => setStudentId(e.target.value)}
+                  placeholder="STU-12345"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium"
+                />
               </div>
-              <input
-                type="text"
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
-                placeholder="STU-12345"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium"
-              />
             </div>
-          </div>
+          ) : (
+            <>
+              <div>
+                <label className="kicker-label block mb-1.5">Faculty ID *</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <IdCard className="h-4 w-4" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={facultyId}
+                    onChange={(e) => setFacultyId(e.target.value)}
+                    placeholder="FAC-2041"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="kicker-label block mb-1.5">Department *</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <Building2 className="h-4 w-4" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    placeholder="Computer Science & Engineering"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="kicker-label block mb-1.5">
+                  Designation <span className="normal-case text-slate-400">(Optional)</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                    <BriefcaseBusiness className="h-4 w-4" />
+                  </div>
+                  <input
+                    type="text"
+                    value={designation}
+                    onChange={(e) => setDesignation(e.target.value)}
+                    placeholder="Assistant Professor"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-medium"
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           <div>
             <label className="kicker-label block mb-1.5">
@@ -183,11 +304,11 @@ export function RegisterForm() {
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Creating account...</span>
+                <span>Sending verification code...</span>
               </>
             ) : (
               <>
-                <span>Register</span>
+                <span>{accountType === "faculty" ? "Register as Faculty" : "Register"}</span>
                 <ArrowRight className="h-4 w-4" />
               </>
             )}

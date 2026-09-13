@@ -504,10 +504,6 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type OtpVerificationCreateWithoutUserInput = {
   id?: string
   purpose: $Enums.OtpPurpose

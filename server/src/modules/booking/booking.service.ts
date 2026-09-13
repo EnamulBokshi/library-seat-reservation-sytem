@@ -16,6 +16,11 @@ import {
 } from "../../lib/booking-fines";
 import { FineStatus, PaymentMethod } from "../../generated/enums";
 import { IPaySeatFinePayload, IWaiveSeatFinePayload } from "./booking.interface";
+import { getPrivilegesForRole } from "../../lib/privileges";
+
+/** Roles that book seats for themselves rather than administering the library. */
+const isSelfServiceRole = (role: Role | string): boolean =>
+    role === Role.student || role === Role.faculty;
 
 /**
  * Create a new single or multi-seat (group) booking for a student.
@@ -591,7 +596,7 @@ const getBookingById = async (id: string, userId: string, role: Role) => {
         throw new AppError(status.NOT_FOUND, "Booking not found");
     }
 
-    if (role === Role.student && booking.userId !== userId) {
+    if (isSelfServiceRole(role) && booking.userId !== userId) {
         throw new AppError(status.FORBIDDEN, "Access denied");
     }
 
@@ -646,11 +651,13 @@ const cancelBooking = async (
     const isAdminOrLibrarian = role === Role.admin || role === Role.librarian;
     const defaultReason = isAdminOrLibrarian
         ? "Cancelled by Library Administration"
+        : role === Role.faculty
+        ? "Cancelled by Faculty Member"
         : "Cancelled by Student";
     let finalCancelReason = customCancelReason?.trim() || defaultReason;
 
-    // If student, check ownership and restrict cancellation
-    if (role === Role.student) {
+    // Self-service cancellation (student or faculty): ownership + status limits
+    if (isSelfServiceRole(role)) {
         if (booking.userId !== userId) {
             throw new AppError(status.FORBIDDEN, "Forbidden: You can only cancel your own bookings");
         }
@@ -679,7 +686,8 @@ const cancelBooking = async (
     let fineAmount = 0;
     let fineDecision: ReturnType<typeof evaluateCancellationFine> | null = null;
 
-    if (role === Role.student) {
+    if (isSelfServiceRole(role)) {
+        const privileges = await getPrivilegesForRole(role);
         const policy = await SettingService.getBookingPolicyConfig();
         const slotConfig = await getActiveSlotConfig();
         const slotStart = getSlotStartDate(
@@ -696,12 +704,13 @@ const cancelBooking = async (
             lateCancelLeadMinutes: policy.lateCancelLeadMinutes,
         });
 
-        fineAmount = fineDecision.fineAmount;
+        // Fine-exempt accounts (faculty) cancel free of charge, however late.
+        fineAmount = privileges.exemptSeatFines ? 0 : fineDecision.fineAmount;
 
         if (!customCancelReason?.trim()) {
             finalCancelReason = fineAmount > 0
-                ? `Cancelled by Student (${formatMinutes(fineDecision.minutesSinceBooking)} after booking, ${fineAmount} BDT late cancellation fee applied)`
-                : `Cancelled by Student (${formatMinutes(fineDecision.minutesSinceBooking)} after booking, within free cancellation window)`;
+                ? `${defaultReason} (${formatMinutes(fineDecision.minutesSinceBooking)} after booking, ${fineAmount} BDT late cancellation fee applied)`
+                : `${defaultReason} (${formatMinutes(fineDecision.minutesSinceBooking)} after booking, within free cancellation window)`;
         }
     }
 
@@ -1105,7 +1114,7 @@ const getDashboardStats = async (userId: string, role: string) => {
     });
 
     let studentStats = null;
-    if (role === "student") {
+    if (isSelfServiceRole(role)) {
         const myActivePasses = await prisma.booking.count({
             where: {
                 userId,

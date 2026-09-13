@@ -10,8 +10,10 @@ Health check: `GET /` (root, outside `/api/v1`).
 
 | Method | Path | Guard | Notes |
 |---|---|---|---|
-| POST | `/auth/register` | public | zod `registerSchema` |
-| POST | `/auth/login` | public | sets access + refresh cookies |
+| POST | `/auth/register` | public | zod `registerSchema`; `role` is `student` or `faculty` only. No session is issued — mails a 6-digit code |
+| POST | `/auth/verify-email` | public | consumes the registration code; students get cookies, faculty wait for approval |
+| POST | `/auth/resend-otp` | public | new registration code, 60s cooldown |
+| POST | `/auth/login` | public | sets access + refresh cookies; 403 when unverified, pending or rejected |
 | POST | `/auth/refresh` | public | reads refresh cookie |
 | GET | `/auth/me` | auth | current user |
 | POST | `/auth/logout` | public | clears cookies |
@@ -42,15 +44,15 @@ Health check: `GET /` (root, outside `/api/v1`).
 
 | Method | Path | Guard | Notes |
 |---|---|---|---|
-| POST | `/booking` | student, admin, librarian | single or multi-seat; returns QR image |
-| GET | `/booking/my` | student, admin, librarian | |
+| POST | `/booking` | student, faculty, admin, librarian | single or multi-seat; returns QR image |
+| GET | `/booking/my` | student, faculty, admin, librarian | |
 | GET | `/booking` | admin, librarian | paginated/filterable |
-| GET | `/booking/fcfs-suggest` | student, admin, librarian | 1-click auto-assign |
+| GET | `/booking/fcfs-suggest` | student, faculty, admin, librarian | 1-click auto-assign |
 | GET | `/booking/schedules` | auth | open upcoming slots |
 | GET | `/booking/stats` | auth | dashboard analytics |
-| GET | `/booking/eligibility` | student, admin, librarian | unpaid dues + reservation lock state; registered before `/:id` |
+| GET | `/booking/eligibility` | student, faculty, admin, librarian | unpaid dues + reservation lock state; registered before `/:id` |
 | GET | `/booking/:id` | auth | |
-| DELETE | `/booking/:id` | student, admin, librarian | cancel; student cancels may incur a late fee |
+| DELETE | `/booking/:id` | student, faculty, admin, librarian | cancel; student cancels may incur a late fee |
 | POST | `/booking/:id/pay-fine` | admin, librarian | settle a seat fine (cash / chalan / online) |
 | POST | `/booking/:id/waive-fine` | admin, librarian | waive a seat fine |
 
@@ -86,9 +88,9 @@ Health check: `GET /` (root, outside `/api/v1`).
 
 | Method | Path | Guard | Notes |
 |---|---|---|---|
-| POST | `/loan/request` | student, admin, librarian | student-initiated request |
-| GET | `/loan/my-loans` | student, admin, librarian | |
-| POST | `/loan/:id/renew` | student, admin, librarian | self renew |
+| POST | `/loan/request` | student, faculty, admin, librarian | student-initiated request |
+| GET | `/loan/my-loans` | student, faculty, admin, librarian | |
+| POST | `/loan/:id/renew` | student, faculty, admin, librarian | self renew |
 | GET | `/loan/lookup-book/:identifier` | admin, librarian | barcode / ISBN / call number / uuid |
 | GET | `/loan/lookup-student/:identifier` | admin, librarian | returns student, unpaid fines, quota |
 | GET | `/loan/stats` | admin, librarian | circulation stats |
@@ -125,3 +127,22 @@ Student self-service profile and dues. All routes act on the caller's own record
 ## student — `modules/student/student.route.ts`
 
 Empty placeholder router mounted at `/student`.
+
+## waiver — `modules/waiver/waiver.route.ts`
+
+| Method | Path | Guard | Notes |
+|---|---|---|---|
+| POST | `/waiver` | faculty | petition to clear one student fine; body references exactly one of bookingId / loanId |
+| GET | `/waiver/lookup?identifier=` | faculty | a student's unpaid, petitionable fines |
+| GET | `/waiver/my` | faculty | own petitions |
+| GET | `/waiver` | admin, librarian | review queue, `?status=` filter, paginated |
+| PATCH | `/waiver/:id/decide` | admin | `{ status: approved \| rejected, decisionNote? }`; approval waives the fine |
+
+## user — admin additions (`modules/user/user.route.ts`)
+
+| Method | Path | Guard | Notes |
+|---|---|---|---|
+| GET | `/user` | admin | directory; `?role=`, `?approvalStatus=`, `?searchTerm=`, paginated |
+| GET | `/user/pending-approvals` | admin | verified faculty signups awaiting a decision |
+| PATCH | `/user/:id/approve` | admin | activates the account, mails the applicant |
+| PATCH | `/user/:id/reject` | admin | `{ reason }`; reason is shown on the applicant's next login |

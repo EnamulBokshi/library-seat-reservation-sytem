@@ -32,6 +32,14 @@ export type UserMinAggregateOutputType = {
   passwordHash: string | null
   role: $Enums.Role | null
   isActive: boolean | null
+  facultyId: string | null
+  department: string | null
+  designation: string | null
+  emailVerifiedAt: Date | null
+  approvalStatus: $Enums.ApprovalStatus | null
+  approvedById: string | null
+  approvedAt: Date | null
+  rejectionReason: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -44,6 +52,14 @@ export type UserMaxAggregateOutputType = {
   passwordHash: string | null
   role: $Enums.Role | null
   isActive: boolean | null
+  facultyId: string | null
+  department: string | null
+  designation: string | null
+  emailVerifiedAt: Date | null
+  approvalStatus: $Enums.ApprovalStatus | null
+  approvedById: string | null
+  approvedAt: Date | null
+  rejectionReason: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -56,6 +72,14 @@ export type UserCountAggregateOutputType = {
   passwordHash: number
   role: number
   isActive: number
+  facultyId: number
+  department: number
+  designation: number
+  emailVerifiedAt: number
+  approvalStatus: number
+  approvedById: number
+  approvedAt: number
+  rejectionReason: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -70,6 +94,14 @@ export type UserMinAggregateInputType = {
   passwordHash?: true
   role?: true
   isActive?: true
+  facultyId?: true
+  department?: true
+  designation?: true
+  emailVerifiedAt?: true
+  approvalStatus?: true
+  approvedById?: true
+  approvedAt?: true
+  rejectionReason?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -82,6 +114,14 @@ export type UserMaxAggregateInputType = {
   passwordHash?: true
   role?: true
   isActive?: true
+  facultyId?: true
+  department?: true
+  designation?: true
+  emailVerifiedAt?: true
+  approvalStatus?: true
+  approvedById?: true
+  approvedAt?: true
+  rejectionReason?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -94,6 +134,14 @@ export type UserCountAggregateInputType = {
   passwordHash?: true
   role?: true
   isActive?: true
+  facultyId?: true
+  department?: true
+  designation?: true
+  emailVerifiedAt?: true
+  approvalStatus?: true
+  approvedById?: true
+  approvedAt?: true
+  rejectionReason?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -179,6 +227,14 @@ export type UserGroupByOutputType = {
   passwordHash: string
   role: $Enums.Role
   isActive: boolean
+  facultyId: string | null
+  department: string | null
+  designation: string | null
+  emailVerifiedAt: Date | null
+  approvalStatus: $Enums.ApprovalStatus
+  approvedById: string | null
+  approvedAt: Date | null
+  rejectionReason: string | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -212,11 +268,21 @@ export type UserWhereInput = {
   passwordHash?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   isActive?: Prisma.BoolFilter<"User"> | boolean
+  facultyId?: Prisma.StringNullableFilter<"User"> | string | null
+  department?: Prisma.StringNullableFilter<"User"> | string | null
+  designation?: Prisma.StringNullableFilter<"User"> | string | null
+  emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFilter<"User"> | $Enums.ApprovalStatus
+  approvedById?: Prisma.StringNullableFilter<"User"> | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   bookings?: Prisma.BookingListRelationFilter
   loans?: Prisma.BookLoanListRelationFilter
   otps?: Prisma.OtpVerificationListRelationFilter
+  waiverRequestsMade?: Prisma.FineWaiverRequestListRelationFilter
+  waiverRequestsReceived?: Prisma.FineWaiverRequestListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -227,17 +293,28 @@ export type UserOrderByWithRelationInput = {
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  facultyId?: Prisma.SortOrderInput | Prisma.SortOrder
+  department?: Prisma.SortOrderInput | Prisma.SortOrder
+  designation?: Prisma.SortOrderInput | Prisma.SortOrder
+  emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvalStatus?: Prisma.SortOrder
+  approvedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   bookings?: Prisma.BookingOrderByRelationAggregateInput
   loans?: Prisma.BookLoanOrderByRelationAggregateInput
   otps?: Prisma.OtpVerificationOrderByRelationAggregateInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestOrderByRelationAggregateInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
   studentId?: string
+  facultyId?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
@@ -245,12 +322,21 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   passwordHash?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   isActive?: Prisma.BoolFilter<"User"> | boolean
+  department?: Prisma.StringNullableFilter<"User"> | string | null
+  designation?: Prisma.StringNullableFilter<"User"> | string | null
+  emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFilter<"User"> | $Enums.ApprovalStatus
+  approvedById?: Prisma.StringNullableFilter<"User"> | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  rejectionReason?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   bookings?: Prisma.BookingListRelationFilter
   loans?: Prisma.BookLoanListRelationFilter
   otps?: Prisma.OtpVerificationListRelationFilter
-}, "id" | "email" | "studentId">
+  waiverRequestsMade?: Prisma.FineWaiverRequestListRelationFilter
+  waiverRequestsReceived?: Prisma.FineWaiverRequestListRelationFilter
+}, "id" | "email" | "studentId" | "facultyId">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -260,6 +346,14 @@ export type UserOrderByWithAggregationInput = {
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  facultyId?: Prisma.SortOrderInput | Prisma.SortOrder
+  department?: Prisma.SortOrderInput | Prisma.SortOrder
+  designation?: Prisma.SortOrderInput | Prisma.SortOrder
+  emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvalStatus?: Prisma.SortOrder
+  approvedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -278,6 +372,14 @@ export type UserScalarWhereWithAggregatesInput = {
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
   isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  facultyId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  department?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  designation?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  emailVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusWithAggregatesFilter<"User"> | $Enums.ApprovalStatus
+  approvedById?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  approvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  rejectionReason?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -290,11 +392,21 @@ export type UserCreateInput = {
   passwordHash: string
   role?: $Enums.Role
   isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
   loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
   otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -305,11 +417,21 @@ export type UserUncheckedCreateInput = {
   passwordHash: string
   role?: $Enums.Role
   isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
   loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
   otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
 }
 
 export type UserUpdateInput = {
@@ -320,11 +442,21 @@ export type UserUpdateInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
   loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
   otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -335,11 +467,21 @@ export type UserUncheckedUpdateInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
   loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
   otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -350,6 +492,14 @@ export type UserCreateManyInput = {
   passwordHash: string
   role?: $Enums.Role
   isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -362,6 +512,14 @@ export type UserUpdateManyMutationInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -374,6 +532,14 @@ export type UserUncheckedUpdateManyInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -386,6 +552,14 @@ export type UserCountOrderByAggregateInput = {
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  facultyId?: Prisma.SortOrder
+  department?: Prisma.SortOrder
+  designation?: Prisma.SortOrder
+  emailVerifiedAt?: Prisma.SortOrder
+  approvalStatus?: Prisma.SortOrder
+  approvedById?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -398,6 +572,14 @@ export type UserMaxOrderByAggregateInput = {
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  facultyId?: Prisma.SortOrder
+  department?: Prisma.SortOrder
+  designation?: Prisma.SortOrder
+  emailVerifiedAt?: Prisma.SortOrder
+  approvalStatus?: Prisma.SortOrder
+  approvedById?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -410,6 +592,14 @@ export type UserMinOrderByAggregateInput = {
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  facultyId?: Prisma.SortOrder
+  department?: Prisma.SortOrder
+  designation?: Prisma.SortOrder
+  emailVerifiedAt?: Prisma.SortOrder
+  approvalStatus?: Prisma.SortOrder
+  approvedById?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
+  rejectionReason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -433,6 +623,14 @@ export type EnumRoleFieldUpdateOperationsInput = {
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
+export type EnumApprovalStatusFieldUpdateOperationsInput = {
+  set?: $Enums.ApprovalStatus
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -481,6 +679,34 @@ export type UserUpdateOneRequiredWithoutLoansNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutLoansInput, Prisma.UserUpdateWithoutLoansInput>, Prisma.UserUncheckedUpdateWithoutLoansInput>
 }
 
+export type UserCreateNestedOneWithoutWaiverRequestsMadeInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWaiverRequestsMadeInput, Prisma.UserUncheckedCreateWithoutWaiverRequestsMadeInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWaiverRequestsMadeInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutWaiverRequestsReceivedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWaiverRequestsReceivedInput, Prisma.UserUncheckedCreateWithoutWaiverRequestsReceivedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWaiverRequestsReceivedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutWaiverRequestsMadeNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWaiverRequestsMadeInput, Prisma.UserUncheckedCreateWithoutWaiverRequestsMadeInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWaiverRequestsMadeInput
+  upsert?: Prisma.UserUpsertWithoutWaiverRequestsMadeInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWaiverRequestsMadeInput, Prisma.UserUpdateWithoutWaiverRequestsMadeInput>, Prisma.UserUncheckedUpdateWithoutWaiverRequestsMadeInput>
+}
+
+export type UserUpdateOneRequiredWithoutWaiverRequestsReceivedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWaiverRequestsReceivedInput, Prisma.UserUncheckedCreateWithoutWaiverRequestsReceivedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWaiverRequestsReceivedInput
+  upsert?: Prisma.UserUpsertWithoutWaiverRequestsReceivedInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWaiverRequestsReceivedInput, Prisma.UserUpdateWithoutWaiverRequestsReceivedInput>, Prisma.UserUncheckedUpdateWithoutWaiverRequestsReceivedInput>
+}
+
 export type UserCreateWithoutOtpsInput = {
   id?: string
   name: string
@@ -489,10 +715,20 @@ export type UserCreateWithoutOtpsInput = {
   passwordHash: string
   role?: $Enums.Role
   isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
   loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
 }
 
 export type UserUncheckedCreateWithoutOtpsInput = {
@@ -503,10 +739,20 @@ export type UserUncheckedCreateWithoutOtpsInput = {
   passwordHash: string
   role?: $Enums.Role
   isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
   loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
 }
 
 export type UserCreateOrConnectWithoutOtpsInput = {
@@ -533,10 +779,20 @@ export type UserUpdateWithoutOtpsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
   loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOtpsInput = {
@@ -547,10 +803,20 @@ export type UserUncheckedUpdateWithoutOtpsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
   loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
 }
 
 export type UserCreateWithoutBookingsInput = {
@@ -561,10 +827,20 @@ export type UserCreateWithoutBookingsInput = {
   passwordHash: string
   role?: $Enums.Role
   isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
   otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
 }
 
 export type UserUncheckedCreateWithoutBookingsInput = {
@@ -575,10 +851,20 @@ export type UserUncheckedCreateWithoutBookingsInput = {
   passwordHash: string
   role?: $Enums.Role
   isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
   otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
 }
 
 export type UserCreateOrConnectWithoutBookingsInput = {
@@ -605,10 +891,20 @@ export type UserUpdateWithoutBookingsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
   otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBookingsInput = {
@@ -619,10 +915,20 @@ export type UserUncheckedUpdateWithoutBookingsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
   otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
 }
 
 export type UserCreateWithoutLoansInput = {
@@ -633,10 +939,20 @@ export type UserCreateWithoutLoansInput = {
   passwordHash: string
   role?: $Enums.Role
   isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
   otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
 }
 
 export type UserUncheckedCreateWithoutLoansInput = {
@@ -647,10 +963,20 @@ export type UserUncheckedCreateWithoutLoansInput = {
   passwordHash: string
   role?: $Enums.Role
   isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
   otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
 }
 
 export type UserCreateOrConnectWithoutLoansInput = {
@@ -677,10 +1003,20 @@ export type UserUpdateWithoutLoansInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
   otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLoansInput = {
@@ -691,10 +1027,244 @@ export type UserUncheckedUpdateWithoutLoansInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
   otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+}
+
+export type UserCreateWithoutWaiverRequestsMadeInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestCreateNestedManyWithoutTargetUserInput
+}
+
+export type UserUncheckedCreateWithoutWaiverRequestsMadeInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutTargetUserInput
+}
+
+export type UserCreateOrConnectWithoutWaiverRequestsMadeInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutWaiverRequestsMadeInput, Prisma.UserUncheckedCreateWithoutWaiverRequestsMadeInput>
+}
+
+export type UserCreateWithoutWaiverRequestsReceivedInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestCreateNestedManyWithoutRequestedByInput
+}
+
+export type UserUncheckedCreateWithoutWaiverRequestsReceivedInput = {
+  id?: string
+  name: string
+  email: string
+  studentId?: string | null
+  passwordHash: string
+  role?: $Enums.Role
+  isActive?: boolean
+  facultyId?: string | null
+  department?: string | null
+  designation?: string | null
+  emailVerifiedAt?: Date | string | null
+  approvalStatus?: $Enums.ApprovalStatus
+  approvedById?: string | null
+  approvedAt?: Date | string | null
+  rejectionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutUserInput
+  loans?: Prisma.BookLoanUncheckedCreateNestedManyWithoutUserInput
+  otps?: Prisma.OtpVerificationUncheckedCreateNestedManyWithoutUserInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedCreateNestedManyWithoutRequestedByInput
+}
+
+export type UserCreateOrConnectWithoutWaiverRequestsReceivedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutWaiverRequestsReceivedInput, Prisma.UserUncheckedCreateWithoutWaiverRequestsReceivedInput>
+}
+
+export type UserUpsertWithoutWaiverRequestsMadeInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutWaiverRequestsMadeInput, Prisma.UserUncheckedUpdateWithoutWaiverRequestsMadeInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutWaiverRequestsMadeInput, Prisma.UserUncheckedCreateWithoutWaiverRequestsMadeInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutWaiverRequestsMadeInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutWaiverRequestsMadeInput, Prisma.UserUncheckedUpdateWithoutWaiverRequestsMadeInput>
+}
+
+export type UserUpdateWithoutWaiverRequestsMadeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUpdateManyWithoutTargetUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutWaiverRequestsMadeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsReceived?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutTargetUserNestedInput
+}
+
+export type UserUpsertWithoutWaiverRequestsReceivedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutWaiverRequestsReceivedInput, Prisma.UserUncheckedUpdateWithoutWaiverRequestsReceivedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutWaiverRequestsReceivedInput, Prisma.UserUncheckedCreateWithoutWaiverRequestsReceivedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutWaiverRequestsReceivedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutWaiverRequestsReceivedInput, Prisma.UserUncheckedUpdateWithoutWaiverRequestsReceivedInput>
+}
+
+export type UserUpdateWithoutWaiverRequestsReceivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUpdateManyWithoutRequestedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutWaiverRequestsReceivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  facultyId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  department?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvalStatus?: Prisma.EnumApprovalStatusFieldUpdateOperationsInput | $Enums.ApprovalStatus
+  approvedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookings?: Prisma.BookingUncheckedUpdateManyWithoutUserNestedInput
+  loans?: Prisma.BookLoanUncheckedUpdateManyWithoutUserNestedInput
+  otps?: Prisma.OtpVerificationUncheckedUpdateManyWithoutUserNestedInput
+  waiverRequestsMade?: Prisma.FineWaiverRequestUncheckedUpdateManyWithoutRequestedByNestedInput
 }
 
 
@@ -706,12 +1276,16 @@ export type UserCountOutputType = {
   bookings: number
   loans: number
   otps: number
+  waiverRequestsMade: number
+  waiverRequestsReceived: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   bookings?: boolean | UserCountOutputTypeCountBookingsArgs
   loans?: boolean | UserCountOutputTypeCountLoansArgs
   otps?: boolean | UserCountOutputTypeCountOtpsArgs
+  waiverRequestsMade?: boolean | UserCountOutputTypeCountWaiverRequestsMadeArgs
+  waiverRequestsReceived?: boolean | UserCountOutputTypeCountWaiverRequestsReceivedArgs
 }
 
 /**
@@ -745,6 +1319,20 @@ export type UserCountOutputTypeCountOtpsArgs<ExtArgs extends runtime.Types.Exten
   where?: Prisma.OtpVerificationWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountWaiverRequestsMadeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FineWaiverRequestWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountWaiverRequestsReceivedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FineWaiverRequestWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -754,11 +1342,21 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   passwordHash?: boolean
   role?: boolean
   isActive?: boolean
+  facultyId?: boolean
+  department?: boolean
+  designation?: boolean
+  emailVerifiedAt?: boolean
+  approvalStatus?: boolean
+  approvedById?: boolean
+  approvedAt?: boolean
+  rejectionReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   bookings?: boolean | Prisma.User$bookingsArgs<ExtArgs>
   loans?: boolean | Prisma.User$loansArgs<ExtArgs>
   otps?: boolean | Prisma.User$otpsArgs<ExtArgs>
+  waiverRequestsMade?: boolean | Prisma.User$waiverRequestsMadeArgs<ExtArgs>
+  waiverRequestsReceived?: boolean | Prisma.User$waiverRequestsReceivedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -770,6 +1368,14 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   passwordHash?: boolean
   role?: boolean
   isActive?: boolean
+  facultyId?: boolean
+  department?: boolean
+  designation?: boolean
+  emailVerifiedAt?: boolean
+  approvalStatus?: boolean
+  approvedById?: boolean
+  approvedAt?: boolean
+  rejectionReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -782,6 +1388,14 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   passwordHash?: boolean
   role?: boolean
   isActive?: boolean
+  facultyId?: boolean
+  department?: boolean
+  designation?: boolean
+  emailVerifiedAt?: boolean
+  approvalStatus?: boolean
+  approvedById?: boolean
+  approvedAt?: boolean
+  rejectionReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -794,15 +1408,25 @@ export type UserSelectScalar = {
   passwordHash?: boolean
   role?: boolean
   isActive?: boolean
+  facultyId?: boolean
+  department?: boolean
+  designation?: boolean
+  emailVerifiedAt?: boolean
+  approvalStatus?: boolean
+  approvedById?: boolean
+  approvedAt?: boolean
+  rejectionReason?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "studentId" | "passwordHash" | "role" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "studentId" | "passwordHash" | "role" | "isActive" | "facultyId" | "department" | "designation" | "emailVerifiedAt" | "approvalStatus" | "approvedById" | "approvedAt" | "rejectionReason" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   bookings?: boolean | Prisma.User$bookingsArgs<ExtArgs>
   loans?: boolean | Prisma.User$loansArgs<ExtArgs>
   otps?: boolean | Prisma.User$otpsArgs<ExtArgs>
+  waiverRequestsMade?: boolean | Prisma.User$waiverRequestsMadeArgs<ExtArgs>
+  waiverRequestsReceived?: boolean | Prisma.User$waiverRequestsReceivedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -814,6 +1438,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     bookings: Prisma.$BookingPayload<ExtArgs>[]
     loans: Prisma.$BookLoanPayload<ExtArgs>[]
     otps: Prisma.$OtpVerificationPayload<ExtArgs>[]
+    waiverRequestsMade: Prisma.$FineWaiverRequestPayload<ExtArgs>[]
+    waiverRequestsReceived: Prisma.$FineWaiverRequestPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -823,6 +1449,24 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     passwordHash: string
     role: $Enums.Role
     isActive: boolean
+    /**
+     * Faculty-only identity fields. Null for students, librarians and admins.
+     */
+    facultyId: string | null
+    department: string | null
+    designation: string | null
+    /**
+     * Registration email ownership proof. Null until the signup OTP is consumed.
+     */
+    emailVerifiedAt: Date | null
+    /**
+     * Accounts that need a human gate (faculty) start as pending.
+     * Self-serve student accounts and admin-created staff are approved on creation.
+     */
+    approvalStatus: $Enums.ApprovalStatus
+    approvedById: string | null
+    approvedAt: Date | null
+    rejectionReason: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1222,6 +1866,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   bookings<T extends Prisma.User$bookingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$bookingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   loans<T extends Prisma.User$loansArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$loansArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookLoanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   otps<T extends Prisma.User$otpsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$otpsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OtpVerificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  waiverRequestsMade<T extends Prisma.User$waiverRequestsMadeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$waiverRequestsMadeArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FineWaiverRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  waiverRequestsReceived<T extends Prisma.User$waiverRequestsReceivedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$waiverRequestsReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FineWaiverRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1258,6 +1904,14 @@ export interface UserFieldRefs {
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'Role'>
   readonly isActive: Prisma.FieldRef<"User", 'Boolean'>
+  readonly facultyId: Prisma.FieldRef<"User", 'String'>
+  readonly department: Prisma.FieldRef<"User", 'String'>
+  readonly designation: Prisma.FieldRef<"User", 'String'>
+  readonly emailVerifiedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly approvalStatus: Prisma.FieldRef<"User", 'ApprovalStatus'>
+  readonly approvedById: Prisma.FieldRef<"User", 'String'>
+  readonly approvedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly rejectionReason: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
@@ -1722,6 +2376,54 @@ export type User$otpsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   take?: number
   skip?: number
   distinct?: Prisma.OtpVerificationScalarFieldEnum | Prisma.OtpVerificationScalarFieldEnum[]
+}
+
+/**
+ * User.waiverRequestsMade
+ */
+export type User$waiverRequestsMadeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FineWaiverRequest
+   */
+  select?: Prisma.FineWaiverRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FineWaiverRequest
+   */
+  omit?: Prisma.FineWaiverRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FineWaiverRequestInclude<ExtArgs> | null
+  where?: Prisma.FineWaiverRequestWhereInput
+  orderBy?: Prisma.FineWaiverRequestOrderByWithRelationInput | Prisma.FineWaiverRequestOrderByWithRelationInput[]
+  cursor?: Prisma.FineWaiverRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FineWaiverRequestScalarFieldEnum | Prisma.FineWaiverRequestScalarFieldEnum[]
+}
+
+/**
+ * User.waiverRequestsReceived
+ */
+export type User$waiverRequestsReceivedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FineWaiverRequest
+   */
+  select?: Prisma.FineWaiverRequestSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FineWaiverRequest
+   */
+  omit?: Prisma.FineWaiverRequestOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FineWaiverRequestInclude<ExtArgs> | null
+  where?: Prisma.FineWaiverRequestWhereInput
+  orderBy?: Prisma.FineWaiverRequestOrderByWithRelationInput | Prisma.FineWaiverRequestOrderByWithRelationInput[]
+  cursor?: Prisma.FineWaiverRequestWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FineWaiverRequestScalarFieldEnum | Prisma.FineWaiverRequestScalarFieldEnum[]
 }
 
 /**

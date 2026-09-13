@@ -9,19 +9,19 @@ const bookingRoute: Router = Router();
 // Create booking (Student, Admin, Librarian)
 bookingRoute.post(
     "/",
-    authCheck("student", "admin", "librarian"),
+    authCheck("student", "faculty", "admin", "librarian"),
     requestValidator(BookingValidation.createBookingSchema),
     BookingController.createBooking
 );
 
 // Get my bookings (Student, Admin, Librarian)
-bookingRoute.get("/my", authCheck("student", "admin", "librarian"), BookingController.getMyBookings);
+bookingRoute.get("/my", authCheck("student", "faculty", "admin", "librarian"), BookingController.getMyBookings);
 
 // Get all bookings (Librarians & Admins)
 bookingRoute.get("/", authCheck("admin", "librarian"), BookingController.getAllBookings);
 
 // FCFS Quick Assign suggestion (Student, Admin, Librarian)
-bookingRoute.get("/fcfs-suggest", authCheck("student", "admin", "librarian"), BookingController.getFCFSQuickAssign);
+bookingRoute.get("/fcfs-suggest", authCheck("student", "faculty", "admin", "librarian"), BookingController.getFCFSQuickAssign);
 
 // Get available schedules (all authenticated roles)
 bookingRoute.get("/schedules", authCheck(), BookingController.getSchedules);
@@ -32,7 +32,7 @@ bookingRoute.get("/stats", authCheck(), BookingController.getDashboardStats);
 // Student fine standing & reservation lock status — must precede "/:id"
 bookingRoute.get(
     "/eligibility",
-    authCheck("student", "admin", "librarian"),
+    authCheck("student", "faculty", "admin", "librarian"),
     BookingController.getBookingEligibility
 );
 
@@ -56,7 +56,7 @@ bookingRoute.post(
 );
 
 // Cancel booking (Student, Librarian, Admin)
-bookingRoute.delete("/:id", authCheck("student", "admin", "librarian"), BookingController.cancelBooking);
+bookingRoute.delete("/:id", authCheck("student", "faculty", "admin", "librarian"), BookingController.cancelBooking);
 
 
 export default bookingRoute;

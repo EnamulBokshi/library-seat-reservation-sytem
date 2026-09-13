@@ -15,6 +15,8 @@ const schedule_router_1 = __importDefault(require("../modules/schedule/schedule.
 const book_route_1 = __importDefault(require("../modules/book/book.route"));
 const loan_route_1 = __importDefault(require("../modules/loan/loan.route"));
 const user_route_1 = __importDefault(require("../modules/user/user.route"));
+const fine_route_1 = __importDefault(require("../modules/fine/fine.route"));
+const waiver_route_1 = __importDefault(require("../modules/waiver/waiver.route"));
 const indexRoutes = (0, express_1.Router)();
 indexRoutes.use("/auth", auth_router_1.default);
 indexRoutes.use("/student", student_route_1.default);
@@ -27,4 +29,6 @@ indexRoutes.use("/schedule", schedule_router_1.default);
 indexRoutes.use("/book", book_route_1.default);
 indexRoutes.use("/loan", loan_route_1.default);
 indexRoutes.use("/user", user_route_1.default);
+indexRoutes.use("/fine", fine_route_1.default);
+indexRoutes.use("/waiver", waiver_route_1.default);
 exports.default = indexRoutes;

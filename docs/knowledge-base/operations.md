@@ -89,3 +89,14 @@ migration history against the live schema is outstanding work; until then do not
   holds the template copy.
 - `system-diagram.drawio` / `.png` — architecture diagram.
 - `library-seat-system-docs.docx`, `latest-requirement.txt` (empty) — requirement documents.
+
+## Faculty test account
+
+`pnpm db:seed:faculty` creates an approved faculty account (defaults
+`faculty@library.com` / `faculty123`, override with `SEED_FACULTY_EMAIL`,
+`SEED_FACULTY_PASSWORD`, `SEED_FACULTY_NAME`, `SEED_FACULTY_ID`). It sets
+`emailVerifiedAt` and `approvalStatus: approved`, so it skips the signup round-trip.
+
+Accounts created before email verification existed were backfilled by migration
+`20260913130000_backfill_email_verified_at`. Any account inserted by hand now needs
+`emailVerifiedAt` set, or login returns 403.

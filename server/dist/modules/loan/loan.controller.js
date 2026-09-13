@@ -78,6 +78,16 @@ const payLoanFine = (0, CatchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const waiveLoanFine = (0, CatchAsync_1.default)(async (req, res) => {
+    const librarianId = req.user.userId;
+    const result = await loan_service_1.LoanService.waiveLoanFine(req.params.id, req.body, librarianId);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: `Overdue fine of ${result.fineAmount} BDT waived successfully.`,
+        data: result,
+    });
+});
 const renewLoan = (0, CatchAsync_1.default)(async (req, res) => {
     const userId = req.user.userId;
     const result = await loan_service_1.LoanService.renewLoan(req.params.id, userId);
@@ -145,6 +155,7 @@ exports.LoanController = {
     updateLoanStatus,
     returnBook,
     payLoanFine,
+    waiveLoanFine,
     renewLoan,
     adminRenewLoan,
     getMyLoans,

@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import prisma from "../lib/prisma";
-import { BookingStatus, SlotType, LoanStatus, FineStatus } from "../generated/enums";
+import { BookingStatus, SlotType, LoanStatus, FineStatus, Role } from "../generated/enums";
 import { BookingService } from "../modules/booking/booking.service";
 import { SettingService } from "../modules/setting/setting.service";
 import { emailService } from "./email.service";
@@ -9,6 +9,25 @@ import { getUserUnpaidFinesSummary } from "../lib/booking-fines";
 
 // Default grace period in minutes if not configured in DB
 const DEFAULT_GRACE_PERIOD_MINUTES = 15;
+
+/**
+ * Prisma `user` filter that removes fine-exempt accounts (faculty) from a
+ * booking query. Returns an empty object when the exemption is switched off,
+ * so the worker then treats faculty exactly like students.
+ */
+const excludeFineExemptUsers = async (): Promise<{ user?: { role: { not: Role } } }> => {
+  const facultyPolicy = await SettingService.getFacultyPolicyConfig();
+  return facultyPolicy.exemptSeatFines ? { user: { role: { not: Role.faculty } } } : {};
+};
+
+/**
+ * Prisma `user` filter that removes accounts exempt from grace-period
+ * auto-cancellation (faculty).
+ */
+const excludeAutoCancelExemptUsers = async (): Promise<{ user?: { role: { not: Role } } }> => {
+  const facultyPolicy = await SettingService.getFacultyPolicyConfig();
+  return facultyPolicy.exemptNoShowCancel ? { user: { role: { not: Role.faculty } } } : {};
+};
 
 /**
  * Charge the configured no-show fee on bookings that were just auto-cancelled.
@@ -29,11 +48,15 @@ export const applyNoShowFines = async (bookingIds: string[]): Promise<number> =>
     return 0;
   }
 
-  // Never overwrite a fine that has already been settled or waived.
+  // Never overwrite a fine that has already been settled or waived, and never
+  // charge an account the policy exempts from seat fines.
+  const fineExemptFilter = await excludeFineExemptUsers();
+
   const result = await prisma.booking.updateMany({
     where: {
       id: { in: bookingIds },
       fineStatus: FineStatus.none,
+      ...fineExemptFilter,
     },
     data: {
       fineAmount: policy.noShowFine,
@@ -82,12 +105,16 @@ export const checkGracePeriodCancellations = async () => {
     const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
 
     // Fetch all confirmed bookings for today with complete student & seat info
+    // Faculty reservations are never auto-cancelled for a missed check-in.
+    const autoCancelExemptFilter = await excludeAutoCancelExemptUsers();
+
     const confirmedBookings = await prisma.booking.findMany({
       where: {
         status: BookingStatus.confirmed,
         schedule: {
           date: todayDate,
         },
+        ...autoCancelExemptFilter,
       },
       include: {
         schedule: true,
@@ -303,11 +330,17 @@ export const checkSlotExpirationAndRelease = async () => {
       include: {
         schedule: true,
         seat: true,
+        user: { select: { role: true } },
       },
     });
 
+    const facultyPolicy = await SettingService.getFacultyPolicyConfig();
+
     const completedBookingIds: string[] = [];
     const noShowBookingIds: string[] = [];
+    // Faculty reservations that ran to the end of the slot without a scan. The
+    // seat is still released, but the booking is closed rather than penalised.
+    const exemptClosedBookingIds: string[] = [];
     const seatIdsToFree: string[] = [];
 
     for (const booking of bookings) {
@@ -328,13 +361,24 @@ export const checkSlotExpirationAndRelease = async () => {
           completedBookingIds.push(booking.id);
           if (booking.seatId) seatIdsToFree.push(booking.seatId);
         } else if (booking.status === BookingStatus.confirmed) {
-          noShowBookingIds.push(booking.id);
+          const isAutoCancelExempt =
+            facultyPolicy.exemptNoShowCancel && booking.user?.role === Role.faculty;
+
+          if (isAutoCancelExempt) {
+            exemptClosedBookingIds.push(booking.id);
+          } else {
+            noShowBookingIds.push(booking.id);
+          }
           if (booking.seatId) seatIdsToFree.push(booking.seatId);
         }
       }
     }
 
-    if (completedBookingIds.length > 0 || noShowBookingIds.length > 0) {
+    if (
+      completedBookingIds.length > 0 ||
+      noShowBookingIds.length > 0 ||
+      exemptClosedBookingIds.length > 0
+    ) {
       await prisma.$transaction([
         ...(completedBookingIds.length > 0
           ? [
@@ -358,6 +402,17 @@ export const checkSlotExpirationAndRelease = async () => {
               }),
             ]
           : []),
+        ...(exemptClosedBookingIds.length > 0
+          ? [
+              prisma.booking.updateMany({
+                where: { id: { in: exemptClosedBookingIds } },
+                data: {
+                  status: BookingStatus.completed,
+                  cancelReason: "Closed automatically: time slot ended (no-show penalty exempt)",
+                },
+              }),
+            ]
+          : []),
         ...(seatIdsToFree.length > 0
           ? [
               prisma.seat.updateMany({
@@ -372,7 +427,7 @@ export const checkSlotExpirationAndRelease = async () => {
       await applyNoShowFines(noShowBookingIds);
 
       console.log(
-        `[Cron Scheduler] Slot Expiration Enforcer: Released ${seatIdsToFree.length} seat(s) (Completed: ${completedBookingIds.length}, No-show: ${noShowBookingIds.length})`
+        `[Cron Scheduler] Slot Expiration Enforcer: Released ${seatIdsToFree.length} seat(s) (Completed: ${completedBookingIds.length}, No-show: ${noShowBookingIds.length}, Exempt closed: ${exemptClosedBookingIds.length})`
       );
     }
   } catch (error) {
@@ -405,18 +460,22 @@ const processSlotCleanup = async (slot: SlotType) => {
       return;
     }
 
-    // Mark remaining confirmed as no_show
+    // Mark remaining confirmed as no_show. Exempt accounts (faculty) are closed
+    // out instead, so the slot still ends but no penalty is recorded.
+    const autoCancelExemptFilter = await excludeAutoCancelExemptUsers();
+
     const pendingNoShows = await prisma.booking.findMany({
       where: {
         scheduleId: schedule.id,
         status: BookingStatus.confirmed,
+        ...autoCancelExemptFilter,
       },
       select: { id: true },
     });
 
     const noShowResult = await prisma.booking.updateMany({
       where: {
-        scheduleId: schedule.id,
+        id: { in: pendingNoShows.map((b) => b.id) },
         status: BookingStatus.confirmed,
       },
       data: {
@@ -427,7 +486,20 @@ const processSlotCleanup = async (slot: SlotType) => {
 
     await applyNoShowFines(pendingNoShows.map((b) => b.id));
 
-    console.log(`[Cron Scheduler] Marked ${noShowResult.count} bookings as no-show.`);
+    const exemptClosed = await prisma.booking.updateMany({
+      where: {
+        scheduleId: schedule.id,
+        status: BookingStatus.confirmed,
+      },
+      data: {
+        status: BookingStatus.completed,
+        cancelReason: "Closed automatically: time slot ended (no-show penalty exempt)",
+      },
+    });
+
+    console.log(
+      `[Cron Scheduler] Marked ${noShowResult.count} bookings as no-show, closed ${exemptClosed.count} exempt reservation(s).`
+    );
 
     // Force checkout for checked_in bookings and release seats
     const checkedInBookings = await prisma.booking.findMany({
@@ -541,12 +613,20 @@ export const checkCirculationRemindersAndFines = async () => {
     }
 
     // ── 2. Check Overdue Loans and Accumulate Fines ──
+    // Faculty loans are excluded while the loan-fine exemption is on: they are
+    // never marked overdue and never accrue a fine.
+    const facultyPolicy = await SettingService.getFacultyPolicyConfig();
+    const loanFineExemptFilter = facultyPolicy.exemptLoanFines
+      ? { user: { role: { not: Role.faculty } } }
+      : {};
+
     const overdueLoans = await prisma.bookLoan.findMany({
       where: {
         status: { in: [LoanStatus.issued, LoanStatus.overdue] },
         dueDate: {
           lt: now,
         },
+        ...loanFineExemptFilter,
       },
       include: {
         book: true,

@@ -13,7 +13,40 @@ const register = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         httpStatusCode: status.CREATED,
         success: true,
-        message: "Registration successful",
+        message: `Registration received. We emailed a 6-digit verification code to ${result.user.email}.`,
+        data: result,
+    });
+});
+
+const verifyRegistration = catchAsync(async (req: Request, res: Response) => {
+    const result = await AuthService.verifyRegistration(req.body);
+
+    // A faculty account gets no session until an admin approves it.
+    if (result.accessToken && result.refreshToken) {
+        tokenUtils.setAccessTokenCookie(res, result.accessToken);
+        tokenUtils.setRefreshTokenCookie(res, result.refreshToken);
+    }
+
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: result.requiresAdminApproval
+            ? "Email verified. Your faculty account is now awaiting admin approval."
+            : "Email verified. Your account is active.",
+        data: {
+            user: result.user,
+            requiresAdminApproval: result.requiresAdminApproval,
+        },
+    });
+});
+
+const resendRegistrationOtp = catchAsync(async (req: Request, res: Response) => {
+    const result = await AuthService.resendRegistrationOtp(req.body);
+
+    sendResponse(res, {
+        httpStatusCode: status.OK,
+        success: true,
+        message: `A new verification code was sent to ${result.sentTo}.`,
         data: result,
     });
 });
@@ -95,6 +128,8 @@ const logout = catchAsync(async (req: Request, res: Response) => {
 
 export const AuthController = {
     register,
+    verifyRegistration,
+    resendRegistrationOtp,
     login,
     refresh,
     getMe,

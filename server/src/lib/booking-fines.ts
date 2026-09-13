@@ -3,6 +3,7 @@ import prisma from "./prisma";
 import AppError from "../helpers/AppError";
 import { FineStatus } from "../generated/enums";
 import { SettingService } from "../modules/setting/setting.service";
+import { getUserPrivileges } from "./privileges";
 
 export interface IUnpaidFinesSummary {
     seatFineTotal: number;
@@ -31,7 +32,10 @@ const roundBDT = (amount: number): number => Math.round(amount * 100) / 100;
  * and overdue book loan fines, and report whether seat booking is locked.
  */
 export const getUserUnpaidFinesSummary = async (userId: string): Promise<IUnpaidFinesSummary> => {
-    const policy = await SettingService.getBookingPolicyConfig();
+    const [policy, privileges] = await Promise.all([
+        SettingService.getBookingPolicyConfig(),
+        getUserPrivileges(userId),
+    ]);
 
     const [unpaidBookings, unpaidLoans] = await Promise.all([
         prisma.booking.findMany({
@@ -71,7 +75,10 @@ export const getUserUnpaidFinesSummary = async (userId: string): Promise<IUnpaid
         loanFineTotal,
         totalUnpaid,
         maxUnpaidFineLimit: policy.maxUnpaidFineLimit,
-        isBookingBlocked: totalUnpaid >= policy.maxUnpaidFineLimit,
+        // Faculty dues are still reported, but they never lock a reservation.
+        isBookingBlocked: privileges.exemptSeatFines
+            ? false
+            : totalUnpaid >= policy.maxUnpaidFineLimit,
         remainingBalance: roundBDT(Math.max(0, policy.maxUnpaidFineLimit - totalUnpaid)),
         unpaidSeatBookings: unpaidBookings.map((b) => ({
             bookingId: b.id,

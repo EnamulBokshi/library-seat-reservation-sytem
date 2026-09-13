@@ -15,6 +15,23 @@ const booking_fines_1 = require("../lib/booking-fines");
 // Default grace period in minutes if not configured in DB
 const DEFAULT_GRACE_PERIOD_MINUTES = 15;
 /**
+ * Prisma `user` filter that removes fine-exempt accounts (faculty) from a
+ * booking query. Returns an empty object when the exemption is switched off,
+ * so the worker then treats faculty exactly like students.
+ */
+const excludeFineExemptUsers = async () => {
+    const facultyPolicy = await setting_service_1.SettingService.getFacultyPolicyConfig();
+    return facultyPolicy.exemptSeatFines ? { user: { role: { not: enums_1.Role.faculty } } } : {};
+};
+/**
+ * Prisma `user` filter that removes accounts exempt from grace-period
+ * auto-cancellation (faculty).
+ */
+const excludeAutoCancelExemptUsers = async () => {
+    const facultyPolicy = await setting_service_1.SettingService.getFacultyPolicyConfig();
+    return facultyPolicy.exemptNoShowCancel ? { user: { role: { not: enums_1.Role.faculty } } } : {};
+};
+/**
  * Charge the configured no-show fee on bookings that were just auto-cancelled.
  *
  * Every automatic no_show path funnels through here, so a student cannot dodge
@@ -31,11 +48,14 @@ const applyNoShowFines = async (bookingIds) => {
     if (policy.noShowFine <= 0) {
         return 0;
     }
-    // Never overwrite a fine that has already been settled or waived.
+    // Never overwrite a fine that has already been settled or waived, and never
+    // charge an account the policy exempts from seat fines.
+    const fineExemptFilter = await excludeFineExemptUsers();
     const result = await prisma_1.default.booking.updateMany({
         where: {
             id: { in: bookingIds },
             fineStatus: enums_1.FineStatus.none,
+            ...fineExemptFilter,
         },
         data: {
             fineAmount: policy.noShowFine,
@@ -80,12 +100,15 @@ const checkGracePeriodCancellations = async () => {
         const todayStr = now.toISOString().split("T")[0];
         const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
         // Fetch all confirmed bookings for today with complete student & seat info
+        // Faculty reservations are never auto-cancelled for a missed check-in.
+        const autoCancelExemptFilter = await excludeAutoCancelExemptUsers();
         const confirmedBookings = await prisma_1.default.booking.findMany({
             where: {
                 status: enums_1.BookingStatus.confirmed,
                 schedule: {
                     date: todayDate,
                 },
+                ...autoCancelExemptFilter,
             },
             include: {
                 schedule: true,
@@ -272,10 +295,15 @@ const checkSlotExpirationAndRelease = async () => {
             include: {
                 schedule: true,
                 seat: true,
+                user: { select: { role: true } },
             },
         });
+        const facultyPolicy = await setting_service_1.SettingService.getFacultyPolicyConfig();
         const completedBookingIds = [];
         const noShowBookingIds = [];
+        // Faculty reservations that ran to the end of the slot without a scan. The
+        // seat is still released, but the booking is closed rather than penalised.
+        const exemptClosedBookingIds = [];
         const seatIdsToFree = [];
         for (const booking of bookings) {
             const slot = booking.schedule.slot;
@@ -295,13 +323,21 @@ const checkSlotExpirationAndRelease = async () => {
                         seatIdsToFree.push(booking.seatId);
                 }
                 else if (booking.status === enums_1.BookingStatus.confirmed) {
-                    noShowBookingIds.push(booking.id);
+                    const isAutoCancelExempt = facultyPolicy.exemptNoShowCancel && booking.user?.role === enums_1.Role.faculty;
+                    if (isAutoCancelExempt) {
+                        exemptClosedBookingIds.push(booking.id);
+                    }
+                    else {
+                        noShowBookingIds.push(booking.id);
+                    }
                     if (booking.seatId)
                         seatIdsToFree.push(booking.seatId);
                 }
             }
         }
-        if (completedBookingIds.length > 0 || noShowBookingIds.length > 0) {
+        if (completedBookingIds.length > 0 ||
+            noShowBookingIds.length > 0 ||
+            exemptClosedBookingIds.length > 0) {
             await prisma_1.default.$transaction([
                 ...(completedBookingIds.length > 0
                     ? [
@@ -325,6 +361,17 @@ const checkSlotExpirationAndRelease = async () => {
                         }),
                     ]
                     : []),
+                ...(exemptClosedBookingIds.length > 0
+                    ? [
+                        prisma_1.default.booking.updateMany({
+                            where: { id: { in: exemptClosedBookingIds } },
+                            data: {
+                                status: enums_1.BookingStatus.completed,
+                                cancelReason: "Closed automatically: time slot ended (no-show penalty exempt)",
+                            },
+                        }),
+                    ]
+                    : []),
                 ...(seatIdsToFree.length > 0
                     ? [
                         prisma_1.default.seat.updateMany({
@@ -336,7 +383,7 @@ const checkSlotExpirationAndRelease = async () => {
             ]);
             // Reservations that ran out the clock without a scan are no-shows too
             await (0, exports.applyNoShowFines)(noShowBookingIds);
-            console.log(`[Cron Scheduler] Slot Expiration Enforcer: Released ${seatIdsToFree.length} seat(s) (Completed: ${completedBookingIds.length}, No-show: ${noShowBookingIds.length})`);
+            console.log(`[Cron Scheduler] Slot Expiration Enforcer: Released ${seatIdsToFree.length} seat(s) (Completed: ${completedBookingIds.length}, No-show: ${noShowBookingIds.length}, Exempt closed: ${exemptClosedBookingIds.length})`);
         }
     }
     catch (error) {
@@ -365,17 +412,20 @@ const processSlotCleanup = async (slot) => {
             console.log(`[Cron Scheduler] No schedule slot found for date: ${todayStr} and slot: ${slot}. Skipping cleanup.`);
             return;
         }
-        // Mark remaining confirmed as no_show
+        // Mark remaining confirmed as no_show. Exempt accounts (faculty) are closed
+        // out instead, so the slot still ends but no penalty is recorded.
+        const autoCancelExemptFilter = await excludeAutoCancelExemptUsers();
         const pendingNoShows = await prisma_1.default.booking.findMany({
             where: {
                 scheduleId: schedule.id,
                 status: enums_1.BookingStatus.confirmed,
+                ...autoCancelExemptFilter,
             },
             select: { id: true },
         });
         const noShowResult = await prisma_1.default.booking.updateMany({
             where: {
-                scheduleId: schedule.id,
+                id: { in: pendingNoShows.map((b) => b.id) },
                 status: enums_1.BookingStatus.confirmed,
             },
             data: {
@@ -384,7 +434,17 @@ const processSlotCleanup = async (slot) => {
             },
         });
         await (0, exports.applyNoShowFines)(pendingNoShows.map((b) => b.id));
-        console.log(`[Cron Scheduler] Marked ${noShowResult.count} bookings as no-show.`);
+        const exemptClosed = await prisma_1.default.booking.updateMany({
+            where: {
+                scheduleId: schedule.id,
+                status: enums_1.BookingStatus.confirmed,
+            },
+            data: {
+                status: enums_1.BookingStatus.completed,
+                cancelReason: "Closed automatically: time slot ended (no-show penalty exempt)",
+            },
+        });
+        console.log(`[Cron Scheduler] Marked ${noShowResult.count} bookings as no-show, closed ${exemptClosed.count} exempt reservation(s).`);
         // Force checkout for checked_in bookings and release seats
         const checkedInBookings = await prisma_1.default.booking.findMany({
             where: {
@@ -489,12 +549,19 @@ const checkCirculationRemindersAndFines = async () => {
             }
         }
         // ── 2. Check Overdue Loans and Accumulate Fines ──
+        // Faculty loans are excluded while the loan-fine exemption is on: they are
+        // never marked overdue and never accrue a fine.
+        const facultyPolicy = await setting_service_1.SettingService.getFacultyPolicyConfig();
+        const loanFineExemptFilter = facultyPolicy.exemptLoanFines
+            ? { user: { role: { not: enums_1.Role.faculty } } }
+            : {};
         const overdueLoans = await prisma_1.default.bookLoan.findMany({
             where: {
                 status: { in: [enums_1.LoanStatus.issued, enums_1.LoanStatus.overdue] },
                 dueDate: {
                     lt: now,
                 },
+                ...loanFineExemptFilter,
             },
             include: {
                 book: true,

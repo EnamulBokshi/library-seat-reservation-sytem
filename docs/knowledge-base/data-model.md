@@ -5,7 +5,7 @@ Prisma client is generated to `server/src/generated`.
 
 ## Enums
 
-- `Role`: admin | librarian | student
+- `Role`: admin | librarian | student | faculty
 - `ZoneType`: silent_desk | group_study | computer_lab | open_reading | conference_room
 - `TableType`: individual_cubicle | circle_table | meeting_table | booth_pod | workstation_bench
 - `SlotType`: morning | noon | afternoon | evening
@@ -13,14 +13,29 @@ Prisma client is generated to `server/src/generated`.
 - `LoanStatus`: requested | issued | returned | overdue | cancelled | rejected
 - `FineStatus`: none | unpaid | paid | waived
 - `PaymentMethod`: cash | chalan | online
-- `OtpPurpose`: email_change | password_change
+- `OtpPurpose`: email_change | password_change | registration
+- `ApprovalStatus`: pending | approved | rejected
+- `WaiverRequestStatus`: pending | approved | rejected
 
 `client/lib/types.ts` mirrors these as string unions — update both together.
 
 ## Models
 
 **User** (`users`) — id, name, email (unique), studentId (unique, nullable), passwordHash,
-role (default student), isActive. Relations: bookings, loans, otps.
+role (default student), isActive. Faculty fields: `facultyId` (unique, nullable), `department`,
+`designation`. Signup gating: `emailVerifiedAt` (null until the registration OTP is consumed),
+`approvalStatus` (default `approved`; faculty signups start `pending`), `approvedById`,
+`approvedAt`, `rejectionReason`. Relations: bookings, loans, otps, waiverRequestsMade,
+waiverRequestsReceived.
+
+Migration `20260913130000_backfill_email_verified_at` set `emailVerifiedAt = createdAt` on rows
+that predate verification, so existing accounts are not locked out by the login gate.
+
+**FineWaiverRequest** (`fine_waiver_requests`) — requestedById (faculty), targetUserId (student),
+exactly one of bookingId / loanId, `amount` (snapshot at request time), reason, status
+(`WaiverRequestStatus`), decidedById, decidedAt, decisionNote. Indexes on status, requestedById,
+targetUserId, bookingId, loanId. Approval waives the referenced fine through `FineService.waiveFine`,
+so the booking / loan row stays the single source of truth for fine state.
 
 **OtpVerification** (`otp_verifications`) — userId, purpose (`OtpPurpose`), `codeHash` (bcrypt —
 the plaintext code is never stored), `newEmail` (target address for an `email_change`, else null),

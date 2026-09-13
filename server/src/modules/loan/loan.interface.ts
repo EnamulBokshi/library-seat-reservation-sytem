@@ -39,3 +39,7 @@ export interface IPayFinePayload {
   chalanNumber?: string;
   notes?: string;
 }
+
+export interface IWaiveLoanFinePayload {
+  reason?: string | null;
+}

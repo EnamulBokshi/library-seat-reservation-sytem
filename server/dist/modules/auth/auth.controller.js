@@ -16,7 +16,35 @@ const register = (0, CatchAsync_1.default)(async (req, res) => {
     (0, SendResponse_1.sendResponse)(res, {
         httpStatusCode: http_status_1.default.CREATED,
         success: true,
-        message: "Registration successful",
+        message: `Registration received. We emailed a 6-digit verification code to ${result.user.email}.`,
+        data: result,
+    });
+});
+const verifyRegistration = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await auth_service_1.AuthService.verifyRegistration(req.body);
+    // A faculty account gets no session until an admin approves it.
+    if (result.accessToken && result.refreshToken) {
+        token_1.tokenUtils.setAccessTokenCookie(res, result.accessToken);
+        token_1.tokenUtils.setRefreshTokenCookie(res, result.refreshToken);
+    }
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: result.requiresAdminApproval
+            ? "Email verified. Your faculty account is now awaiting admin approval."
+            : "Email verified. Your account is active.",
+        data: {
+            user: result.user,
+            requiresAdminApproval: result.requiresAdminApproval,
+        },
+    });
+});
+const resendRegistrationOtp = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await auth_service_1.AuthService.resendRegistrationOtp(req.body);
+    (0, SendResponse_1.sendResponse)(res, {
+        httpStatusCode: http_status_1.default.OK,
+        success: true,
+        message: `A new verification code was sent to ${result.sentTo}.`,
         data: result,
     });
 });
@@ -85,6 +113,8 @@ const logout = (0, CatchAsync_1.default)(async (req, res) => {
 });
 exports.AuthController = {
     register,
+    verifyRegistration,
+    resendRegistrationOtp,
     login,
     refresh,
     getMe,

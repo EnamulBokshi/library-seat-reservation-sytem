@@ -1,21 +1,53 @@
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
-export type Role = "student" | "librarian" | "admin" | "super_admin";
+export type Role = "student" | "faculty" | "librarian" | "admin" | "super_admin";
+
+export type ApprovalStatus = "pending" | "approved" | "rejected";
 
 export interface User {
   id: string;
   name: string;
   email: string;
   studentId?: string | null;
+  facultyId?: string | null;
+  department?: string | null;
+  designation?: string | null;
   role: Role;
+  isActive?: boolean;
+  approvalStatus?: ApprovalStatus;
+  emailVerifiedAt?: string | null;
+  rejectionReason?: string | null;
   createdAt?: string;
 }
+
+/** Self-registration only ever creates one of these two roles. */
+export type SelfRegisterRole = "student" | "faculty";
 
 export interface RegisterPayload {
   name: string;
   email: string;
   password: string;
   studentId?: string;
+  role?: SelfRegisterRole;
+  facultyId?: string;
+  department?: string;
+  designation?: string;
+}
+
+export interface RegisterResult {
+  user: User;
+  requiresEmailVerification: boolean;
+  requiresAdminApproval: boolean;
+}
+
+export interface VerifyEmailPayload {
+  email: string;
+  code: string;
+}
+
+export interface VerifyEmailResult {
+  user: User;
+  requiresAdminApproval: boolean;
 }
 
 export interface LoginPayload {
@@ -38,7 +70,8 @@ export interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (payload: LoginPayload) => Promise<void>;
-  register: (payload: RegisterPayload) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<RegisterResult>;
+  verifyEmail: (payload: VerifyEmailPayload) => Promise<VerifyEmailResult>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
 }
@@ -680,4 +713,142 @@ export interface OtpChallenge {
   expiresAt: string;
   expiresInMinutes: number;
   sentTo: string;
+}
+
+// ─── Admin Fines Management ──────────────────────────────────────────────────
+export type FineSource = "all" | "seat" | "loan";
+
+export interface AdminFineRecord {
+  id: string;
+  source: "seat" | "loan";
+  amount: number;
+  status: FineStatus;
+  reason: string | null;
+  subject: string;
+  incurredAt: string;
+  paidAt: string | null;
+  paymentMethod: PaymentMethod | null;
+  chalanNumber: string | null;
+  receivedBy: string | null;
+  student: {
+    id: string;
+    name: string;
+    email: string;
+    studentId: string | null;
+  };
+  details: {
+    bookingId?: string;
+    loanId?: string;
+    seatNumber?: string;
+    zoneName?: string;
+    scheduleDate?: string;
+    slot?: string;
+    bookingStatus?: string;
+    bookTitle?: string;
+    bookAuthor?: string;
+    barcode?: string | null;
+    isbn?: string | null;
+    dueDate?: string;
+    returnDate?: string | null;
+  };
+}
+
+export interface FineStats {
+  totalOutstanding: number;
+  outstandingCount: number;
+  totalCollected: number;
+  collectedCount: number;
+  totalWaived: number;
+  waivedCount: number;
+  seatUnpaid: number;
+  seatUnpaidCount: number;
+  loanUnpaid: number;
+  loanUnpaidCount: number;
+  cashCollected: number;
+  chalanCollected: number;
+  onlineCollected: number;
+  impactedStudentsCount: number;
+  blockedStudentsCount: number;
+  maxUnpaidFineLimit: number;
+}
+
+export interface FineQueryParams {
+  source?: FineSource;
+  status?: FineStatus | "all";
+  paymentMethod?: PaymentMethod | "all";
+  searchTerm?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: "incurredAt" | "amount" | "paidAt" | "status" | "studentName";
+  sortOrder?: "asc" | "desc";
+}
+
+export interface PayFinePayload {
+  paymentMethod: PaymentMethod;
+  chalanNumber?: string;
+  notes?: string;
+}
+
+export interface WaiveFinePayload {
+  reason?: string;
+}
+
+// ─── Fine Waiver Requests ────────────────────────────────────────────────────
+
+export type WaiverRequestStatus = "pending" | "approved" | "rejected";
+
+export interface WaiverPartyRef {
+  id: string;
+  name: string;
+  email: string;
+  studentId?: string | null;
+  department?: string | null;
+}
+
+export interface FineWaiverRequest {
+  id: string;
+  requestedById: string;
+  targetUserId: string;
+  bookingId?: string | null;
+  loanId?: string | null;
+  amount: number;
+  reason: string;
+  status: WaiverRequestStatus;
+  decidedById?: string | null;
+  decidedAt?: string | null;
+  decisionNote?: string | null;
+  createdAt: string;
+  requestedBy: WaiverPartyRef;
+  targetUser: WaiverPartyRef;
+}
+
+export interface CreateWaiverRequestPayload {
+  targetUserId: string;
+  bookingId?: string;
+  loanId?: string;
+  reason: string;
+}
+
+export interface DecideWaiverRequestPayload {
+  status: "approved" | "rejected";
+  decisionNote?: string;
+}
+
+/** One outstanding fine a faculty member may petition to clear. */
+export interface PetitionableFine {
+  id: string;
+  source: "booking" | "loan";
+  amount: number;
+  subject: string;
+  reason: string | null;
+  incurredAt: string | null;
+  hasPendingRequest: boolean;
+}
+
+export interface StudentFineLookup {
+  student: WaiverPartyRef & { role: Role };
+  fines: PetitionableFine[];
+  totalUnpaid: number;
 }

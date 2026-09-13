@@ -37,6 +37,7 @@ pnpm db:migrate     # prisma migrate dev
 pnpm db:push        # prisma db push
 pnpm db:studio
 pnpm db:seed        # seed admin; see also seed-books/librarian/student/zone-rules via tsx
+pnpm db:seed:faculty # approved faculty test account
 ```
 
 Frontend (`cd client`, pnpm):
@@ -105,3 +106,6 @@ Next.js note: `client/AGENTS.md` warns this Next.js version differs from trainin
   `*` origin. A new browser origin must be added to `CORS_ORIGINS` or it gets 403.
 - Cron workers run every minute inside the API process (`initCronJobs`), so a long-running
   local server mutates booking/loan state over time.
+- Login refuses accounts with `emailVerifiedAt = null` (403). Rows inserted by hand must set it.
+- Role exemptions (faculty) live only in `server/src/lib/privileges.ts` and the `FACULTY_*`
+  settings — do not add `role === "faculty"` checks elsewhere.

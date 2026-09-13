@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { UserMenu } from "@/components/shared/dashboard/user-menu";
+import { isSelfServiceRole } from "@/lib/roles";
 import {
   BookOpen,
   LogIn,
@@ -49,7 +50,7 @@ export function Navbar() {
   const pathname = usePathname();
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
   const isLibrarian = user?.role === "librarian";
-  const isStudent = user?.role === "student";
+  const isStudent = isSelfServiceRole(user?.role);
   const canManage = isAdmin || isLibrarian;
 
   const isBookSeatActive = pathname === "/book" || pathname.startsWith("/book/") || pathname.startsWith("/zones");

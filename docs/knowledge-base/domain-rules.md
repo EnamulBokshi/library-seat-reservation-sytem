@@ -18,6 +18,11 @@
 | `FINE_RATE_PER_DAY` | 5 (BDT) | fine calc |
 | `FINE_TIERS` | `[]` JSON `[{minDays, rate}]` | tiered fine calc |
 | `WARNING_REMINDER_DAYS_BEFORE` | 2 | pre-due reminder mail |
+| `FACULTY_LOAN_PERIOD_DAYS` | 365 | due date for a faculty loan |
+| `FACULTY_MAX_BORROW_LIMIT` | 50 | faculty loan quota |
+| `FACULTY_EXEMPT_SEAT_FINES` | `true` | faculty seat fines + dues lock off |
+| `FACULTY_EXEMPT_NO_SHOW_CANCEL` | `true` | grace-period cron skips faculty |
+| `FACULTY_EXEMPT_LOAN_FINES` | `true` | faculty loans never accrue an overdue fine |
 
 Default slots (`DEFAULT_SLOT_CONFIG`): morning 08:00–12:00, noon 12:00–14:00,
 afternoon 14:00–18:00, evening 18:00–21:00. Each has `label`, `icon`, `enabled`.
@@ -160,3 +165,50 @@ sending to guarantee a single dispatch.
 `sendSeatSlotEndingWarningEmail`, `sendSeatLateCancellationEmail`, `sendSeatFinePaidReceiptEmail`,
 `sendProfileOtpEmail` (verification code for an email or password change)
 — all inline-HTML templates sent through `sendHtmlEmail` (SMTP config in `envVars.SMTP`).
+
+## Faculty role
+
+A faculty account is a self-service borrower like a student, with the exemptions below.
+Every exemption is resolved through `lib/privileges.ts` (`getUserPrivileges(userId)` /
+`getPrivilegesForRole(role)`), which reads the `FACULTY_*` settings — no scattered
+`role === "faculty"` checks. Turning a `FACULTY_EXEMPT_*` setting to `false` makes faculty
+behave exactly like a student for that rule.
+
+| Rule | Student | Faculty |
+|---|---|---|
+| Unpaid dues lock seat booking | yes, at `BOOKING_MAX_UNPAID_FINE_LIMIT` | never (`isBookingBlocked` is false) |
+| Late-cancellation fee | yes | none |
+| Grace-period auto-cancel + no-show fee | yes | reservation is never auto-cancelled |
+| Reservation left unscanned at slot end | `no_show` + fee | closed as `completed`, seat released, no fee |
+| Loan due date | `BORROW_PERIOD_DAYS` (10) | `FACULTY_LOAN_PERIOD_DAYS` (365) |
+| Borrow quota | `MAX_BORROW_LIMIT` (3) | `FACULTY_MAX_BORROW_LIMIT` (50) |
+| Overdue fine + `overdue` status | yes | never while `FACULTY_EXEMPT_LOAN_FINES` is on |
+| Unpaid dues block borrowing | yes | no |
+| Request a fine waiver for a student | no | yes |
+
+The seat is always released at slot end, faculty included — only the penalty is waived, never
+the seat itself, or a faculty booking would hold a seat indefinitely.
+
+## Registration, email verification and approval (`auth.service.ts`)
+
+1. `POST /auth/register` accepts `role: student | faculty` only. Faculty must also send
+   `facultyId` and `department`. The account is created `isActive: false`,
+   `emailVerifiedAt: null`, and `approvalStatus` `pending` for faculty / `approved` for students.
+   A 6-digit code is mailed (shared helpers in `lib/otp.ts`, 10-minute TTL, 5 attempts,
+   60-second resend cooldown).
+2. `POST /auth/verify-email` consumes the code. A student is activated and receives cookies;
+   a faculty account records `emailVerifiedAt`, stays inactive, and every admin is emailed.
+3. `PATCH /user/:id/approve` (admin) activates the faculty account and mails the applicant;
+   `PATCH /user/:id/reject` records a reason shown at the applicant's next login attempt.
+4. `POST /auth/login` refuses, after the password check, when the email is unverified
+   (403), when approval is `pending` (403), when it is `rejected` (403, with the reason),
+   and finally when the account is deactivated (401).
+
+## Fine waiver petitions (`modules/waiver`)
+
+A faculty member looks a student up (`GET /waiver/lookup?identifier=`), which lists only
+`unpaid` fines and flags the ones with a petition already open. `POST /waiver` records the
+petition with a snapshot of the amount; one open petition per fine. An admin decides it with
+`PATCH /waiver/:id/decide`. Approval calls `FineService.waiveFine` first and only marks the
+petition approved if that succeeds, so a fine that was paid in the meantime aborts the decision
+instead of leaving the two records disagreeing.
