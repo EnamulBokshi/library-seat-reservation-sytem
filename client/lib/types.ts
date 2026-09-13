@@ -93,7 +93,40 @@ export interface ApiResponse<T = unknown> {
     page: number;
     limit: number;
     totalPages: number;
+    /** Optional facet tallies a list endpoint may attach, e.g. rows per status. */
+    counts?: Record<string, number>;
   } | null;
+}
+
+/** Counters shown as badges on the workspace navigation. */
+export interface NavBadgeCounts {
+  pendingApprovals: number;
+  pendingWaivers: number;
+  activeBookings: number;
+  unpaidFines: number;
+  myPendingWaivers: number;
+  myUnpaidFines: number;
+}
+
+export type NavBadgeKey = keyof NavBadgeCounts;
+
+/** Sort keys the account-approval queue accepts. */
+export type ApprovalSortField =
+  | "createdAt"
+  | "emailVerifiedAt"
+  | "name"
+  | "email"
+  | "department";
+
+export interface ApprovalQueryParams {
+  page?: number;
+  limit?: number;
+  approvalStatus?: ApprovalStatus;
+  role?: SelfRegisterRole;
+  searchTerm?: string;
+  sortBy?: ApprovalSortField;
+  sortOrder?: "asc" | "desc";
+  emailVerifiedOnly?: boolean;
 }
 
 // ─── Zone ─────────────────────────────────────────────────────────────────────

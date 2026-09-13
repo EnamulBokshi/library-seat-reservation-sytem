@@ -261,18 +261,77 @@ const listUsers = async (options) => {
         meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
 };
+const APPROVAL_SORT_FIELDS = [
+    "createdAt",
+    "emailVerifiedAt",
+    "name",
+    "email",
+    "department",
+];
+const APPROVAL_STATUS_VALUES = Object.values(enums_2.ApprovalStatus);
 /**
- * Faculty signups that verified their email and still await a decision.
+ * Account requests awaiting (or already given) a decision, filtered, sorted and
+ * paged. Defaults to pending faculty signups that have verified their email —
+ * the queue an admin works through — but the same query backs the decided
+ * history once a status filter is passed.
  */
-const getPendingApprovals = async () => {
-    return prisma_1.default.user.findMany({
-        where: {
-            approvalStatus: enums_2.ApprovalStatus.pending,
-            emailVerifiedAt: { not: null },
-        },
-        select: PROFILE_SELECT,
-        orderBy: { createdAt: "asc" },
-    });
+const getPendingApprovals = async (options = {}) => {
+    const page = Math.max(1, options.page ?? 1);
+    const limit = Math.min(100, Math.max(1, options.limit ?? 12));
+    const approvalStatus = options.approvalStatus && APPROVAL_STATUS_VALUES.includes(options.approvalStatus)
+        ? options.approvalStatus
+        : enums_2.ApprovalStatus.pending;
+    const sortBy = options.sortBy && APPROVAL_SORT_FIELDS.includes(options.sortBy)
+        ? options.sortBy
+        : "createdAt";
+    const sortOrder = options.sortOrder === "desc" ? "desc" : "asc";
+    // An unverified applicant cannot be approved, so the pending queue hides
+    // them by default. Any other status lists every row.
+    const emailVerifiedOnly = options.emailVerifiedOnly ?? approvalStatus === enums_2.ApprovalStatus.pending;
+    const where = {
+        approvalStatus,
+        // Staff accounts are created by admins and never sit in this queue.
+        role: options.role
+            ? options.role
+            : { in: [enums_2.Role.faculty, enums_2.Role.student] },
+        ...(emailVerifiedOnly ? { emailVerifiedAt: { not: null } } : {}),
+    };
+    if (options.searchTerm?.trim()) {
+        const term = options.searchTerm.trim();
+        where.OR = [
+            { name: { contains: term, mode: "insensitive" } },
+            { email: { contains: term, mode: "insensitive" } },
+            { facultyId: { contains: term, mode: "insensitive" } },
+            { studentId: { contains: term, mode: "insensitive" } },
+            { department: { contains: term, mode: "insensitive" } },
+            { designation: { contains: term, mode: "insensitive" } },
+        ];
+    }
+    const [requests, total, statusCounts] = await Promise.all([
+        prisma_1.default.user.findMany({
+            where,
+            select: PROFILE_SELECT,
+            // Nulls sort last on a nullable column so decided rows never lead.
+            orderBy: { [sortBy]: sortOrder },
+            skip: (page - 1) * limit,
+            take: limit,
+        }),
+        prisma_1.default.user.count({ where }),
+        prisma_1.default.user.groupBy({
+            by: ["approvalStatus"],
+            where: { role: { in: [enums_2.Role.faculty, enums_2.Role.student] } },
+            _count: { _all: true },
+        }),
+    ]);
+    const counts = { pending: 0, approved: 0, rejected: 0 };
+    for (const row of statusCounts) {
+        counts[row.approvalStatus] = row._count._all;
+    }
+    return {
+        requests,
+        counts,
+        meta: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) },
+    };
 };
 const getApprovableUserOrThrow = async (userId) => {
     const user = await prisma_1.default.user.findUnique({ where: { id: userId } });

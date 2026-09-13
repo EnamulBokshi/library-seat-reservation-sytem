@@ -128,6 +128,12 @@ Student self-service profile and dues. All routes act on the caller's own record
 
 Empty placeholder router mounted at `/student`.
 
+## dashboard — `modules/dashboard/dashboard.route.ts`
+
+| Method | Path | Guard | Notes |
+|---|---|---|---|
+| GET | `/dashboard/badges` | auth | navigation badge counters, scoped to the caller's role: `pendingApprovals` (admin), `pendingWaivers`, `activeBookings`, `unpaidFines` (staff), `myPendingWaivers` (faculty), `myUnpaidFines` (own). Every key is always present; a counter the role cannot see reads 0, and a counter whose query fails also reads 0 rather than failing the response |
+
 ## waiver — `modules/waiver/waiver.route.ts`
 
 | Method | Path | Guard | Notes |
@@ -143,6 +149,6 @@ Empty placeholder router mounted at `/student`.
 | Method | Path | Guard | Notes |
 |---|---|---|---|
 | GET | `/user` | admin | directory; `?role=`, `?approvalStatus=`, `?searchTerm=`, paginated |
-| GET | `/user/pending-approvals` | admin | verified faculty signups awaiting a decision |
+| GET | `/user/pending-approvals` | admin | account-approval queue: `?approvalStatus=` (default `pending`), `?role=`, `?searchTerm=`, `?sortBy=createdAt\|emailVerifiedAt\|name\|email\|department`, `?sortOrder=`, `?page=`, `?limit=` (max 100), `?emailVerifiedOnly=`. `meta.counts` carries the per-status tallies |
 | PATCH | `/user/:id/approve` | admin | activates the account, mails the applicant |
 | PATCH | `/user/:id/reject` | admin | `{ reason }`; reason is shown on the applicant's next login |

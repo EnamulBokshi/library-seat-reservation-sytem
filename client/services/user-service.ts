@@ -8,6 +8,7 @@ import {
   UpdateProfilePayload,
   UserProfile,
   VerifyPasswordChangePayload,
+  ApprovalQueryParams,
 } from "@/lib/types";
 
 export interface ListUsersParams {
@@ -27,10 +28,13 @@ export const userService = {
   },
 
   /**
-   * Admin: faculty signups that verified their email and await a decision.
+   * Admin: the account-approval queue — pending faculty signups by default,
+   * with search, role/status filters, sorting and pagination.
    */
-  async getPendingApprovals(): Promise<ApiResponse<UserProfile[]>> {
-    return apiClient.get<unknown, ApiResponse<UserProfile[]>>("/user/pending-approvals");
+  async getPendingApprovals(params?: ApprovalQueryParams): Promise<ApiResponse<UserProfile[]>> {
+    return apiClient.get<unknown, ApiResponse<UserProfile[]>>("/user/pending-approvals", {
+      params,
+    });
   },
 
   /**

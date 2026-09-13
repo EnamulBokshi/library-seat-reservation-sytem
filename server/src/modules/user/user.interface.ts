@@ -6,6 +6,22 @@ export interface IListUsersOptions {
     searchTerm?: string;
 }
 
+export type ApprovalSortField = "createdAt" | "emailVerifiedAt" | "name" | "email" | "department";
+
+export interface IApprovalListOptions {
+    page?: number;
+    limit?: number;
+    /** Decision state to list. Defaults to `pending`. */
+    approvalStatus?: string;
+    /** Restrict to one requested role; omitted means every non-staff signup. */
+    role?: string;
+    searchTerm?: string;
+    sortBy?: ApprovalSortField;
+    sortOrder?: "asc" | "desc";
+    /** Only list applicants who already verified their email. Defaults to true for `pending`. */
+    emailVerifiedOnly?: boolean;
+}
+
 export interface IRejectUserPayload {
     reason: string;
 }

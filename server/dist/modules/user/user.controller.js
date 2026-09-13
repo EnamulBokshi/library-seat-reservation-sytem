@@ -34,13 +34,25 @@ const listUsers = (0, CatchAsync_1.default)(async (req, res) => {
         meta: result.meta,
     });
 });
-const getPendingApprovals = (0, CatchAsync_1.default)(async (_req, res) => {
-    const result = await user_service_1.UserService.getPendingApprovals();
+const getPendingApprovals = (0, CatchAsync_1.default)(async (req, res) => {
+    const result = await user_service_1.UserService.getPendingApprovals({
+        page: req.query.page ? Number(req.query.page) : undefined,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        approvalStatus: req.query.approvalStatus,
+        role: req.query.role,
+        searchTerm: req.query.searchTerm,
+        sortBy: req.query.sortBy,
+        sortOrder: req.query.sortOrder === "desc" ? "desc" : "asc",
+        emailVerifiedOnly: req.query.emailVerifiedOnly === undefined
+            ? undefined
+            : req.query.emailVerifiedOnly !== "false",
+    });
     (0, SendResponse_1.sendResponse)(res, {
         httpStatusCode: http_status_1.default.OK,
         success: true,
-        message: "Pending account approvals retrieved successfully",
-        data: result,
+        message: "Account approvals retrieved successfully",
+        data: result.requests,
+        meta: { ...result.meta, counts: result.counts },
     });
 });
 const approveUser = (0, CatchAsync_1.default)(async (req, res) => {

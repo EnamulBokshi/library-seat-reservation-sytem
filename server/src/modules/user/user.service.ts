@@ -7,8 +7,9 @@ import { FineStatus, OtpPurpose } from "../../generated/enums";
 import { emailService } from "../../services/email.service";
 import { consumeOtp, issueOtp } from "../../lib/otp";
 import { getUserPrivileges } from "../../lib/privileges";
+import { Prisma } from "../../generated/client";
 import { ApprovalStatus, Role } from "../../generated/enums";
-import { IListUsersOptions, IRejectUserPayload } from "./user.interface";
+import { ApprovalSortField, IApprovalListOptions, IListUsersOptions, IRejectUserPayload } from "./user.interface";
 import { SettingService } from "../../modules/setting/setting.service";
 import {
     IFineEntry,
@@ -299,18 +300,90 @@ const listUsers = async (options: IListUsersOptions) => {
     };
 };
 
+const APPROVAL_SORT_FIELDS: ApprovalSortField[] = [
+    "createdAt",
+    "emailVerifiedAt",
+    "name",
+    "email",
+    "department",
+];
+
+const APPROVAL_STATUS_VALUES = Object.values(ApprovalStatus) as string[];
+
 /**
- * Faculty signups that verified their email and still await a decision.
+ * Account requests awaiting (or already given) a decision, filtered, sorted and
+ * paged. Defaults to pending faculty signups that have verified their email —
+ * the queue an admin works through — but the same query backs the decided
+ * history once a status filter is passed.
  */
-const getPendingApprovals = async () => {
-    return prisma.user.findMany({
-        where: {
-            approvalStatus: ApprovalStatus.pending,
-            emailVerifiedAt: { not: null },
-        },
-        select: PROFILE_SELECT,
-        orderBy: { createdAt: "asc" },
-    });
+const getPendingApprovals = async (options: IApprovalListOptions = {}) => {
+    const page = Math.max(1, options.page ?? 1);
+    const limit = Math.min(100, Math.max(1, options.limit ?? 12));
+
+    const approvalStatus =
+        options.approvalStatus && APPROVAL_STATUS_VALUES.includes(options.approvalStatus)
+            ? (options.approvalStatus as ApprovalStatus)
+            : ApprovalStatus.pending;
+
+    const sortBy: ApprovalSortField =
+        options.sortBy && APPROVAL_SORT_FIELDS.includes(options.sortBy)
+            ? options.sortBy
+            : "createdAt";
+    const sortOrder = options.sortOrder === "desc" ? "desc" : "asc";
+
+    // An unverified applicant cannot be approved, so the pending queue hides
+    // them by default. Any other status lists every row.
+    const emailVerifiedOnly =
+        options.emailVerifiedOnly ?? approvalStatus === ApprovalStatus.pending;
+
+    const where: Prisma.UserWhereInput = {
+        approvalStatus,
+        // Staff accounts are created by admins and never sit in this queue.
+        role: options.role
+            ? (options.role as Role)
+            : { in: [Role.faculty, Role.student] },
+        ...(emailVerifiedOnly ? { emailVerifiedAt: { not: null } } : {}),
+    };
+
+    if (options.searchTerm?.trim()) {
+        const term = options.searchTerm.trim();
+        where.OR = [
+            { name: { contains: term, mode: "insensitive" } },
+            { email: { contains: term, mode: "insensitive" } },
+            { facultyId: { contains: term, mode: "insensitive" } },
+            { studentId: { contains: term, mode: "insensitive" } },
+            { department: { contains: term, mode: "insensitive" } },
+            { designation: { contains: term, mode: "insensitive" } },
+        ];
+    }
+
+    const [requests, total, statusCounts] = await Promise.all([
+        prisma.user.findMany({
+            where,
+            select: PROFILE_SELECT,
+            // Nulls sort last on a nullable column so decided rows never lead.
+            orderBy: { [sortBy]: sortOrder },
+            skip: (page - 1) * limit,
+            take: limit,
+        }),
+        prisma.user.count({ where }),
+        prisma.user.groupBy({
+            by: ["approvalStatus"],
+            where: { role: { in: [Role.faculty, Role.student] } },
+            _count: { _all: true },
+        }),
+    ]);
+
+    const counts = { pending: 0, approved: 0, rejected: 0 };
+    for (const row of statusCounts) {
+        counts[row.approvalStatus as keyof typeof counts] = row._count._all;
+    }
+
+    return {
+        requests,
+        counts,
+        meta: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) },
+    };
 };
 
 const getApprovableUserOrThrow = async (userId: string) => {
