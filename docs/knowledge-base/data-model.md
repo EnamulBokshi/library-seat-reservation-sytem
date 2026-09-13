@@ -13,13 +13,19 @@ Prisma client is generated to `server/src/generated`.
 - `LoanStatus`: requested | issued | returned | overdue | cancelled | rejected
 - `FineStatus`: none | unpaid | paid | waived
 - `PaymentMethod`: cash | chalan | online
+- `OtpPurpose`: email_change | password_change
 
 `client/lib/types.ts` mirrors these as string unions — update both together.
 
 ## Models
 
 **User** (`users`) — id, name, email (unique), studentId (unique, nullable), passwordHash,
-role (default student), isActive. Relations: bookings, loans.
+role (default student), isActive. Relations: bookings, loans, otps.
+
+**OtpVerification** (`otp_verifications`) — userId, purpose (`OtpPurpose`), `codeHash` (bcrypt —
+the plaintext code is never stored), `newEmail` (target address for an `email_change`, else null),
+attempts, expiresAt, consumedAt. Indexes `[userId, purpose]`, `[expiresAt]`. Rows are deleted on
+use, on expiry, and when the attempt ceiling is hit, so the table stays a short-lived queue.
 
 **Zone** (`zones`) — name (unique), description, color, zoneType, `allowMultiSeat`,
 `maxSeatsPerBooking` (default 1), `defaultTableType`, `rules String[]`, isActive. Has seats.

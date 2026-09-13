@@ -51,7 +51,7 @@ export function FineLockBanner({ eligibility, className = "" }: FineLockBannerPr
               </span>
             )}
             <Link
-              href="/bookings"
+              href="/dashboard/bookings"
               className="inline-flex items-center rounded-full border border-rose-300 bg-rose-600 px-3 py-1 text-[11px] font-black text-white transition-colors hover:bg-rose-500"
             >
               Review my dues

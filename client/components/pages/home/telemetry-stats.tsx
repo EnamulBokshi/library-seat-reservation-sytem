@@ -77,7 +77,7 @@ export function TelemetryStats({ stats, isStatsLoading = false }: TelemetryStats
           </span>
           <p className="text-xs font-bold text-slate-700 mt-1">Active Passes</p>
           <Link
-            href="/bookings"
+            href="/dashboard/bookings"
             className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors inline-flex items-center gap-1 mt-0.5"
           >
             <span>View QR Entrance Tokens</span>

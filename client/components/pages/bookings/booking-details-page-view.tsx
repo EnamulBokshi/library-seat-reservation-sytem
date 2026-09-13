@@ -92,7 +92,7 @@ export function BookingDetailsPageView({ bookingId }: { bookingId: string }) {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
-              href="/bookings"
+              href="/dashboard/bookings"
               className="pulse-button-secondary py-1.5 px-3 text-xs shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -120,7 +120,7 @@ export function BookingDetailsPageView({ bookingId }: { bookingId: string }) {
           <div className="flex flex-col items-center gap-3 pulse-card py-24 text-center">
             <AlertCircle className="h-10 w-10 text-rose-500" />
             <p className="text-slate-500 text-sm">{error ?? "Booking not found."}</p>
-            <Link href="/bookings" className="pulse-button-primary mt-2 text-xs">
+            <Link href="/dashboard/bookings" className="pulse-button-primary mt-2 text-xs">
               Go to My Bookings
             </Link>
           </div>

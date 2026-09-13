@@ -12,9 +12,13 @@ Public / student:
 - `/auth/login`, `/auth/register`
 - `/zones`, `/zones/[id]`
 - `/book` — seat booking flow (`pages/booking/book-seat-view.tsx`)
-- `/bookings`, `/bookings/[id]`
+- `/bookings/[id]` — single booking detail
 - `/books`, `/books/[id]`
-- `/loans`
+- `/dashboard` — student dashboard, one nested route per tab (`layout.tsx` holds the `AuthGuard`
+  and `components/pages/dashboard/dashboard-shell.tsx` renders the tab bar):
+  `/dashboard` overview, `/dashboard/bookings`, `/dashboard/loans`, `/dashboard/fines`,
+  `/dashboard/profile`
+- `/bookings` and `/loans` are `redirect()` stubs to their dashboard tabs — the old links stay alive
 - `/seats`, `/check-in` (route folders)
 
 Admin (`app/admin/(dashboardGroup)` with its own `layout.tsx`):
@@ -35,14 +39,25 @@ replaced with a generic message before reaching the UI. Errors surface as
 
 Domain services (one per API area): `auth-service`, `zone-service`, `seat-service`,
 `booking-service`, `checkin-service`, `book-service`, `loan-service`, `schedule-service`,
-`setting-service`. `lib/api.ts` and `lib/instance.ts` just re-export the client.
+`setting-service`, `user-service` (own profile, fine statement, OTP-gated email/password change). `lib/api.ts` and `lib/instance.ts` just re-export the client.
 
 ## Auth
 
 `context/auth-context.tsx` bootstraps the session with `authService.getMe()`, clears legacy
 `localStorage` / `library_user_session` entries, and exposes `user`, `isLoading`, login/register/
-logout. `components/shared/auth-guard.tsx` gates client views. `proxy.ts` redirects on cookie
-presence only — `/auth/*` away when logged in, `/admin/*` to login with a `redirect` param when not.
+logout. `components/shared/auth-guard.tsx` gates client views. `proxy.ts` gates on cookie presence only:
+`/admin/*` and `/dashboard/*` redirect to login with a `redirect` param when no token cookie is
+present, and `/auth/login` + `/auth/register` redirect home when a live **accessToken** is present.
+Only the access token counts for that second rule — a lone `refreshToken` cookie may be stale, and
+bouncing on it used to lock students out of the auth pages entirely. A `?redirect=` parameter also
+suppresses the bounce, because it means the app itself sent the user there after a 401.
+
+### Profile changes (`/dashboard/profile`)
+
+Name saves directly. Email and password changes are two-step: request a code, then verify it.
+The email code goes to the **new** address (proving ownership); the password code goes to the
+**current** address (so a stolen session alone cannot take the account). Both steps require the
+current password. Codes are 6 digits, valid 10 minutes, single-use, 5 attempts.
 
 ## Seating UI
 

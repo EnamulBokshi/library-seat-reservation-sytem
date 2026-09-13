@@ -1273,6 +1273,61 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   return sendHtmlEmail(toEmail, subject, htmlContent);
 };
 
+// ─── 11. Profile Change Verification Code (OTP) ──────────────────────────────
+
+export interface SendProfileOtpOptions {
+  toEmail: string;
+  studentName: string;
+  code: string;
+  /** What the code authorises, in plain words, e.g. "change your account email". */
+  purposeLabel: string;
+  expiresInMinutes: number;
+}
+
+export const sendProfileOtpEmail = async (opts: SendProfileOtpOptions) => {
+  const { toEmail, studentName, code, purposeLabel, expiresInMinutes } = opts;
+
+  const subject = `Your Smart Library verification code: ${code}`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/><style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #1e293b; }
+.card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+.header { background: #0f172a; color: #ffffff; padding: 26px; text-align: center; }
+.header h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.header p { margin: 6px 0 0 0; font-size: 12px; color: #cbd5e1; }
+.body { padding: 28px; }
+.code { text-align: center; font-size: 34px; letter-spacing: 10px; font-weight: 900; color: #0f172a; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 0; margin: 4px 0 18px 0; }
+.notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; font-size: 12px; color: #92400e; line-height: 1.5; }
+.footer { padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; background: #f8f9fa; border-top: 1px solid #f1f5f9; }
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>Verification Code</h1>
+    <p>Smart Library Management</p>
+  </div>
+  <div class="body">
+    <p style="margin-top:0;font-size:14px;">Hello <strong>${studentName}</strong>,</p>
+    <p style="font-size:13px;color:#475569;line-height:1.5;">
+      Use the code below to ${purposeLabel}. It expires in ${expiresInMinutes} minutes and can be used once.
+    </p>
+    <div class="code">${code}</div>
+    <div class="notice">
+      If you did not request this change, ignore this email and consider changing your password.
+      Library staff will never ask you for this code.
+    </div>
+  </div>
+  <div class="footer">Smart Library Management &middot; Automated message, do not reply</div>
+</div>
+</body>
+</html>`;
+
+  return sendHtmlEmail(toEmail, subject, htmlContent);
+};
+
 export const emailService = {
   sendBookingConfirmationEmail,
   sendLoanConfirmationEmail,
@@ -1284,5 +1339,6 @@ export const emailService = {
   sendSeatSlotEndingWarningEmail,
   sendSeatLateCancellationEmail,
   sendSeatFinePaidReceiptEmail,
+  sendProfileOtpEmail,
 };
 

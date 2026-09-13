@@ -74,6 +74,11 @@ enum PaymentMethod {
   online
 }
 
+enum OtpPurpose {
+  email_change
+  password_change
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model User {
@@ -89,8 +94,30 @@ model User {
 
   bookings Booking[]
   loans    BookLoan[]
+  otps     OtpVerification[]
 
   @@map("users")
+}
+
+/// Single-use verification code for a sensitive profile change.
+/// Only the hash of the code is stored, never the code itself.
+model OtpVerification {
+  id         String     @id @default(uuid())
+  userId     String
+  purpose    OtpPurpose
+  codeHash   String
+  /// Target address for an email_change OTP; null for other purposes.
+  newEmail   String?
+  attempts   Int        @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+  @@map("otp_verifications")
 }
 
 model Zone {

@@ -67,7 +67,7 @@ export function HomeHero({
 
           {isStudent && (
             <Link
-              href="/bookings"
+              href="/dashboard/bookings"
               className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur-md hover:bg-white/20 transition-all active:scale-95"
             >
               <ScanLine className="h-4 w-4" />

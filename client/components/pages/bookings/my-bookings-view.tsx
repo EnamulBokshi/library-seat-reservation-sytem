@@ -239,14 +239,14 @@ export function MyBookingsView() {
   const past   = bookings.filter((b) => ["completed","cancelled","no_show"].includes(b.status));
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] text-slate-900">
-      {/* Content */}
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-6 pb-24 md:pb-8 space-y-8">
+    <div className="text-slate-900">
+      {/* Rendered inside the dashboard shell, which supplies the page background and tab bar. */}
+      <div className="space-y-8 pb-24 md:pb-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="kicker-label">RESERVATIONS &rsaquo; STUDENT PASSES</p>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">My Bookings</h1>
+            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 mt-1">My Bookings</h2>
             <p className="mt-0.5 text-xs sm:text-sm text-slate-500">Manage your active seat passes and check-in QR codes</p>
           </div>
           <button

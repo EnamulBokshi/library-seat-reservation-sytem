@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Layers,
   ArrowRight,
+  LayoutDashboard,
 } from "lucide-react";
 
 interface NavLinkProps {
@@ -64,8 +65,10 @@ export function Navbar() {
 
   const isBookSeatActive = pathname === "/book" || pathname.startsWith("/book/") || pathname.startsWith("/zones");
   const isCatalogActive = pathname === "/books" || pathname.startsWith("/books/");
-  const isMySeatsActive = pathname === "/bookings" || pathname.startsWith("/bookings/");
-  const isMyLoansActive = pathname === "/loans" || pathname.startsWith("/loans/");
+  const isMySeatsActive = pathname.startsWith("/dashboard/bookings") || pathname.startsWith("/bookings/");
+  const isMyLoansActive = pathname.startsWith("/dashboard/loans");
+  // Everything under /dashboard that is not one of the two dedicated links above.
+  const isDashboardActive = pathname.startsWith("/dashboard") && !isMySeatsActive && !isMyLoansActive;
   const isCheckinActive = pathname.startsWith("/admin/checkin");
   const isAdminActive = pathname.startsWith("/admin") && !isCheckinActive;
 
@@ -127,13 +130,19 @@ export function Navbar() {
                 <>
                   <NavSeparator />
                   <NavLink
-                    href="/bookings"
+                    href="/dashboard"
+                    icon={LayoutDashboard}
+                    label="Dashboard"
+                    active={isDashboardActive}
+                  />
+                  <NavLink
+                    href="/dashboard/bookings"
                     icon={ClipboardList}
                     label="My Seats"
                     active={isMySeatsActive}
                   />
                   <NavLink
-                    href="/loans"
+                    href="/dashboard/loans"
                     icon={Bookmark}
                     label="My Loans"
                     active={isMyLoansActive}
@@ -333,7 +342,20 @@ export function Navbar() {
           {isStudent && (
             <>
               <Link
-                href="/bookings"
+                href="/dashboard"
+                className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
+                  isDashboardActive ? "text-slate-900 font-extrabold" : "text-slate-400"
+                }`}
+              >
+                <LayoutDashboard
+                  className={`h-4.5 w-4.5 ${
+                    isDashboardActive ? "text-slate-900" : "text-slate-400"
+                  }`}
+                />
+                <span className="text-[10px] whitespace-nowrap">Dashboard</span>
+              </Link>
+              <Link
+                href="/dashboard/bookings"
                 className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
                   isMySeatsActive
                     ? "text-slate-900 font-extrabold"
@@ -348,7 +370,7 @@ export function Navbar() {
                 <span className="text-[10px] whitespace-nowrap">My Seats</span>
               </Link>
               <Link
-                href="/loans"
+                href="/dashboard/loans"
                 className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
                   isMyLoansActive ? "text-slate-900 font-extrabold" : "text-slate-400"
                 }`}

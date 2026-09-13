@@ -68,6 +68,29 @@ cleanup. Fining only the first would let a student book a slot near its end, nev
 nothing — cheaper than cancelling. The helper only touches rows with `fineStatus = none`, so a
 settled or waived fine is never overwritten.
 
+## Student fine statement (`user.service.ts: getMyFines`)
+
+`GET /user/me/fines` returns the caller's seat fines and loan fines as two separate lists plus a
+summary (`seatUnpaidTotal`, `loanUnpaidTotal`, `totalUnpaid`, `maxUnpaidFineLimit`,
+`isBookingBlocked`, `remainingBalance`). Unlike `getUserUnpaidFinesSummary` it keeps settled and
+waived rows, because the dashboard shows a statement rather than only what is owed. Students cannot
+settle a fine themselves — payment stays a staff action at the desk.
+
+## Profile changes with OTP (`user.service.ts`)
+
+Name changes commit directly. Email and password changes are two-step and both require the current
+password:
+
+- Email: the code is mailed to the **new** address, which is what proves the student owns it. The
+  address is re-checked for uniqueness at commit time, since another account may have claimed it
+  while the code sat unused.
+- Password: the code is mailed to the **current** address, so holding a stolen session is not
+  enough to take over the account. The new password must differ from the old one.
+
+Codes are 6 digits from `crypto.randomInt`, stored only as a bcrypt hash, valid 10 minutes and
+single-use. Issuing a new code for a purpose deletes the previous one. Five wrong submissions burn
+the code, which is what keeps six-digit space out of brute-force range.
+
 ## Seat fine settlement
 
 `paySeatFine` records `paymentMethod`, `chalanNumber` (required for `chalan`), `finePaidAt` and
@@ -134,5 +157,6 @@ sending to guarantee a single dispatch.
 `sendBookingConfirmationEmail`, `sendLoanConfirmationEmail`, `sendLoanDueDateWarningEmail`,
 `sendLoanOverdueAlertEmail`, `sendFinePaidReceiptEmail`, `sendSeatNoShowCancellationEmail`
 (carries the no-show fee and running dues), `sendBookingCancelledByAdminEmail`,
-`sendSeatSlotEndingWarningEmail`, `sendSeatLateCancellationEmail`, `sendSeatFinePaidReceiptEmail`
+`sendSeatSlotEndingWarningEmail`, `sendSeatLateCancellationEmail`, `sendSeatFinePaidReceiptEmail`,
+`sendProfileOtpEmail` (verification code for an email or password change)
 — all inline-HTML templates sent through `sendHtmlEmail` (SMTP config in `envVars.SMTP`).

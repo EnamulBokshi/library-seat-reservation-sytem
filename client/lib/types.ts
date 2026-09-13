@@ -619,3 +619,65 @@ export interface LoanQueryParams {
 }
 
 
+
+// ─── Student Profile & Fines (dashboard) ──────────────────────────────────────
+
+export interface UserProfile extends User {
+  isActive?: boolean;
+}
+
+/** One fine row, from either the seat-booking ledger or the book-loan ledger. */
+export interface FineEntry {
+  id: string;
+  source: "booking" | "loan";
+  amount: number;
+  status: FineStatus;
+  reason: string | null;
+  /** Seat fines: seat + zone + slot. Loan fines: book title and author. */
+  subject: string;
+  incurredAt: string | null;
+  paidAt: string | null;
+  paymentMethod: PaymentMethod | null;
+  chalanNumber: string | null;
+}
+
+export interface MyFinesSummary {
+  seatUnpaidTotal: number;
+  loanUnpaidTotal: number;
+  totalUnpaid: number;
+  maxUnpaidFineLimit: number;
+  isBookingBlocked: boolean;
+  remainingBalance: number;
+}
+
+export interface MyFinesResult {
+  seatFines: FineEntry[];
+  loanFines: FineEntry[];
+  summary: MyFinesSummary;
+}
+
+export interface UpdateProfilePayload {
+  name: string;
+}
+
+export interface RequestEmailChangePayload {
+  newEmail: string;
+  currentPassword: string;
+}
+
+export interface RequestPasswordChangePayload {
+  currentPassword: string;
+}
+
+export interface VerifyPasswordChangePayload {
+  currentPassword: string;
+  newPassword: string;
+  code: string;
+}
+
+/** Where the code went and how long it stays valid. */
+export interface OtpChallenge {
+  expiresAt: string;
+  expiresInMinutes: number;
+  sentTo: string;
+}

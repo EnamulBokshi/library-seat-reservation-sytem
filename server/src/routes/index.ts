@@ -9,6 +9,7 @@ import settingRoute from "../modules/setting/setting.route";
 import scheduleRoute from "../modules/schedule/schedule.router";
 import bookRoute from "../modules/book/book.route";
 import loanRoute from "../modules/loan/loan.route";
+import userRoute from "../modules/user/user.route";
 
 const indexRoutes: Router = Router();
 
@@ -22,5 +23,6 @@ indexRoutes.use("/setting", settingRoute);
 indexRoutes.use("/schedule", scheduleRoute);
 indexRoutes.use("/book", bookRoute);
 indexRoutes.use("/loan", loanRoute);
+indexRoutes.use("/user", userRoute);
 
 export default indexRoutes;

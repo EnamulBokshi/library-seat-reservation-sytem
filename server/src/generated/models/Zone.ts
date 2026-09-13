@@ -525,14 +525,6 @@ export type EnumZoneTypeFieldUpdateOperationsInput = {
   set?: $Enums.ZoneType
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type EnumTableTypeFieldUpdateOperationsInput = {
   set?: $Enums.TableType
 }

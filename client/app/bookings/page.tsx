@@ -1,15 +1,6 @@
-import { MyBookingsView } from "@/components/pages/bookings/my-bookings-view";
-import { AuthGuard } from "@/components/shared/auth-guard";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "My Bookings | Smart Library",
-  description: "View and manage your seat reservations",
-};
-
+/** Reservations now live inside the student dashboard. */
 export default function BookingsPage() {
-  return (
-    <AuthGuard allowedRoles={["student"]}>
-      <MyBookingsView />
-    </AuthGuard>
-  );
+  redirect("/dashboard/bookings");
 }

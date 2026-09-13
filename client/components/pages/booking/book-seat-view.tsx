@@ -214,7 +214,7 @@ function BookingSuccessModal({
 
         <div className="flex gap-2">
           <button
-            onClick={() => router.push("/bookings")}
+            onClick={() => router.push("/dashboard/bookings")}
             className="pulse-button-primary w-full py-2.5 text-xs"
           >
             View My Bookings

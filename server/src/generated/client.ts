@@ -45,6 +45,12 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
+ * Model OtpVerification
+ * Single-use verification code for a sensitive profile change.
+ * Only the hash of the code is stored, never the code itself.
+ */
+export type OtpVerification = Prisma.OtpVerificationModel
+/**
  * Model Zone
  * 
  */

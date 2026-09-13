@@ -252,7 +252,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
 
                 <Link
-                  href="/loans"
+                  href="/dashboard/loans"
                   className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-extrabold text-white transition-colors shrink-0 self-start sm:self-auto shadow-xs ${
                     userLoan.status === "overdue"
                       ? "bg-rose-600 hover:bg-rose-700"
@@ -578,7 +578,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               <div className="space-y-3 pt-2">
                 {isBorrowedByMe ? (
                   <Link
-                    href="/loans"
+                    href="/dashboard/loans"
                     className="w-full py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm transition-all flex items-center justify-center gap-2 shadow-sm"
                   >
                     <Bookmark className="w-4 h-4 fill-current" />
@@ -586,7 +586,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                   </Link>
                 ) : isRequestedByMe ? (
                   <Link
-                    href="/loans"
+                    href="/dashboard/loans"
                     className="w-full py-3.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm transition-all flex items-center justify-center gap-2 shadow-sm"
                   >
                     <Clock className="w-4 h-4" />

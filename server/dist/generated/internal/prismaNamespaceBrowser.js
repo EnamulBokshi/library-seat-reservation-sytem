@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.BookLoanScalarFieldEnum = exports.BookScalarFieldEnum = exports.SettingScalarFieldEnum = exports.BookingScalarFieldEnum = exports.BookingSeatScalarFieldEnum = exports.ScheduleScalarFieldEnum = exports.SeatScalarFieldEnum = exports.ZoneScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
+exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.BookLoanScalarFieldEnum = exports.BookScalarFieldEnum = exports.SettingScalarFieldEnum = exports.BookingScalarFieldEnum = exports.BookingSeatScalarFieldEnum = exports.ScheduleScalarFieldEnum = exports.SeatScalarFieldEnum = exports.ZoneScalarFieldEnum = exports.OtpVerificationScalarFieldEnum = exports.UserScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/index-browser"));
 exports.Decimal = runtime.Decimal;
 exports.NullTypes = {
@@ -76,6 +76,7 @@ exports.JsonNull = runtime.JsonNull;
 exports.AnyNull = runtime.AnyNull;
 exports.ModelName = {
     User: 'User',
+    OtpVerification: 'OtpVerification',
     Zone: 'Zone',
     Seat: 'Seat',
     Schedule: 'Schedule',
@@ -104,6 +105,17 @@ exports.UserScalarFieldEnum = {
     isActive: 'isActive',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
+};
+exports.OtpVerificationScalarFieldEnum = {
+    id: 'id',
+    userId: 'userId',
+    purpose: 'purpose',
+    codeHash: 'codeHash',
+    newEmail: 'newEmail',
+    attempts: 'attempts',
+    expiresAt: 'expiresAt',
+    consumedAt: 'consumedAt',
+    createdAt: 'createdAt'
 };
 exports.ZoneScalarFieldEnum = {
     id: 'id',

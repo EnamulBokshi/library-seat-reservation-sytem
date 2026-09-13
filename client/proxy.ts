@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_ROUTES = ["/auth/login", "/auth/register"];
-const ADMIN_ROUTES_PREFIX = "/admin";
+/// Signed-in-only areas. Cookie presence only — real authorization is server-side.
+const PROTECTED_ROUTE_PREFIXES = ["/admin", "/dashboard"];
 
 /**
  * Next.js Centralized Request Proxy & Auth Access Control
@@ -13,7 +14,7 @@ export function proxy(request: NextRequest) {
   const hasAuthToken = Boolean(accessToken || refreshToken);
 
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
-  const isAdminRoute = pathname.startsWith(ADMIN_ROUTES_PREFIX);
+  const isProtectedRoute = PROTECTED_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   // 1. Redirect signed-in users away from public auth pages to home.
   //    Only a live access token counts here. A lone refreshToken cookie may be
@@ -25,8 +26,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // 2. Protect Admin dashboard routes — redirect unauthenticated visitors to login
-  if (!hasAuthToken && isAdminRoute) {
+  // 2. Protect signed-in areas — redirect unauthenticated visitors to login
+  if (!hasAuthToken && isProtectedRoute) {
     const loginUrl = new URL("/auth/login", request.url);
     loginUrl.searchParams.set("redirect", `${pathname}${search}`);
     return NextResponse.redirect(loginUrl);

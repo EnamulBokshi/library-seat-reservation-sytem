@@ -99,6 +99,20 @@ Health check: `GET /` (root, outside `/api/v1`).
 | POST | `/loan/:id/pay-fine` | admin, librarian | cash / chalan / online |
 | POST | `/loan/:id/admin-renew` | admin, librarian | |
 
+## user — `modules/user/user.route.ts`
+
+Student self-service profile and dues. All routes act on the caller's own record.
+
+| Method | Path | Guard | Notes |
+|---|---|---|---|
+| GET | `/user/me` | auth | own profile (adds `isActive` over `/auth/me`) |
+| PATCH | `/user/me` | auth | change display name; no verification step |
+| GET | `/user/me/fines` | auth | seat + loan fine statement with dues summary |
+| POST | `/user/me/email/request-otp` | auth | needs current password; mails a code to the NEW address |
+| POST | `/user/me/email/verify` | auth | commits the email change |
+| POST | `/user/me/password/request-otp` | auth | needs current password; mails a code to the CURRENT address |
+| POST | `/user/me/password/verify` | auth | current password + new password + code |
+
 ## setting — `modules/setting/setting.route.ts`
 
 | Method | Path | Guard |

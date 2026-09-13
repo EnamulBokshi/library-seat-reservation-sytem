@@ -230,7 +230,7 @@ export default function BooksCatalogPage() {
                     {studentSummary.quota.availableQuota} Books Available to Borrow
                   </div>
                   <Link
-                    href="/loans"
+                    href="/dashboard/loans"
                     className="text-xs font-bold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 mt-0.5"
                   >
                     <span>View My Loans ({studentSummary.activeLoans.length})</span>
@@ -545,7 +545,7 @@ export default function BooksCatalogPage() {
 
                         {isBorrowedByMe ? (
                           <Link
-                            href="/loans"
+                            href="/dashboard/loans"
                             className="flex items-center justify-center gap-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 text-xs font-extrabold transition-all text-center shadow-xs"
                           >
                             <Bookmark className="h-3.5 w-3.5 fill-current" />
@@ -553,7 +553,7 @@ export default function BooksCatalogPage() {
                           </Link>
                         ) : isRequestedByMe ? (
                           <Link
-                            href="/loans"
+                            href="/dashboard/loans"
                             className="flex items-center justify-center gap-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 text-xs font-extrabold transition-all text-center shadow-xs"
                           >
                             <Clock className="h-3.5 w-3.5" />
