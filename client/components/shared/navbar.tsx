@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
@@ -9,18 +9,11 @@ import {
   BookOpen,
   LogIn,
   UserPlus,
-  ClipboardList,
   ScanLine,
   Home,
   Shield,
-  Settings,
   Activity,
-  Calendar,
   Armchair,
-  Bookmark,
-  ChevronDown,
-  Layers,
-  ArrowRight,
   LayoutDashboard,
 } from "lucide-react";
 
@@ -54,9 +47,6 @@ function NavSeparator() {
 export function Navbar() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const pathname = usePathname();
-  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
-  const adminMenuRef = useRef<HTMLDivElement>(null);
-
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
   const isLibrarian = user?.role === "librarian";
   const isStudent = user?.role === "student";
@@ -67,22 +57,6 @@ export function Navbar() {
   const isDashboardActive = pathname.startsWith("/dashboard") || pathname.startsWith("/bookings/");
   const isCheckinActive = pathname.startsWith("/admin/checkin");
   const isAdminActive = pathname.startsWith("/admin") && !isCheckinActive;
-
-  // Close dropdown on click outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (adminMenuRef.current && !adminMenuRef.current.contains(event.target as Node)) {
-        setIsAdminMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Close dropdown when route changes
-  useEffect(() => {
-    setIsAdminMenuOpen(false);
-  }, [pathname]);
 
   // Dashboard routes render their own sidebar shell, so the public navbar stays out of them.
   if (pathname.startsWith("/admin") || pathname.startsWith("/dashboard")) {
@@ -137,88 +111,6 @@ export function Navbar() {
                     <span>Scan QR</span>
                   </Link>
 
-                  {/* Admin Tools Dropdown */}
-                  <div className="relative" ref={adminMenuRef}>
-                    <button
-                      type="button"
-                      onClick={() => setIsAdminMenuOpen((prev) => !prev)}
-                      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
-                        isAdminMenuOpen || isAdminActive
-                          ? "bg-slate-900 text-white shadow-2xs font-extrabold"
-                          : "bg-slate-900 text-white hover:bg-slate-800 shadow-2xs"
-                      }`}
-                    >
-                      <Shield className="h-3.5 w-3.5 shrink-0" />
-                      <span>Admin Tools</span>
-                      <ChevronDown
-                        className={`h-3 w-3 transition-transform duration-200 ${
-                          isAdminMenuOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-
-                    {/* Dropdown Menu */}
-                    {isAdminMenuOpen && (
-                      <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
-                        <div className="px-2.5 py-1.5 border-b border-slate-100 mb-1">
-                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Administrative Workspace
-                          </p>
-                        </div>
-
-                        <Link
-                          href="/admin"
-                          className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-black text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100/70 transition-colors mb-1"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-3.5 w-3.5 text-indigo-600" />
-                            <span>Admin Console</span>
-                          </div>
-                          <ArrowRight className="h-3 w-3" />
-                        </Link>
-
-                        <Link
-                          href="/admin/zones"
-                          className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <Layers className="h-3.5 w-3.5 text-slate-400" />
-                          <span>Zones &amp; Seating Layout</span>
-                        </Link>
-
-                        <Link
-                          href="/admin/bookings"
-                          className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <ClipboardList className="h-3.5 w-3.5 text-slate-400" />
-                          <span>All Reservations</span>
-                        </Link>
-
-                        <Link
-                          href="/admin/loans"
-                          className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <Bookmark className="h-3.5 w-3.5 text-slate-400" />
-                          <span>Circulation &amp; Loans</span>
-                        </Link>
-
-                        <Link
-                          href="/admin/schedules"
-                          className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                          <span>Schedules &amp; Slots</span>
-                        </Link>
-
-                        <Link
-                          href="/admin/settings"
-                          className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <Settings className="h-3.5 w-3.5 text-slate-400" />
-                          <span>System Settings</span>
-                        </Link>
-                      </div>
-                    )}
-                  </div>
                 </>
               )}
             </nav>
