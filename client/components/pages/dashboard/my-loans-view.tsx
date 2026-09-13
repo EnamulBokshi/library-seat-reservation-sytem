@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   MapPin,
   ArrowRight,
-  ShieldCheck,
   PlusCircle,
   History,
   DollarSign,
@@ -97,21 +96,8 @@ export function MyLoansView() {
         {/* ── Section Header ── */}
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="px-5 sm:px-6 py-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 border border-indigo-200/60 px-3 py-1 text-xs font-bold text-indigo-700 mb-3">
-                  <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
-                  <span>Student Library Portal</span>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                  My Borrowed Books &amp; Fines
-                </h2>
-                <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-                  Manage your active book loans, track due dates, submit 1-click renewals, and check late fee statements.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-end gap-6">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={() => setIsChalanModalOpen(true)}
                   className="inline-flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50 shadow-sm transition-all"

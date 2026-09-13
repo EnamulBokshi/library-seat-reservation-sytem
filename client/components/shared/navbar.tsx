@@ -4,10 +4,9 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
+import { UserMenu } from "@/components/shared/dashboard/user-menu";
 import {
   BookOpen,
-  LogOut,
-  User as UserIcon,
   LogIn,
   UserPlus,
   ClipboardList,
@@ -53,7 +52,7 @@ function NavSeparator() {
 }
 
 export function Navbar() {
-  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const pathname = usePathname();
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef<HTMLDivElement>(null);
@@ -65,10 +64,7 @@ export function Navbar() {
 
   const isBookSeatActive = pathname === "/book" || pathname.startsWith("/book/") || pathname.startsWith("/zones");
   const isCatalogActive = pathname === "/books" || pathname.startsWith("/books/");
-  const isMySeatsActive = pathname.startsWith("/dashboard/bookings") || pathname.startsWith("/bookings/");
-  const isMyLoansActive = pathname.startsWith("/dashboard/loans");
-  // Everything under /dashboard that is not one of the two dedicated links above.
-  const isDashboardActive = pathname.startsWith("/dashboard") && !isMySeatsActive && !isMyLoansActive;
+  const isDashboardActive = pathname.startsWith("/dashboard") || pathname.startsWith("/bookings/");
   const isCheckinActive = pathname.startsWith("/admin/checkin");
   const isAdminActive = pathname.startsWith("/admin") && !isCheckinActive;
 
@@ -88,8 +84,8 @@ export function Navbar() {
     setIsAdminMenuOpen(false);
   }, [pathname]);
 
-  // Do not render student/public navbar on dedicated admin dashboard pages
-  if (pathname.startsWith("/admin")) {
+  // Dashboard routes render their own sidebar shell, so the public navbar stays out of them.
+  if (pathname.startsWith("/admin") || pathname.startsWith("/dashboard")) {
     return null;
   }
 
@@ -124,31 +120,6 @@ export function Navbar() {
                 label="Catalog"
                 active={isCatalogActive}
               />
-
-              {/* Student Only Passes */}
-              {isStudent && (
-                <>
-                  <NavSeparator />
-                  <NavLink
-                    href="/dashboard"
-                    icon={LayoutDashboard}
-                    label="Dashboard"
-                    active={isDashboardActive}
-                  />
-                  <NavLink
-                    href="/dashboard/bookings"
-                    icon={ClipboardList}
-                    label="My Seats"
-                    active={isMySeatsActive}
-                  />
-                  <NavLink
-                    href="/dashboard/loans"
-                    icon={Bookmark}
-                    label="My Loans"
-                    active={isMyLoansActive}
-                  />
-                </>
-              )}
 
               {/* Staff / Admin Shortcuts (Clean & Non-Breaking) */}
               {canManage && (
@@ -258,28 +229,8 @@ export function Navbar() {
             {isLoading ? (
               <div className="h-8 w-20 animate-pulse rounded-full bg-slate-200" />
             ) : isAuthenticated && user ? (
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                {/* User Pill */}
-                <div className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-2.5 sm:px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs whitespace-nowrap">
-                  <UserIcon className="h-3.5 w-3.5 text-slate-900 shrink-0" />
-                  <span className="truncate max-w-[90px] sm:max-w-[130px] font-bold">
-                    {user.name}
-                  </span>
-                  <span className="rounded-full bg-slate-100 px-1.5 py-0.2 text-[9px] font-extrabold text-slate-600 uppercase border border-slate-200/60 shrink-0">
-                    {user.role}
-                  </span>
-                </div>
-
-                {/* Logout Button */}
-                <button
-                  onClick={logout}
-                  className="flex items-center gap-1 rounded-full border border-slate-200/80 bg-white px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 whitespace-nowrap shrink-0"
-                  title="Logout"
-                >
-                  <LogOut className="h-3.5 w-3.5 text-slate-500 hover:text-rose-600 shrink-0" />
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
-              </div>
+              /* Dashboard and sign-out both live in the advance user menu. */
+              <UserMenu placement="bottom" variant="pill" />
             ) : (
               <div className="flex items-center gap-2 whitespace-nowrap">
                 <Link href="/auth/login" className="pulse-button-secondary py-1.5 px-3 text-xs">
@@ -340,49 +291,19 @@ export function Navbar() {
           </Link>
 
           {isStudent && (
-            <>
-              <Link
-                href="/dashboard"
-                className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
-                  isDashboardActive ? "text-slate-900 font-extrabold" : "text-slate-400"
+            <Link
+              href="/dashboard"
+              className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
+                isDashboardActive ? "text-slate-900 font-extrabold" : "text-slate-400"
+              }`}
+            >
+              <LayoutDashboard
+                className={`h-4.5 w-4.5 ${
+                  isDashboardActive ? "text-slate-900" : "text-slate-400"
                 }`}
-              >
-                <LayoutDashboard
-                  className={`h-4.5 w-4.5 ${
-                    isDashboardActive ? "text-slate-900" : "text-slate-400"
-                  }`}
-                />
-                <span className="text-[10px] whitespace-nowrap">Dashboard</span>
-              </Link>
-              <Link
-                href="/dashboard/bookings"
-                className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
-                  isMySeatsActive
-                    ? "text-slate-900 font-extrabold"
-                    : "text-slate-400"
-                }`}
-              >
-                <ClipboardList
-                  className={`h-4.5 w-4.5 ${
-                    isMySeatsActive ? "text-slate-900" : "text-slate-400"
-                  }`}
-                />
-                <span className="text-[10px] whitespace-nowrap">My Seats</span>
-              </Link>
-              <Link
-                href="/dashboard/loans"
-                className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
-                  isMyLoansActive ? "text-slate-900 font-extrabold" : "text-slate-400"
-                }`}
-              >
-                <Bookmark
-                  className={`h-4.5 w-4.5 ${
-                    isMyLoansActive ? "text-slate-900" : "text-slate-400"
-                  }`}
-                />
-                <span className="text-[10px] whitespace-nowrap">My Loans</span>
-              </Link>
-            </>
+              />
+              <span className="text-[10px] whitespace-nowrap">Dashboard</span>
+            </Link>
           )}
 
           {canManage && (

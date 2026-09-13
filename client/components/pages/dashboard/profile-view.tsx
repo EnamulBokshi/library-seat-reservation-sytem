@@ -256,14 +256,6 @@ export function ProfileView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="kicker-label">ACCOUNT &rsaquo; PROFILE</p>
-        <h2 className="mt-1 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">Profile</h2>
-        <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
-          Your account details. Email and password changes are confirmed by a one-time code.
-        </p>
-      </div>
-
       {/* ── Identity summary ── */}
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

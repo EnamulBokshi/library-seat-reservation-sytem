@@ -14,8 +14,7 @@ Public / student:
 - `/book` — seat booking flow (`pages/booking/book-seat-view.tsx`)
 - `/bookings/[id]` — single booking detail
 - `/books`, `/books/[id]`
-- `/dashboard` — student dashboard, one nested route per tab (`layout.tsx` holds the `AuthGuard`
-  and `components/pages/dashboard/dashboard-shell.tsx` renders the tab bar):
+- `/dashboard` — student dashboard, one nested route per section, same sidebar shell as `/admin`:
   `/dashboard` overview, `/dashboard/bookings`, `/dashboard/loans`, `/dashboard/fines`,
   `/dashboard/profile`
 - `/bookings` and `/loans` are `redirect()` stubs to their dashboard tabs — the old links stay alive
@@ -26,7 +25,28 @@ Admin (`app/admin/(dashboardGroup)` with its own `layout.tsx`):
 - `/admin` overview, `/admin/bookings`, `/admin/books`, `/admin/checkin`, `/admin/loans`,
   `/admin/schedules`, `/admin/settings`, `/admin/zones`, `/admin/zones/[id]`
 
-Admin chrome: `components/admin/admin-sidebar.tsx`, `admin-topbar.tsx`, `admin-user-menu.tsx`.
+## Dashboard shell (`components/shared/dashboard/`)
+
+One sidebar + topbar shell serves both `/admin` and `/dashboard`; they differ only in the workspace
+config handed to it, so the two consoles stay visually identical.
+
+- `dashboard-nav.ts` — `WORKSPACES.admin` / `WORKSPACES.student` (portal label, home href, tabs,
+  sidebar cross-link) plus `visibleTabs(workspace, role)`, which drops tabs a role may not open
+  (System Settings is admin/super_admin only). `isStaffRole()` lives here too.
+- `dashboard-layout.tsx` — the `h-screen` flex shell with an independently scrolling content column.
+- `dashboard-sidebar.tsx` — branding, role-filtered tab list, cross-link, user menu.
+- `dashboard-topbar.tsx` — breadcrumb + per-route title from the `routeTitles` map each layout owns,
+  live clock, and an optional quick action (Scan QR for staff, Reserve a Seat for students).
+- `user-menu.tsx` — the advance user menu: identity, role-aware shortcuts (My Dashboard, Profile,
+  Admin Console for staff, Library Home) and **the only sign-out control in the app**. Rendered as a
+  full-width card at the sidebar foot (`placement="top"`) and as a compact pill in the public navbar
+  (`placement="bottom"`).
+
+Route layouts (`app/admin/(dashboardGroup)/layout.tsx`, `app/dashboard/layout.tsx`) wrap the shell in
+an `AuthGuard` — staff roles for `/admin`, any authenticated user for `/dashboard`.
+
+The public navbar hides itself on `/admin/*` and `/dashboard/*`, since those render their own chrome.
+It carries no My Seats / My Loans / logout controls; students reach them through the user menu.
 
 ## Data layer
 

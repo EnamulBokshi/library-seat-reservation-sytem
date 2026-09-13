@@ -135,14 +135,7 @@ export function FinesView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="kicker-label">ACCOUNT &rsaquo; DUES</p>
-          <h2 className="mt-1 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">Fines</h2>
-          <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
-            Seat reservation fees and overdue book fees, kept as separate statements.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <button onClick={fetchFines} className="pulse-button-secondary shrink-0">
           <RefreshCw className="h-4 w-4" />
           <span>Refresh</span>
