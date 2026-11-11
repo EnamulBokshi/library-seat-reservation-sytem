@@ -10,19 +10,43 @@ import AppError from "./helpers/AppError";
 import status from "http-status";
 
 const app: Application = express();
+app.set("trust proxy", 1);
 
 // Allowed browser origins. Credentialed requests (auth cookies) forbid a "*" origin,
-// so every origin must be listed explicitly via FRONTEND_URL / CORS_ORIGINS.
-const allowedOrigins = new Set(
-    [envVars.FRONTEND_URL, ...envVars.CORS_ORIGINS]
-        .map((origin) => origin.trim().replace(/\/+$/, ""))
-        .filter((origin) => origin.length > 0),
-);
+// so every origin must be listed explicitly via FRONTEND_URL / CORS_ORIGINS
+// (supports exact origins and leading wildcard subdomains like https://*.vercel.app).
+const rawOrigins = [envVars.FRONTEND_URL, ...envVars.CORS_ORIGINS]
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
+    .filter((origin) => origin.length > 0);
 
 if (envVars.NODE_ENV === "development") {
-    allowedOrigins.add("http://localhost:3000");
-    allowedOrigins.add("http://127.0.0.1:3000");
+    rawOrigins.push("http://localhost:3000", "http://127.0.0.1:3000");
 }
+
+const exactOrigins = new Set<string>();
+const wildcardOriginMatchers: RegExp[] = [];
+
+for (const entry of rawOrigins) {
+    if (entry.includes("://*.")) {
+        const [scheme, hostSuffix] = entry.split("://*.");
+        if (scheme && hostSuffix) {
+            const escapedSuffix = hostSuffix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            wildcardOriginMatchers.push(
+                new RegExp(`^${scheme}://[a-z0-9-]+(?:\\.[a-z0-9-]+)*\\.${escapedSuffix}$`, "i"),
+            );
+        }
+    } else {
+        exactOrigins.add(entry);
+    }
+}
+
+const isOriginAllowed = (origin: string): boolean => {
+    const normalized = origin.replace(/\/+$/, "");
+    if (exactOrigins.has(normalized)) {
+        return true;
+    }
+    return wildcardOriginMatchers.some((pattern) => pattern.test(normalized));
+};
 
 const corsOptions: CorsOptions = {
     origin(origin, callback) {
@@ -30,7 +54,7 @@ const corsOptions: CorsOptions = {
         if (!origin) {
             return callback(null, true);
         }
-        if (allowedOrigins.has(origin.replace(/\/+$/, ""))) {
+        if (isOriginAllowed(origin)) {
             return callback(null, true);
         }
         return callback(new AppError(status.FORBIDDEN, "Not allowed by CORS"));

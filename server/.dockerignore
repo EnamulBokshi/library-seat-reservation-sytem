@@ -1,0 +1,13 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+*.log
+npm-debug.log*
+pnpm-debug.log*
+coverage
+src/scripts/extract-spec*
+

@@ -1,11 +1,15 @@
 import { JwtPayload, SignOptions } from "jsonwebtoken";
 import { jwtUtils } from "./jwt";
 import { envVars } from "../config/envVars";
-import { Response } from "express";
+import { CookieOptions, Response } from "express";
 import { cookieUtils } from "./cookie";
 
-const isProduction = envVars.NODE_ENV === "production";
-const cookieSameSite: "lax" | "none" = isProduction ? "none" : "lax";
+const baseCookieOptions: CookieOptions = {
+    httpOnly: true,
+    secure: envVars.COOKIE.SECURE,
+    sameSite: envVars.COOKIE.SAME_SITE,
+    path: "/",
+};
 
 const getAccessToken = (payload: JwtPayload) => {
     return jwtUtils.createToken(payload, envVars.ACCESS_TOKEN_SECRET, {
@@ -21,22 +25,21 @@ const getRefreshToken = (payload: JwtPayload) => {
 
 const setAccessTokenCookie = (res: Response, token: string) => {
     cookieUtils.setCookie(res, "accessToken", token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: cookieSameSite,
+        ...baseCookieOptions,
         maxAge: envVars.ACCESS_TOKEN_EXPIRES_IN * 1000, // convert seconds to ms
-        path: "/",
     });
 };
 
 const setRefreshTokenCookie = (res: Response, token: string) => {
     cookieUtils.setCookie(res, "refreshToken", token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: cookieSameSite,
+        ...baseCookieOptions,
         maxAge: envVars.REFRESH_TOKEN_EXPIRES_IN * 1000, // convert seconds to ms
-        path: "/",
     });
+};
+
+const clearAuthCookies = (res: Response) => {
+    cookieUtils.clearCookie(res, "accessToken", baseCookieOptions);
+    cookieUtils.clearCookie(res, "refreshToken", baseCookieOptions);
 };
 
 export const tokenUtils = {
@@ -44,4 +47,5 @@ export const tokenUtils = {
     getRefreshToken,
     setAccessTokenCookie,
     setRefreshTokenCookie,
+    clearAuthCookies,
 };

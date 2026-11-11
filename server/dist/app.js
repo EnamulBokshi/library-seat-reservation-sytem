@@ -14,22 +14,44 @@ const envVars_1 = require("./config/envVars");
 const AppError_1 = __importDefault(require("./helpers/AppError"));
 const http_status_1 = __importDefault(require("http-status"));
 const app = (0, express_1.default)();
+app.set("trust proxy", 1);
 // Allowed browser origins. Credentialed requests (auth cookies) forbid a "*" origin,
-// so every origin must be listed explicitly via FRONTEND_URL / CORS_ORIGINS.
-const allowedOrigins = new Set([envVars_1.envVars.FRONTEND_URL, ...envVars_1.envVars.CORS_ORIGINS]
+// so every origin must be listed explicitly via FRONTEND_URL / CORS_ORIGINS
+// (supports exact origins and leading wildcard subdomains like https://*.vercel.app).
+const rawOrigins = [envVars_1.envVars.FRONTEND_URL, ...envVars_1.envVars.CORS_ORIGINS]
     .map((origin) => origin.trim().replace(/\/+$/, ""))
-    .filter((origin) => origin.length > 0));
+    .filter((origin) => origin.length > 0);
 if (envVars_1.envVars.NODE_ENV === "development") {
-    allowedOrigins.add("http://localhost:3000");
-    allowedOrigins.add("http://127.0.0.1:3000");
+    rawOrigins.push("http://localhost:3000", "http://127.0.0.1:3000");
 }
+const exactOrigins = new Set();
+const wildcardOriginMatchers = [];
+for (const entry of rawOrigins) {
+    if (entry.includes("://*.")) {
+        const [scheme, hostSuffix] = entry.split("://*.");
+        if (scheme && hostSuffix) {
+            const escapedSuffix = hostSuffix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            wildcardOriginMatchers.push(new RegExp(`^${scheme}://[a-z0-9-]+(?:\\.[a-z0-9-]+)*\\.${escapedSuffix}$`, "i"));
+        }
+    }
+    else {
+        exactOrigins.add(entry);
+    }
+}
+const isOriginAllowed = (origin) => {
+    const normalized = origin.replace(/\/+$/, "");
+    if (exactOrigins.has(normalized)) {
+        return true;
+    }
+    return wildcardOriginMatchers.some((pattern) => pattern.test(normalized));
+};
 const corsOptions = {
     origin(origin, callback) {
         // Same-origin, server-to-server and tooling requests send no Origin header.
         if (!origin) {
             return callback(null, true);
         }
-        if (allowedOrigins.has(origin.replace(/\/+$/, ""))) {
+        if (isOriginAllowed(origin)) {
             return callback(null, true);
         }
         return callback(new AppError_1.default(http_status_1.default.FORBIDDEN, "Not allowed by CORS"));

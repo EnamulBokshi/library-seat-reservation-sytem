@@ -61,8 +61,7 @@ const login = (0, CatchAsync_1.default)(async (req, res) => {
     });
 });
 const clearAuthCookies = (res) => {
-    res.clearCookie("accessToken", { path: "/" });
-    res.clearCookie("refreshToken", { path: "/" });
+    token_1.tokenUtils.clearAuthCookies(res);
 };
 const refresh = (0, CatchAsync_1.default)(async (req, res) => {
     const refreshToken = cookie_1.cookieUtils.getCookie(req, "refreshToken");

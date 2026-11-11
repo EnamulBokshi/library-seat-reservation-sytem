@@ -67,8 +67,7 @@ const login = catchAsync(async (req: Request, res: Response) => {
 });
 
 const clearAuthCookies = (res: Response) => {
-    res.clearCookie("accessToken", { path: "/" });
-    res.clearCookie("refreshToken", { path: "/" });
+    tokenUtils.clearAuthCookies(res);
 };
 
 const refresh = catchAsync(async (req: Request, res: Response) => {

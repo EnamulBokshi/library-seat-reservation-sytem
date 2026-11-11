@@ -18,6 +18,10 @@ interface EnvConfig {
     SUPER_ADMIN_PASSWORD: string;
     FRONTEND_URL: string;
     CORS_ORIGINS: string[];
+    COOKIE: {
+        SAME_SITE: "lax" | "strict" | "none";
+        SECURE: boolean;
+    };
     SMTP: {
         SMTP_HOST: string;
         SMTP_PORT: number;
@@ -68,6 +72,19 @@ const loadEnvVariables = (): EnvConfig => {
             .split(",")
             .map((origin) => origin.trim().replace(/\/+$/, ""))
             .filter((origin) => origin.length > 0),
+        COOKIE: {
+            SAME_SITE: ((): "lax" | "strict" | "none" => {
+                const raw = (process.env.COOKIE_SAME_SITE || "").toLowerCase();
+                if (raw === "lax" || raw === "strict" || raw === "none") {
+                    return raw;
+                }
+                return (process.env.NODE_ENV || "development") === "production" ? "none" : "lax";
+            })(),
+            SECURE:
+                process.env.COOKIE_SECURE !== undefined
+                    ? process.env.COOKIE_SECURE === "true"
+                    : (process.env.NODE_ENV || "development") === "production",
+        },
         SMTP: {
             SMTP_HOST: process.env.SMTP_HOST || "smtp.gmail.com",
             SMTP_PORT: parseInt(process.env.SMTP_PORT || "587", 10),
